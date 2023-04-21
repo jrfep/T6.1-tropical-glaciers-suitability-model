@@ -1,6 +1,6 @@
-# T6.1-tropical-glaciers - Data for a global IUCN RLE assessment (Level 4/5 units)
+# T6.1-tropical-glaciers - Environmental suitability model
 
-This repository includes all steps for data import and preparation for an ongoing IUCN Red List of Ecosystem Assessment of global ecoregional types for the ecosystem functional group _T6.1 Ice sheets, glaciers and perennial snowfields_ in the tropical regions.
+This repository includes all steps for fitting a environmental suitability model for tropical glacier ecosystems.
 
 The repository has the following structure:
 

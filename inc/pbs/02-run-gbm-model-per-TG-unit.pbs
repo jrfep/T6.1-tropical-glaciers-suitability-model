@@ -14,4 +14,4 @@ source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-mode
 #module purge
 module load proj/8.2.1 sqlite/3.39.4 perl/5.36.0 udunits/2.2.28 geos/3.9.1 python/3.10.8 gdal/3.5.3-szip netcdf-c/4.9.0 r/4.2.2
 
-Rscript --vanilla $SCRIPTDIR/workflow/03-model-projections/01-gbm-model-glacier.R ${PBS_ARRAY_INDEX}
+Rscript --vanilla $SCRIPTDIR/inc/R/01-gbm-model-glacier.R ${PBS_ARRAY_INDEX}
