@@ -95,7 +95,7 @@ Check what resources (I/O, CPU, memory and scratch) a job is currently using?
 For this repository, I would do something like:
 
 ```{bash}
-source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-data/env/project-env.sh
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
 qsub -J 10-28 $SCRIPTDIR/inc/pbs/crop-variables-per-TG-unit.pbs
 qsub -J 29-37 $SCRIPTDIR/inc/pbs/crop-variables-per-TG-unit.pbs
@@ -103,7 +103,7 @@ qsub -J 29-37 $SCRIPTDIR/inc/pbs/crop-variables-per-TG-unit.pbs
 
 
 ```{bash}
-source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-data/env/project-env.sh
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
 qsub -J 1-3 $SCRIPTDIR/inc/pbs/run-gbm-model-per-TG-unit.pbs
 qsub -J 4-19 $SCRIPTDIR/inc/pbs/run-gbm-model-per-TG-unit.pbs

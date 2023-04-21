@@ -1,4 +1,4 @@
-source ~/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-data/env/project-env.sh
+source ~/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
 
 # for terra.ad.unsw.edu.au

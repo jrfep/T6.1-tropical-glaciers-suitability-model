@@ -22,7 +22,7 @@ require(dismo)
 require(readr)
 
 ## Programing environment variables
-source(sprintf("%s/proyectos/IUCN-GET-L4/T6.1-tropical-glaciers/env/project-env.R",Sys.getenv("HOME")))
+source(sprintf("%s/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.R",Sys.getenv("HOME")))
 input.dir <- sprintf("%s/%s/INPUT",gis.out,projectname)
 output.dir <- sprintf("%s/%s/OUTPUT",gis.out,projectname)
 

@@ -1,5 +1,5 @@
 #!R --vanilla
-projectname <- "T6.1-tropical-glaciers-data"
+projectname <- "T6.1-tropical-glaciers-suitability-model"
 projectdir <- "proyectos/Tropical-Glaciers"
 
 if (Sys.getenv("GISDATA") != "") {
@@ -61,5 +61,4 @@ if (file.exists("~/.database.ini")) {
 #if (file.exists("~/.secrets/osf")) {
 #  osf.token <- readLines("~/.secrets/osf")
 #}
-source("~/.Renviron")
-Sys.setenv("OSF_PROJECT"="432sb")
+Sys.setenv("OSF_PROJECT"="hp8bs")

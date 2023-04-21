@@ -8,7 +8,7 @@
 #PBJ -J 1-16
 
 ## set up bash environment variables
-source $HOME/proyectos/IUCN-GET-L4/T6.1-tropical-glaciers/env/project-env.sh
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 
 ## load modules for gdal functions
 #module purge

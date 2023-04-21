@@ -1,6 +1,6 @@
 export MIHOST=$(hostname -s)
 
-export PROJECTNAME=T6.1-tropical-glaciers-data
+export PROJECTNAME=T6.1-tropical-glaciers-suitability-model
 export SCRIPTDIR=$HOME/proyectos/Tropical-Glaciers/$PROJECTNAME
 
 case $MIHOST in
