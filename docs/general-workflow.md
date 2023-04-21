@@ -12,7 +12,18 @@ editor_options:
 
 ### Consolidate input data
 
+```sh
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
+cd $WORKDIR
 
+## load modules for gdal functions
+#module purge
+module load gdal/3.5.3-szip  r/4.2.2
+
+Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
+
+
+```
 
 ### Run models for each unit
 

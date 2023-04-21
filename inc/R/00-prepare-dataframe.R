@@ -27,8 +27,8 @@ env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability
 source(
     sprintf(
         "%s/%s/env/project-env.R",
-        env_file_path, 
-        Sys.getenv("HOME")
+        Sys.getenv("HOME"),
+        env_file_path
     )
 )
 input.dir <- sprintf("%s/%s/OUTPUT", gis.out, "T6.1-tropical-glaciers-data")
