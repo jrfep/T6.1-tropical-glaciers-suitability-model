@@ -13,14 +13,14 @@
 
 require(dplyr)
 require(sf)
-require(magrittr)
+#require(magrittr)
 require(tibble)
 require(raster)
-require(stringr)
-require(tidyr)
-library(caret)
-require(dismo)
-require(readr)
+#require(stringr)
+#require(tidyr)
+#library(caret)
+#require(dismo)
+#require(readr)
 
 ## Set up / Programing environment variables  -------
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
@@ -70,7 +70,7 @@ input_raster_data <-
         e0 <- raster(
             sprintf(
                 '%s/Group-%02d/GMTED/elevation_1KMmd_GMTEDmd.tif',
-                output.dir, 
+                input.dir, 
                 j
             )
         )
