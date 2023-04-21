@@ -109,6 +109,6 @@ gc()
 
 ## Output: save data to Rdata file ----
 
-rda.file <- sprintf("%s/Rdata/bioclim-model-data-groups.rda",output.dir)
+rda.file <- sprintf("%s/current-bioclim-data-all-groups.rda",output.dir)
 
 save(file=rda.file, input_raster_data)

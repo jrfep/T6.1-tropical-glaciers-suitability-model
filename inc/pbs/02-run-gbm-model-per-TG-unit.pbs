@@ -12,6 +12,12 @@ source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-mode
 
 ## load modules for gdal functions
 #module purge
-module load proj/8.2.1 sqlite/3.39.4 perl/5.36.0 udunits/2.2.28 geos/3.9.1 python/3.10.8 gdal/3.5.3-szip r/4.2.2
+module load r/4.2.2
+
+if [ ! -e $GISOUT/$PROJECTNAME/current-bioclim-data-all-groups.rda ]
+then
+    Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
+fi
 
 Rscript --vanilla $SCRIPTDIR/inc/R/01-gbm-model-fit-and-predict.R ${PBS_ARRAY_INDEX}
+Rscript --vanilla $SCRIPTDIR/inc/R/02-gbm-model-predict-future.R ${PBS_ARRAY_INDEX}

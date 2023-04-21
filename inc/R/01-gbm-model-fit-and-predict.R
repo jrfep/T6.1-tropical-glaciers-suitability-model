@@ -48,10 +48,11 @@ trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-g
 all_units <- unique(grp_table$unit_name)
 slc_unit <- all_units[ifelse(is.na(pick),12,pick)]
 
+system(sprintf('mkdir -p %s/%s',output.dir,str_replace_all(slc_unit," ","-")))
 
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
-rda.file <- sprintf("%s/Rdata/bioclim-model-data-groups.rda",output.dir)
+rda.file <- sprintf("%s/current-bioclim-data-all-groups.rda",output.dir)
 if (file.exists(rda.file)) {
    load(rda.file)
 } else {
@@ -108,7 +109,7 @@ model <- caret::train(
 test.features = testing %>% dplyr::select(bio10_01:bio10_19)
 test.target = testing %>% pull(glacier)
 
-rda.results <- sprintf('%s/Rdata/gbm-model-%s-current.rda',output.dir,str_replace_all(slc_unit," ","-"))
+rda.results <- sprintf('%s/%s/gbm-model-current.rda',output.dir,str_replace_all(slc_unit," ","-"))
 
 ## Step 4: save model predictions at test location  -------
 
@@ -118,42 +119,6 @@ predictions = predict(model, newdata = test.features, type='prob')
 e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
 
 save(file=rda.results,model,training,testing,predictions,slc_unit, e1 )
-
-## Step 5: predictions for different timeframes models and pathways  -------
-
-ids <- grp_table %>% filter(unit_name %in% slc_unit) %>% pull(id) %>% as.numeric()
-
-for (timeframe in c("2011-2040","2041-2070","2071-2100")) {
-   for (modelname in c("ukesm1-0-ll","mri-esm2-0","ipsl-cm6a-lr","gfdl-esm4","mpi-esm1-2-hr")) {
-      for (pathway in c("ssp126","ssp370","ssp585")) {
-         cat(sprintf("prediction for %s_%s_%s \n ",timeframe,modelname,pathway))
-         newdata <- data.frame()
-         for (Group in ids) {
-            archs <- list.files(sprintf('%s/Group-%02d/modvars',output.dir,Group),
-                                pattern=sprintf("%s_%s_%s",timeframe,modelname,pathway),
-                                full.names=T)
-            r0 <- stack(archs)
-            names(r0) <- sprintf("bio10_%02d",as.numeric(str_extract(str_extract(basename(archs),"bio[0-9]+"),"[0-9]+")))
-            vals <- values(r0)
-            cellnr <- 1:ncell(r0)
-            ss <- rowSums(is.na(vals))==0
-            newdata %<>% bind_rows({data.frame(vals,id=as.character(Group),cellnr) %>% filter(ss)})
-         }
-         newdata %<>% left_join(testing %>% transmute(id=as.character(id),cellnr,glacier),by=c("id","cellnr")) %>% filter(glacier == "G")
-         predictions = predict(model, newdata,type="prob")[,"G"]
-
-      rda.results.future <- sprintf('%s/Rdata/gbm-model-%s-%s-%s-%s.rda',
-         output.dir,
-         str_replace_all(slc_unit," ","-"),
-         timeframe,
-         modelname,
-         pathway)
-
-      save(file=rda.results.future,predictions )
-      }
-   }
-}
-
 
 ## That's it  -----
 
