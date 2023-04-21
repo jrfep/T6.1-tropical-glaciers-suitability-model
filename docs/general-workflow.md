@@ -27,7 +27,9 @@ Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
 ```sh
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
-qsub -J 2-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
+## fool qsub to send only one job
+qsub -J 2-3:4 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs 
+qsub -J 3-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
 ```
 
 

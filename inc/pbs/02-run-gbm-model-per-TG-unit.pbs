@@ -12,7 +12,7 @@ source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-mode
 
 ## load modules for gdal functions
 #module purge
-module load r/4.2.2
+module load gdal/3.5.3-szip  r/4.2.2
 
 if [ ! -e $GISOUT/$PROJECTNAME/current-bioclim-data-all-groups.rda ]
 then
