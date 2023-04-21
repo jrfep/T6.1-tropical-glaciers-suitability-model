@@ -1,0 +1,113 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+[OSF](https://osf.io/dashboard) is a free and open source web application that provides a space for researchers to collaboratively store, manage, and share their research materials (e.g. data, code, protocols).
+
+## OSF with R
+
+### The personal access token
+
+First, we need to add a OSF personal access token (PAT) to the R session. 
+
+- Navigate to https://osf.io/settings/tokens/
+- Click the New token button and provide a descriptive name
+- Select the scopes (i.e., permissions) to grant osfr
+- Click the Create button to generate our PAT
+- If successful, our 70 character token will be displayed along with several important warnings
+- Copy the token and keep it in a safe place
+
+One way to inform the R session of our PAT is to add the value in our .Renviron file.
+
+```{bash}
+OSF_PAT=<PERSONAL ACCESS TOKEN VALUE>
+```
+
+### Retrieve information about our OSF project
+
+Now we run the project environment script:
+
+```{r}
+source(sprintf("%s/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-data/env/project-env.R",Sys.getenv("HOME")))
+```
+
+This script contains adds an environment variable called `OSF_PROJECT` with the code of the OSF Project. We will use this to locate our **project** and access cloud-based storage bucket where files can be stored and organized into directories.
+
+```{r}
+library(dplyr)
+library(osfr)
+osfcode <- Sys.getenv("OSF_PROJECT")
+osf_project <- osf_retrieve_node(sprintf("https://osf.io/%s", osfcode))
+
+```
+
+We can list files under one project or project component using the `osf_ls_files` function:
+
+```{r}
+osf_ls_files(osf_project)
+```
+
+### Create and navigate components
+
+We can create components under our project. To avoid duplicates, we first get a list of the components of the parent project:
+
+```{r}
+my_project_components <- osf_ls_nodes(osf_project)
+```
+
+Now we create a simple function that first searches for a component's name in the list. If not found we create the new component with the description and category we provide in the parameters to the function:
+```{r}
+
+
+osf_find_or_create_component <- 
+  function(project_components, comp_name=NULL, comp_desc=NULL, comp_cat=NULL) {
+    if (is.null(comp_name))
+        stop("Please provide a `comp_name` to search!")
+    if (comp_name %in% project_components$name) {
+      idx <- project_components %>% 
+        filter(name %in% comp_name) %>%
+        pull(id) 
+      target_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
+      cat("Component found!\n")
+    } else {
+      target_comp <- osf_create_component(
+        osf_project, 
+        title = comp_name,
+        description = comp_desc,
+        category=comp_cat)
+      cat("New component created!\n")
+    }
+    return(target_comp)
+  }
+
+```
+
+So we can now add two high level components:
+
+```{r}
+global_data_comp <- osf_find_or_create_component(
+  my_project_components,
+  comp_name = "Data for the global RLE assessment of Tropical Glacier Ecosystems",
+  comp_desc = "Data for the global Red List of Ecosystems assessment of all Tropical Glacier Ecosystems. This component contains data files to be used by other components of the project.",
+  comp_cat = "data"
+)
+vzla_comp <- osf_find_or_create_component(
+  my_project_components, 
+  comp_name = "RLE assessment of the Tropical Glacier Ecosystem of the Cordillera de Mérida",
+  comp_desc =  "Red List of Ecosystems assessment of the Tropical Glacier Ecosystem of the Cordillera de Mérida. This is a global and national assessment for this ecosystem unit. The assessment unit is defined in a global context but its whole distribution is contained in one country (Venezuela). Thus, the assessment outcomes will inform both global and national RLE initiatives.",
+  comp_cat ="project")
+
+
+```
+
+And add sub-components to components:
+```{r}
+my_subproject_components <- osf_ls_nodes(vzla_comp)
+vzla_data_comp <- osf_find_or_create_component(
+  my_subproject_components,
+  comp_name = "Data for the RLE assessment of the T.G.E. Cordillera de Mérida",
+  comp_desc = "Data for the Red List of Ecosystems assessment of the Tropical Glacier Ecosystem of the Cordillera de Mérida. This component contains data files to be used by the parent components of the project.",
+  comp_cat="data")
+```
+
