@@ -31,26 +31,23 @@ source(
         env_file_path
     )
 )
+input.dir <- sprintf("%s/%s/OUTPUT",gis.out,"T6.1-tropical-glaciers-data")
 output.dir <- sprintf("%s/%s/OUTPUT",gis.out,projectname)
 
 ## Read command line arguments
 args = commandArgs(trailingOnly=TRUE)
 pick <- as.numeric(args[1])
 
-## Utility functions
-source(sprintf("%s/%s/inc/R/RS-functions.R", Sys.getenv("HOME"), env_file_path))
-
-
 ## Input: Load data in R session ----
 
 ## Load spatial data for the group polygons and glacier points
-grp_table <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",output.dir)) %>%
+grp_table <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",input.dir)) %>%
    st_drop_geometry %>% transmute(id=factor(id),unit_name=group_name)
-trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",output.dir))
+trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
+   input.dir))
 all_units <- unique(grp_table$unit_name)
 slc_unit <- all_units[ifelse(is.na(pick),12,pick)]
 
-rda.results <- sprintf('%s/Rdata/gbm-model-%s.rda',output.dir,str_replace_all(slc_unit," ","-"))
 
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
@@ -111,36 +108,18 @@ model <- caret::train(
 test.features = testing %>% dplyr::select(bio10_01:bio10_19)
 test.target = testing %>% pull(glacier)
 
-save(file=rda.results,model,training,testing,slc_unit)
+rda.results <- sprintf('%s/Rdata/gbm-model-%s-current.rda',output.dir,str_replace_all(slc_unit," ","-"))
 
 ## Step 4: save model predictions at test location  -------
 
 predictions = predict(model, newdata = test.features, type='prob')
 
-save(file=rda.results,model,training,testing,predictions,slc_unit )
-
-## Step 5: Predicted cells for different thresholds  -------
 
 e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
 
-IV <- predictions$G[test.target=="G"]
-CT <- threshold(e1)
-rslts <- tibble(timeframe="1981-2010",
-                modelname="observed",
-                pathway=c("ssp126","ssp370","ssp585"),
-                predCells=sum(test.target=="G"))
+save(file=rda.results,model,training,testing,predictions,slc_unit, e1 )
 
-for (ctopt in c("prevalence","spec_sens","equal_sens_spec")) {
-   vals <- sum(IV>CT[[ctopt]])
-   rslts %<>%  bind_rows(tibble(timeframe="1981-2010",
-                                  modelname="current",
-                                  CT=ctopt,
-                                  pathway=c("ssp126","ssp370","ssp585"),
-                                  predCells=vals))
-}
-save(file=rda.results,model,training,testing,predictions,rslts,slc_unit )
-
-## Step 6: Relative severity for different thresholds  -------
+## Step 5: predictions for different timeframes models and pathways  -------
 
 ids <- grp_table %>% filter(unit_name %in% slc_unit) %>% pull(id) %>% as.numeric()
 
@@ -163,23 +142,19 @@ for (timeframe in c("2011-2040","2041-2070","2071-2100")) {
          newdata %<>% left_join(testing %>% transmute(id=as.character(id),cellnr,glacier),by=c("id","cellnr")) %>% filter(glacier == "G")
          predictions = predict(model, newdata,type="prob")[,"G"]
 
-         for (ctopt in c("prevalence","spec_sens","equal_sens_spec")) {
-            vals <- sum(predictions>CT[[ctopt]])
-            RSval <- meanRS(IV,FV=predictions,CT[[ctopt]])
-            rslts %<>%    bind_rows(tibble(timeframe,
-                                           modelname,
-                                           CT=ctopt,
-                                           pathway,
-                                           predCells=vals,
-                                           meanRS=RSval))
-         }
-      save(file=rda.results,model,training,testing,predictions,rslts,slc_unit )
+      rda.results.future <- sprintf('%s/Rdata/gbm-model-%s-%s-%s-%s.rda',
+         output.dir,
+         str_replace_all(slc_unit," ","-"),
+         timeframe,
+         modelname,
+         pathway)
+
+      save(file=rda.results.future,predictions )
       }
    }
 }
 
 
-## Output: Save final results  -----
-save(file=rda.results,model,training,testing,rslts,slc_unit)
+## That's it  -----
 
 cat("Done for today!\n")

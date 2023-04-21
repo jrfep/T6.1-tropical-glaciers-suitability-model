@@ -15,17 +15,23 @@ editor_options:
 ```sh
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
-
+mkdir -p $GISOUT/$PROJECTNAME/OUTPUT/Rdata
 ## load modules for gdal functions
 #module purge
 module load gdal/3.5.3-szip  r/4.2.2
 
 Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
 
-
+tree $GISOUT/$PROJECTNAME
 ```
 
 ### Run models for each unit
+
+```sh
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
+cd $WORKDIR
+qsub -J 2-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
+```
 
 ### Calculate Relative Severity
 
