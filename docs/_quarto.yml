@@ -5,7 +5,7 @@ book:
   author: "José R. Ferrer-Paris"
   title: "Environmental suitability model for T6.1 tropical glaciers"
   subtitle: "Analysis of future environmental degradation"
-  date: "2022-10-03"
+  date: "2023-04-03"
   chapters:
     - index.qmd
     - part: "Relative Severity"

@@ -1,16 +1,21 @@
 ---
+title: "Visualisation of Relative Severity values"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
+
 ```{r}
+#| eval: false
 library(dplyr)
-library(ROCR)
+# library(ROCR)
+library(ggplot2)
 ```
 
-## Programing environment variables
+
 ```{r}
+#| eval: false
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
 source(
     sprintf(
@@ -101,7 +106,6 @@ for (threshold in names(CT)) {
     )
 }
 
-library(ggplot2)
 
 RS_results %>% 
   filter(is.finite(RS)) %>% 
@@ -189,15 +193,19 @@ ggplot(RSecdf) +
   theme_minimal()
 ```
 
- we use the tropical glacier ecosystems as a model because:
- risk of ecosystem collapse is very high and well documented
- actual probabilities of collapse can be calculated from mechanistic models,
- the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+## Programing environment variables
 
- we use projected degradation of climatic suitability because:
- it is conceptually linked to models used to calculate probability of collapse
- it uses the same underlying variables models and scenarios
- we can explore different time frames (temporal scale of degradation)
- we can explore uncertainty due to different models, scenarios and collapse thresholds
+We use the tropical glacier ecosystems as a model because:
 
- The values of relative severity vary across the sample of sites. Degradation is considered a threat to the ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.
+- risk of ecosystem collapse is very high and well documented
+- actual probabilities of collapse can be calculated from mechanistic models,
+- the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+
+We use projected degradation of climatic suitability because:
+
+- it is conceptually linked to models used to calculate probability of collapse
+- it uses the same underlying variables models and scenarios
+- we can explore different time frames (temporal scale of degradation)
+- we can explore uncertainty due to different models, scenarios and collapse thresholds
+
+The values of relative severity vary across the sample of sites. Degradation is considered a threat to the ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.
