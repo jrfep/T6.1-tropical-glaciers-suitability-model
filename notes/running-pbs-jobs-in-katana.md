@@ -182,6 +182,13 @@ with_makevars(
   })()
 )
 
+with_makevars(
+  list(LDFLAGS=paste('-Wl,', paste(moduleLibs, collapse=","),sep=''), 
+    MAKEFLAGS='-j'),
+  (function() {
+  install.packages(c('raster','dismo'))
+  })()
+)
 ```
 
 Other libraries might or might not work:

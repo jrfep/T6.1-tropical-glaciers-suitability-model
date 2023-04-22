@@ -19,7 +19,7 @@ require(raster)
 require(stringr)
 require(tidyr)
 library(caret)
-require(dismo)
+# require(dismo)
 require(readr)
 
 ## Programing environment variables
@@ -115,11 +115,12 @@ rda.results <- sprintf('%s/%s/gbm-model-current.rda',output.dir,str_replace_all(
 
 predictions = predict(model, newdata = test.features, type='prob')
 
-e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
+# we will use another approach using the caret library
+#e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
 
 testing$IV <- predictions[,"G"]
 
-save(file=rda.results,model,training,testing,slc_unit, e1 )
+save(file=rda.results,model,training,testing,slc_unit )
 
 ## That's it  -----
 

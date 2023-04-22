@@ -12,8 +12,7 @@
 ## Set up / Libraries -------
 
 library(dplyr)
-library(raster)
-library(dismo)
+library(ROCR)
 
 ## Programing environment variables
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
@@ -24,19 +23,43 @@ source(
         env_file_path
     )
 )
+
+source(
+  sprintf(
+    "%s/%s/inc/R/RS-functions.R",
+    Sys.getenv("HOME"),
+    env_file_path
+  )
+)
+
 input.dir <- sprintf("%s%s/OUTPUT/",gis.out,projectname)
 
-dir(sprintf("%s/Mexico/",input.dir))
 
-load(sprintf("%s/Mexico/gbm-model-current.rda",input.dir))
+dir(sprintf("%s/",input.dir))
+
+## This looks nice in the histogram, right skewed
+grp <- "Ecuador"
+
+## this is probably an error? not including all clusters?
+grp <- "Cordilleras-Norte-de-Peru"
+
+## this is the less threatened, shows a transition from VU for short time frames to EN in longer timeframes, histogram almost bimodal.
+grp <- "Cordilleras-Orientales-de-Peru-y-Bolivia"
+
+## with this one, boxplots are more informative, small number of cells, could actually plot all pathways/models and timefrmaes, to show consistent results?
+grp <- "Rwenzori" 
+
+(load(sprintf("%s/%s/gbm-model-current.rda",input.dir,grp)))
+
 
 all_results <- tibble()
 for (timeframe in c("2011-2040", "2041-2070", "2071-2100")) {
     for (pathway in c("ssp126")) {
         for (modelname in "mri-esm2-0") {
             future_prediction <- readRDS(
-                sprintf("%s/Mexico/gbm-prediction-%s-%s-%s.rds",
+                sprintf("%s/%s/gbm-prediction-%s-%s-%s.rds",
                     input.dir,
+                    grp,
                     timeframe,
                     modelname,
                     pathway))
@@ -51,15 +74,133 @@ for (timeframe in c("2011-2040", "2041-2070", "2071-2100")) {
     }
 }
 
-CT <- threshold(e1)[c("prevalence","spec_sens","equal_sens_spec")]
 
-RS_results <- all_results %>% 
-    mutate(
-        OD=IV-FV,
-        MD_p=IV-CT[[1]],
-        MD_ss=IV-CT[[2]],
-        MD_ess=IV-CT[[3]],
-        RS_p=OD/MD_p,
-        RS_ss=OD/MD_ss,
-        RS_ess=OD/MD_ess,
+CT <- calcCT(testing$IV, testing$glacier)
+
+RS_results <- tibble()
+for (threshold in names(CT)) {
+  CV <- unname(CT[threshold])
+  RS_results <- 
+    RS_results %>% bind_rows(
+      all_results %>% 
+        mutate(
+          threshold=threshold,
+          CV=CV,
+          OD=IV-FV,
+          MD=IV-CV,
+          RS=OD/MD,
+          RS_cor = case_when(
+            FV<CV ~ 1,
+            FV>IV ~ 0,
+            TRUE ~ RS
+          ),
+          IUCN_cat = case_when(
+            RS_cor < 0.3 ~ "LC",
+            RS_cor > 0.999 ~ "CO",
+            RS_cor < 0.5 ~ "VU",
+            RS_cor < 0.8 ~ "EN",
+            TRUE ~ "CR"
+          )
         )
+    )
+}
+
+library(ggplot2)
+
+RS_results %>% 
+  filter(is.finite(RS)) %>% 
+  group_by(timeframe, modelname, pathway, threshold) %>% 
+  summarise(mean_RS=mean(RS,na.rm=T),
+            mean_RS_cor=mean(RS_cor,na.rm=T))
+
+ggplot(RS_results) +
+  geom_boxplot(aes(y=RS_cor,x=timeframe,colour=threshold)) +
+  facet_grid(~pathway) +
+  theme_minimal() 
+
+ggplot(RS_results) +
+  geom_violin(aes(y=RS_cor,x=timeframe,colour=threshold))
+
+ggplot(RS_results %>% filter(threshold=="acc")) +
+  geom_histogram(aes(x=RS_cor,fill=IUCN_cat)) +
+  xlab("Relative severity") +
+  ylab("Count") +
+  facet_grid(~timeframe) +
+  scale_fill_manual(values=clrs) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+tt <- RS_results %>% filter(timeframe=="2041-2070",threshold=="acc") %>% 
+  pull(IUCN_cat) %>% table
+tt/sum(tt)
+
+RS_results %>% filter(timeframe=="2041-2070",threshold=="acc") %>% arrange(desc(RS_cor)) %>% select(RS,RS_cor)
+
+RScats <- tibble(
+  RS_min=c(0.8,0.5,0.3),
+  RS_max=c(1.0,1.0,1.0),
+  extent_min=c(0.8,0.5,0.3),
+  extent_max=c(1.0,1.0,1.0),
+  category=c("CR","EN","VU")
+)
+
+ggplot(RS_results %>% filter(timeframe=="2041-2070",threshold=="acc")) +
+  geom_rect(data=RScats, 
+            aes(fill = category, 
+                xmin = 1-RS_min, xmax = 1-RS_max,
+                ymin = 1-extent_min, ymax = 1-extent_max),
+            alpha=.2) +
+              stat_ecdf(aes(x=1-RS_cor)) 
+
+
+  
+
+RSvals <- RS_results %>% filter(timeframe=="2041-2070",threshold=="acc") %>% pull(RS_cor)
+
+RSvals <- RS_results %>% filter(timeframe=="2011-2040",threshold=="acc") %>% pull(RS_cor)
+
+RSecdf <- tibble()
+for (tfm in c("2011-2040", "2041-2070", "2071-2100")) {
+  for (thr in c("acc")) {
+    RSvals <- RS_results %>% filter(timeframe==tfm,threshold==thr) %>% pull(RS_cor)
+    f <- ecdf((1-RSvals)*100)
+    x <- seq(0,100,length=100)
+    y <- f(x)
+    RSecdf <- RSecdf %>% bind_rows(tibble(RS=100-x,Extent=y*100,timeframe=tfm,threshold=thr))
+    
+  }
+}
+
+
+
+RScats <- tibble(
+  RS_min=c(80,50,30,80,50,80),
+  RS_max=c(100,80,50,100,80,100),
+  extent_min=c(80,80,80,50,50,30),
+  extent_max=c(100,100,100,80,80,50),
+  category=c("CR","EN","VU","EN","VU","VU"))
+
+
+ggplot(RSecdf) +
+  geom_rect(data=RScats, 
+            aes(fill = category, 
+                ymin = RS_min, ymax = RS_max,
+                xmin = extent_min, xmax = extent_max),
+            alpha=1) +
+  geom_line(aes(x=Extent,y=RS,lty=timeframe)) +
+  scale_fill_manual(values=clrs) +
+  theme_minimal()
+
+## we use the tropical glacier ecosystems as a model because:
+## risk of ecosystem collapse is very high and well documented
+## actual probabilities of collapse can be calculated from mechanistic models,
+## the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+
+## we use projected degradation of climatic suitability because:
+## it is conceptually linked to models used to calculate probability of collapse
+## it uses the same underlying variables models and scenarios
+## we can explore different time frames (temporal scale of degradation)
+## we can explore uncertainty due to different models, scenarios and collapse thresholds
+
+## The values of relative severity vary across the sample of sites. Degradation is considered a threat to the ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.
