@@ -115,10 +115,11 @@ rda.results <- sprintf('%s/%s/gbm-model-current.rda',output.dir,str_replace_all(
 
 predictions = predict(model, newdata = test.features, type='prob')
 
-
 e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
 
-save(file=rda.results,model,training,testing,predictions,slc_unit, e1 )
+testing$IV <- predictions[,"G"]
+
+save(file=rda.results,model,training,testing,slc_unit, e1 )
 
 ## That's it  -----
 

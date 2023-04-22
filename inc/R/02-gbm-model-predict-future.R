@@ -78,17 +78,20 @@ for (timeframe in c("2011-2040","2041-2070","2071-2100")) {
             }
          }
          if (nrow(newdata)>0) {
-            newdata %<>% left_join(testing %>% transmute(id=as.character(id),cellnr,glacier),by=c("id","cellnr")) %>% filter(glacier == "G")
-            predictions  <- predict(model, newdata,type="prob")[,"G"]
+            newdata <- newdata %>% 
+               left_join(testing %>% 
+               transmute(id=as.character(id),cellnr,glacier),by=c("id","cellnr")) %>% 
+               filter(glacier == "G")
+            newdata$FV <- predict(model, newdata,type="prob")[,"G"]
 
-            rda.results.future <- sprintf('%s/%s/gbm-prediction-%s-%s-%s.rda',
+            rds.results.future <- sprintf('%s/%s/gbm-prediction-%s-%s-%s.rds',
                output.dir,
                str_replace_all(slc_unit," ","-"),
                timeframe,
                modelname,
                pathway)
 
-            save(file=rda.results.future,predictions )
+            saveRDS(file=rds.results.future, newdata)
             cat("done\n ")
          } else {
             cat("data not found, skipping\n ")
