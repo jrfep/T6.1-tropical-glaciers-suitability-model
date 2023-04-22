@@ -1,20 +1,16 @@
-#!/usr/bin/R --vanilla
-####
-## Fit a Gradient Boosting Machine model to the Tropical Glacier Ecosystem distribution
-####
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 
-## Outline
-## - Set up
-## - Input: Load data prepared for each group using a parallel cluster
-## - Run GBM for each group using data from other groups
-## - Output: save file to output Rdata file
-
-## Set up / Libraries -------
-
+```{r}
 library(dplyr)
 library(ROCR)
+```
 
 ## Programing environment variables
+```{r}
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
 source(
     sprintf(
@@ -191,16 +187,17 @@ ggplot(RSecdf) +
   geom_line(aes(x=Extent,y=RS,lty=timeframe)) +
   scale_fill_manual(values=clrs) +
   theme_minimal()
+```
 
-## we use the tropical glacier ecosystems as a model because:
-## risk of ecosystem collapse is very high and well documented
-## actual probabilities of collapse can be calculated from mechanistic models,
-## the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+ we use the tropical glacier ecosystems as a model because:
+ risk of ecosystem collapse is very high and well documented
+ actual probabilities of collapse can be calculated from mechanistic models,
+ the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
 
-## we use projected degradation of climatic suitability because:
-## it is conceptually linked to models used to calculate probability of collapse
-## it uses the same underlying variables models and scenarios
-## we can explore different time frames (temporal scale of degradation)
-## we can explore uncertainty due to different models, scenarios and collapse thresholds
+ we use projected degradation of climatic suitability because:
+ it is conceptually linked to models used to calculate probability of collapse
+ it uses the same underlying variables models and scenarios
+ we can explore different time frames (temporal scale of degradation)
+ we can explore uncertainty due to different models, scenarios and collapse thresholds
 
-## The values of relative severity vary across the sample of sites. Degradation is considered a threat to the ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.
+ The values of relative severity vary across the sample of sites. Degradation is considered a threat to the ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.

@@ -2,24 +2,18 @@ project:
   type: book
 
 book:
-  title: "Tropical Glacier Ecosystem of the Cordillera de Mérida"
-  subtitle: "IUCN Red List of Ecosystem assessment"
   author: "José R. Ferrer-Paris"
+  title: "Environmental suitability model for T6.1 tropical glaciers"
+  subtitle: "Analysis of future environmental degradation"
   date: "2022-10-03"
   chapters:
     - index.qmd
-    - part: "IUCN RLE assessment"
+    - part: "Relative Severity"
       chapters:
-        - assessment/intro.qmd
-        - assessment/distribution.qmd
-        - assessment/biota.qmd
-        - assessment/abiotic.qmd
-        - assessment/processes.qmd
-        - assessment/collapse.qmd
-        - assessment/risk-assessment.qmd
+        - viz-RS-per-unit.qmd
     - references.qmd
   appendices:
-    - sources/summary.qmd
+    - general-workflow.qmd
   page-footer:
     left: "Created by: JR Ferrer-Paris"
     right:

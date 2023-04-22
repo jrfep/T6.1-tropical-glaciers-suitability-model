@@ -1,8 +1,6 @@
 ---
-author: "José R. Ferrer-Paris"
-title: "Environmental suitability model for T6.1 tropical glaciers"
-subtitle: "Analysis of future environmental degradation"
-editor_options:
+output: html_document
+editor_options: 
   chunk_output_type: console
 ---
 
@@ -12,7 +10,8 @@ editor_options:
 
 ### Consolidate input data
 
-```sh
+```{sh}
+#| eval: false
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
 ## load modules for gdal functions
@@ -24,7 +23,8 @@ Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
 
 ### Run models for each unit
 
-```sh
+```{sh}
+#| eval: false
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
 ## fool qsub to send only one job
@@ -33,7 +33,8 @@ qsub -J 3-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
 ```
 
 
-```sh
+```{sh}
+#| eval: false
 tree $GISOUT/$PROJECTNAME
 ```
 
