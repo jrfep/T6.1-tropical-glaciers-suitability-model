@@ -1,0 +1,45 @@
+project:
+  type: book
+
+book:
+  title: "Tropical Glacier Ecosystem of the Cordillera de Mérida"
+  subtitle: "IUCN Red List of Ecosystem assessment"
+  author: "José R. Ferrer-Paris"
+  date: "2022-10-03"
+  chapters:
+    - index.qmd
+    - part: "IUCN RLE assessment"
+      chapters:
+        - assessment/intro.qmd
+        - assessment/distribution.qmd
+        - assessment/biota.qmd
+        - assessment/abiotic.qmd
+        - assessment/processes.qmd
+        - assessment/collapse.qmd
+        - assessment/risk-assessment.qmd
+    - references.qmd
+  appendices:
+    - sources/summary.qmd
+  page-footer:
+    left: "Created by: JR Ferrer-Paris"
+    right:
+      - icon: github
+        href: https://github.com/jrfep
+      - icon: twitter
+        href: https://twitter.com/neomapas
+bibliography: 
+  - bibTeX/references.bib
+  - bibTeX/glacier-assessments.bib
+csl: bibTeX/oryx.csl
+
+execute:
+  echo: false
+
+format:
+  html:
+    theme: cosmo
+    number-depth: 2
+
+prefer-html: true
+  
+  
