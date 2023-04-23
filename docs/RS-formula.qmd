@@ -1,0 +1,122 @@
+---
+title: "The Relative Severity formula"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(ggforce)
+library(DT)
+library(purrr)
+library(ggpubr)
+here::i_am("docs/viz-RS-per-unit.qmd")
+# sessionInfo()
+
+```
+
+```{r}
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE)
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+
+```
+
+The original Relative Severity formula is given by:
+
+$$
+\mathrm{RS} =
+    \frac{\mathrm{OD}}{\mathrm{MD}} =
+    \frac{V_{0} - V_{F}}{V_{0} - V_{C}}
+$$
+Where $V_{0}$ is the initial value of the indicator, $V_{F}$ is the final value, and $V_{C}$ is the collapse threshold. There are several inconveniences with this formulation:
+
+- if $V_{F}>V_{0}$ the value of $\mathrm{OD}$ is negative and $\mathrm{RS}$ is negative,
+- if $V_{C}>V_{0}$ the value of $\mathrm{MD}$ is negative and $\mathrm{RS}$ is negative,
+- if $|\mathrm{OD}| > |\mathrm{MD}|$ the value of $\mathrm{RS}$ increases disproportionatly.
+
+We propose to use a conditional formula to avoid artifacts:
+
+$$
+\mathrm{RS}_{cor}=
+    \begin{cases}
+      0, & \text{if}\ V_{0} ≤ V_{F} \\
+      \mathrm{OD}/\mathrm{MD}, & \text{otherwise} \\
+      1, & \text{if}\ V_{0} ≤ V_{C} \\
+    \end{cases}
+$$
+
+We show the differences between both formulas with some examples.
+
+## Rwenzori
+
+We focus initially in the case of the tropical glacier ecosystems of Rwenzori mountains in Africa. 
+
+When we consider future projections from one model and scenario (mri-esm2-0, ssp126) for the timeframe 2041-2070, and use a collapse threshold of 0.056 (equal sensitivity and specificity threshold), we find that for one cells the initial value is equal to the collapse threshold, thus maximum decline is zero and the RS formula is undefined. For another cell the final value is much lower than the collapse threshold and the observed decline is more than twice as large as the maximum decline. With the conditional formula, these extreme cases would be considered $RS=1$, i.e. collapsed.
+
+
+```{r}
+RS_results %>% 
+  filter(
+    unit %in% "Rwenzori",
+    pathway %in% "ssp126",
+    modelname %in% "mri-esm2-0",
+    timeframe %in% "2041-2070",
+    threshold %in% "ess",
+    )  %>% 
+  select(id,cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
+  DT::datatable()
+
+```
+
+In this case, the positive predictive rate threshold if very high (0.698) and most of the initial values are above the threshold and the formula of RS give uninformative results. Using the conditional formula, all these cased would be calculated as $RS=1$ or collapsed.
+
+
+```{r}
+RS_results %>% 
+  filter(
+    unit %in% "Rwenzori",
+    pathway %in% "ssp126",
+    modelname %in% "mri-esm2-0",
+    timeframe %in% "2041-2070",
+    threshold %in% "ppv",
+    )  %>% 
+  select(id,cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
+  DT::datatable()
+
+```
+
+The different combinations of standard RS results translate to unpredictable and uninformative mean values of RS. 
+
+```{r}
+RS_results %>% 
+  filter(
+    unit %in% "Rwenzori",
+    pathway %in% "ssp126",
+    modelname %in% "mri-esm2-0"
+    ) %>% 
+  group_by(timeframe, threshold) %>% 
+  summarise(
+    n=n(),
+    mean_RS=mean(RS,na.rm=T),
+    mean_RS_cor=mean(RS_cor,na.rm=T)) %>% 
+  DT::datatable()
+
+```

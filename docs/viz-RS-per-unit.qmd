@@ -31,6 +31,8 @@ library(ggplot2)
 library(readr)
 library(ggforce)
 library(DT)
+library(purrr)
+library(ggpubr)
 here::i_am("docs/viz-RS-per-unit.qmd")
 # sessionInfo()
 
@@ -40,7 +42,8 @@ here::i_am("docs/viz-RS-per-unit.qmd")
 #| eval: true
 #| message: false
 target.dir <- "sandbox"
-RS_results <- read_csv(here::here(target.dir,"relative-severity-degradation-suitability-all-tropical-glaciers.csv"))
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE)
 source(here::here("inc","R","RS-functions.R"))
 ```
 
@@ -54,7 +57,7 @@ panel.grid.major = element_line(colour = "rosybrown3"))
 
 ## Rwenzori
 
-with this one, boxplots are more informative, small number of cells, could actually plot all pathways/models and timefrmaes, to show consistent results?
+For small assessment units the number of calculated RS values is small and differences can be visualised conveniently with a boxplot.
 
 ```{r}
 RS_results %>% 
@@ -69,38 +72,118 @@ RS_results %>%
 ```
 
 ```{r}
+#| label: fig-ruwenzori
+#| fig-cap: Boxplot of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ruwenzori. 
 ggplot(RS_results %>% 
   filter(unit %in% "Rwenzori") ) +
-  geom_boxplot(aes(y = RS_cor, x = timeframe, colour = threshold)) +
-  facet_grid(~pathway) 
+  geom_boxplot(aes(y = RS_cor, colour = timeframe)) +
+  facet_grid(~threshold) 
 ```
 
 ## Ecuador
 
-This looks nice in the histogram, right skewed
+In the case of Ecuador we have more than 1500 cells with values of relative severity. We see from the mean RS values that there is an expected increase from 0.487 (VU) to 0.746 (EN).
 
 ```{r}
-ggplot(RS_results %>% filter(threshold=="acc", unit=="Ecuador")) +
-  geom_histogram(aes(x=RS_cor,fill=IUCN_cat)) +
-  xlab("Relative severity") +
-  ylab("Count") +
-  facet_col(~timeframe) +
-  scale_fill_manual(values = IUCN_cat_colours) +
-  theme(legend.position = "none") +
-  labs(title="Ecuador", subtitle="Accuracy threshold")
+RS_results %>% 
+  filter(
+    threshold=="acc",
+    unit %in% "Ecuador",
+    modelname == "mri-esm2-0"
+         ) %>% 
+  group_by(timeframe, pathway) %>% 
+  summarise(
+    n=n(),
+    mean_RS=mean(RS,na.rm=T),
+    mean_RS_cor=mean(RS_cor,na.rm=T)) %>% 
+  DT::datatable()
+
 ```
+
+Histograms of the relative severity values show a wide spread in the nearest future timeframe, with most cell in the 50 - 80 % interval, but many cells in the lowest intervals. The shape of the histogram changes in the following prediction time frames, and there is a large number of cells in the 80 - 100 % interval.
+
 
 ```{r}
-ggplot(RS_results %>% filter(threshold=="acc", unit=="Ecuador")) +
-  geom_histogram(aes(x=RS_cor,fill=IUCN_cat)) +
-  xlab("Relative severity") +
-  ylab("Count") +
-  facet_col(~timeframe) +
-  scale_fill_manual(values = IUCN_cat_colours) +
-  theme(legend.position = "none") +
-  labs(title="Ecuador", subtitle="Accuracy threshold")
+#| label: fig-hist-ecuador
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+plot_a <- 
+  ggplot(RS_results %>% filter(threshold=="acc", unit=="Ecuador")) +
+    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
+    facet_col(~timeframe) +
+    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+#    scale_fill_manual(values = IUCN_cat_colours) +
+    theme(legend.position = "none") +
+    xlab("Relative severity") +
+    ylab("Nr. of cells") 
+plot_a 
 ```
 
+Although there is now a large number of cell with very high values of relative severity, this still does not represent a majority of the extent of the ecosystem. We can use an alternative visualisation to make this more explicit. We first flip the coordinates of the histogram and then count the cummulative number of cells starting with the highest relative severity values.
+
+```{r}
+#| label: fig-hist-ecdf-ecuador
+#| fig-cap: Comparing the histogram of the $RS_{cor}$ values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+tfm <- RS_results %>% distinct(timeframe) %>% pull
+
+RS_ecdf_f <- RS_results %>% filter(threshold=="acc", unit=="Ecuador") %>% 
+  split(.$timeframe) %>%   # splits the dataset by timeframe 
+  map(~RS_ecdf(.x$RS_cor))
+
+RS_ext_pts <- 
+  bind_rows(
+    {tibble(rss = c(80,50,30),timeframe="2011-2040") %>%
+      mutate(exts=RS_ecdf_f[[1]](100-rss)*100)},
+    {tibble(rss = c(80,50,30),timeframe="2041-2070") %>%
+      mutate(exts=RS_ecdf_f[[2]](100-rss)*100)},
+    {tibble(rss = c(80,50,30),timeframe="2071-2100") %>%
+      mutate(exts=RS_ecdf_f[[3]](100-rss)*100)},
+    )
+
+
+RS_ecdf_ext <- RS_results %>% filter(threshold=="acc", unit=="Ecuador") %>% 
+  split(.$timeframe) %>%   # splits the dataset by timeframe 
+  map(~RSvExt(.x$RS_cor)) %>%
+  bind_rows  %>%
+  mutate(timeframe=rep(tfm,c(100,100,100)))
+
+plot_b <- 
+  ggplot(RS_ecdf_ext) +
+    geom_line(aes(x=Extent,y=RS)) +
+    facet_col(~timeframe) +
+    scale_fill_manual(values = IUCN_cat_colours) +
+    xlab("Cummulative extent") +
+    ylab("Relative severity") 
+
+
+ggarrange(plot_a + coord_flip(), 
+          plot_b +  
+            geom_point(data=RS_ext_pts, aes(x=exts,y=rss), col = "maroon") +
+            geom_text(data=RS_ext_pts, 
+                      aes(x=exts, y=rss, 
+                          label=sprintf("RS≥%d %%\nExt=%0.1f %%",rss,exts)),
+                      col = "maroon",
+                      cex=2,adj=1)) 
+
+```
+
+This arrangement allows to read the cummulative extent by different thresholds of relative severity. For example, there ecosystem extent with $RS ≥ 80%$ increases from less than 2% in the first timeframe to 37.2 and 29.1 %, and the extent with $RS ≥ 30%$ increases from just below 80% to more than 96%. 
+
+We can actually visualise the relationship between this curve and the IUCN category threshold in a convenient way:
+
+
+```{r}
+#| label: fig-ecdf-ecuador
+#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador with the thresholds for IUCN categories of threat. 
+plot_b +
+  geom_rect(data=RS_extent_combs, 
+            aes(fill = category, 
+                ymin = RS_min, ymax = RS_max,
+                xmin = extent_min, xmax = extent_max),
+            alpha=0.44)
+
+```
+
+We see that the top curve overlaps with the threshold for the category VU, and the two lower curves overlap both VU and EN.
 
 ## Cordilleras-Norte-de-Peru
 
@@ -145,16 +228,9 @@ for (tfm in c("2011-2040", "2041-2070", "2071-2100")) {
 
 
 
-RScats <- tibble(
-  RS_min=c(80,50,30,80,50,80),
-  RS_max=c(100,80,50,100,80,100),
-  extent_min=c(80,80,80,50,50,30),
-  extent_max=c(100,100,100,80,80,50),
-  category=c("CR","EN","VU","EN","VU","VU"))
-
 
 ggplot(RSecdf) +
-  geom_rect(data=RScats, 
+  geom_rect(data=RS_extent_combs, 
             aes(fill = category, 
                 ymin = RS_min, ymax = RS_max,
                 xmin = extent_min, xmax = extent_max),

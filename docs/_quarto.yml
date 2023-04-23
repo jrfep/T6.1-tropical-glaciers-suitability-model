@@ -8,8 +8,12 @@ book:
   date: "2023-04-03"
   chapters:
     - index.qmd
+    - part: "Suitability model"
+      chapters:
+        - GBM-model.qmd
     - part: "Relative Severity"
       chapters:
+        - RS-formula.qmd
         - viz-RS-per-unit.qmd
     - references.qmd
   appendices:

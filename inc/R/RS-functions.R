@@ -5,6 +5,13 @@
 IUCN_cat_colours <- c("LC"="darkgreen","VU"="yellow","EN"="orange","CR"="red")
 
 
+RS_extent_combs <- tibble(
+  RS_min=c(80,50,30,80,50,80),
+  RS_max=c(100,80,50,100,80,100),
+  extent_min=c(80,80,80,50,50,30),
+  extent_max=c(100,100,100,80,80,50),
+  category=c("CR","EN","VU","EN","VU","VU"))
+
 meanRS <- function(IV,FV,CT) {
    pres <- IV>CT
    MD=(CT-IV)[pres]
@@ -37,8 +44,12 @@ calcCT <- function(pred_values,obs_values) {
   return(CT)
 }
 
-RSvExt <- function(RSvals) {
+RS_ecdf <- function(RSvals) {
   f <- ecdf((1-RSvals)*100)
+  return(f)
+}
+RSvExt <- function(RSvals) {
+  f <- RS_ecdf(RSvals)
   x <- seq(0,100,length=100)
   y <- f(x)
   z <-tibble(RS=100-x,Extent=y*100)

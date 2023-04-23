@@ -9,6 +9,10 @@ This document includes an overview and preliminary results of the asssessment of
 
 We use the IUCN Red List of Ecosystem assessment protocol and follow the IUCN Global Ecosystem Typology for the classification of the units.
 
+We start with a brief overview of the Tropical Glacier Ecosystems (chapter 1).
 
+Then we describe a GBM model to estimate bioclimatic or environmental suitability of the TGE using the present bioclimatic values and project future suitability values under different scenarios of future climate change (chapter 2).
 
-To learn more about Quarto books visit <https://quarto.org/docs/books>.
+Then we explore the relative severity of degradation (decline in suitability) by projecting model predictions to future climatic scenarios. We use this case study to improve the RS formula and explore different alternatives for summary and visualisation. (chapter 3)
+
+Finally we explore the correlation between RS values, IUCN category thresholds and probabilities of collapse estimated from Mass balance models. (Chapter 4)

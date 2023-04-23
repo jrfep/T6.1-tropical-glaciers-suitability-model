@@ -1,0 +1,60 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+
+```
+
+
+For Criterion C we analysed the potential effect of climate change on the suitability of bioclimatic conditions for the presence of Tropical Glacier Ecosystems. We used a Gradient Boosting Machine (GBM) model to analyse the current climatic conditions in areas occupied by Tropical Glacier Ecosystems in all the tropics. Details of the model fitting and validation process are in preparation (Ferrer-Paris et al. MS), brief summary follows.
+
+Occurrence records were selected using stratified random sampling from all the glacier outlines in tropical areas and 25 km distance buffers around glacier outlines. We applied a first partition of the data by withhold the occurrence records of the target assessment unit for final model evaluation of prediction performance of the model (target partition) and the rest of the occurrence records were used for model fitting (modeling partition). Random subsets of the modeling partition were divided in calibration (80%) and test partitions (20%) for tuning of model parameters (number of trees, interaction depth, shrinkage and minimum number of observations per node) using cross validation.
+
+We used 19 bioclimatic variables from the CHELSA dataset representing climatological mean values for present conditions (1981-2010) as predictor variables. Eight variables were excluded from the model due to high correlation to other variables. Variables were centered and scaled to zero mean and unit variance.
+
+We fitted the GBM model for classification (two classes: glacier or not-glacier) using a bernoulli error distribution, and evaluated the predictive performance of the final model on the target partition:
+
+```{r}
+#| echo: false
+#| eval: false
+
+##rda.results <- '../Rdata/gbm-model-Cordillera-de-Merida.rda'
+##load(rda.results)
+#model
+# plot(model)
+
+test.features = testing %>% dplyr::select(bio10_01:bio10_19)
+test.target = testing %>% pull(glacier)
+predictions = predict(model, newdata = test.features, type='prob')
+
+e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
+
+#e1
+# par(las=2)
+#summary(model)
+
+```
+
+We used the final fitted model to predict the suitability in the present timeframe (1981-2010) and future timeframes (2011-2040 and 2041-2071). We considered uncertainty due to climate change projections (five general circulation models and three representative pathways), and due to the choice of cut-off values to classify predicted suitability into binary score (glacier/non-glacier):
+
+- modeled prevalence is closest to observed prevalence
+- maximum sum of the sensitivity (true positive rate) and specificity (true negative rate),
+- equal sensitivity and specificity
+
+We summarised the outcomes for each combination of models, pathways and cut-off values and calculated relative severity of each outcome in two ways.
+
+First we counted the number of raster cells classified as glacier using each cut-off value, in this case the initial value was three cells and the collapse threshold is zero cells [@fig-C2a; upper panels]. Both extreme outcomes are equally likely, either all cells remain (**Least Concern**) or all cells disappear (**Critically Endangered**).
+
+Next we estimated relative severity by comparing the predicted suitability to the cut-off value [@fig-C2a; lower panels]. Here we assume that the predicted suitability represent the initial and final value and the cut-off value represents the collapse threshold (transition from Glacier to Non-glacier class). We then calculated the mean relative severity of all cells for each combination:
+
+The best estimate of mean relative severity across all predictions is `r qs[3]` % with a 90% confidence interval of `r qs[5]` to `r qs[1]`%.
+
+The subcriterion C2a is assessed as **Critically Endangered** with a plausible bound of **Endangered** to **Collapsed**: CR (EN-CO)
