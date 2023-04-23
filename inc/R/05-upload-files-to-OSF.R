@@ -1,29 +1,38 @@
 source(sprintf("%s/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.R", Sys.getenv("HOME")))
-input.dir <- sprintf("%s/%s/INPUT",gis.out,projectname)
-output.dir <- sprintf("%s/%s/OUTPUT",gis.out,projectname)
+output.dir <- sprintf("%s/%s/",gis.out,projectname)
 
 library(dplyr)
 library(osfr)
+
+here::i_am("inc/R/05-upload-files-to-OSF.R")
+#target.dir <- tempdir()
+target.dir <- "sandbox"
+if (!file.exists(here::here(target.dir)))
+  dir.create(here::here(target.dir))
+
 
 osfcode <- Sys.getenv("OSF_PROJECT")
 osf_project <- osf_retrieve_node(sprintf("https://osf.io/%s", osfcode))
 my_project_components <- osf_ls_nodes(osf_project)
 
-source(sprintf("%s/inc/osf-functions.R", script.dir))
+## navigate to each subcomponent...
+idx <- my_project_components %>% filter(name %in% "Data for the global RLE assessment of Tropical Glacier Ecosystems") %>%
+  pull(id) 
+global_data_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
-global_data_comp <- osf_find_or_create_component(
-  my_project_components,
-  comp_name = "Data for the global RLE assessment of Tropical Glacier Ecosystems",
-  comp_desc = "Data for the global Red List of Ecosystems assessment of all Tropical Glacier Ecosystems. This component contains data files to be used by other components of the project.",
-  comp_cat = "data"
-)
-
-data_file  <- osf_upload(global_data_comp, 
-                         path = sprintf("%s/Rdata/bioclim-model-data-groups.rda",output.dir)
-)
+idx <- my_project_components %>% filter(name %in% "Environmental suitability model for Tropical Glacier Ecosystems") %>%
+  pull(id) 
+env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
 osf_all_files <- osf_ls_files(global_data_comp)
 
-#target.dir <- tempdir()
-#osf_download(osf_all_files,path=target.dir)
-#dir(target.dir)
+file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", output.dir)
+
+data_file  <- osf_upload(env_suitability_comp, 
+                         path = file_to_upload,
+                         conflicts = "skip"
+)
+
+project_files <- osf_ls_files(env_suitability_comp)
+osf_download(project_files, path=here::here(target.dir))
+

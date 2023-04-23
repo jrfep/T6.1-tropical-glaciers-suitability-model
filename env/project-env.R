@@ -61,4 +61,5 @@ if (file.exists("~/.database.ini")) {
 #if (file.exists("~/.secrets/osf")) {
 #  osf.token <- readLines("~/.secrets/osf")
 #}
-Sys.setenv("OSF_PROJECT"="hp8bs")
+Sys.setenv("OSF_PROJECT"="792qb") # overall project
+#Sys.setenv("OSF_PROJECT"="hp8bs") # component
