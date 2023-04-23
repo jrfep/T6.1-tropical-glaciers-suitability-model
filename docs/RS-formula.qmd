@@ -17,6 +17,7 @@ library(ggforce)
 library(DT)
 library(purrr)
 library(ggpubr)
+library(plotly)
 here::i_am("docs/viz-RS-per-unit.qmd")
 # sessionInfo()
 
@@ -86,7 +87,51 @@ RS_results %>%
 
 ```
 
-In this case, the positive predictive rate threshold if very high (0.698) and most of the initial values are above the threshold and the formula of RS give uninformative results. Using the conditional formula, all these cased would be calculated as $RS=1$ or collapsed.
+In this interactive plot, we can visualise these problems 
+```{r}
+
+d <- RS_results %>% 
+  filter(
+    unit %in% "Rwenzori",
+    pathway %in% "ssp126",
+    modelname %in% "mri-esm2-0",
+    threshold %in% "ess"
+    ) %>%
+  mutate(cat = case_when(
+    IV == CV ~"Collapsed<br>(MD == 0)",
+    FV < CV ~"Collapsed<br>(FV>CV)",
+    OD > MD ~ "Collapsed<br>(OD > MD)",
+    OD < 0 ~ "Improved\n(OD < 0)",
+    IV < CV ~"Collapsed<br>(IV>CV)",
+    TRUE ~ "Degradation\n(0 < RS < 1)"
+  ))
+
+
+colline.fmt = list(dash="dash", width = 0.5, color='red')
+ncline.fmt = list(dash="dot", width = 0.5, color='brown')
+
+fig <- plot_ly(
+  d, x = ~IV, y = ~FV,
+  # Hover text:
+  text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>%s", 
+                  OD, MD,RS_cor,cat)
+)
+fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
+            symbol = ~cat, symbols = c('o','x','circle')) 
+fig <- add_lines(fig, x = ~IV, y = ~IV, name="no change", line=ncline.fmt)
+fig <- add_lines(fig, y = unique(d$CV), name="collapse threshold", line=colline.fmt)
+fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.fmt)
+
+
+layout(fig,
+       title = "Example Relative Severity calculation  (Rwenzori)",
+       xaxis = list(title="Initial value"),
+       yaxis = list(title="Final value")
+       )
+```
+
+
+In this unit, the positive predictive rate threshold if very high (0.698) and we have the problem that most of the initial values are above the threshold and the formula of RS give uninformative results. Using the conditional formula, all these cased would be calculated as $RS=1$ or collapsed.
 
 
 ```{r}
@@ -103,7 +148,7 @@ RS_results %>%
 
 ```
 
-The different combinations of standard RS results translate to unpredictable and uninformative mean values of RS. 
+Aggregating the original RS values can be problematic. In this table we can compare the mean values for different thresholds and time frames. Using the conditional RS formula we see a clear increasing trend, but the values of the original formula translate to unpredictable and uninformative mean values of RS.
 
 ```{r}
 RS_results %>% 
@@ -120,3 +165,51 @@ RS_results %>%
   DT::datatable()
 
 ```
+
+## Ecuador
+
+Let's consider now the case of the tropical glacier ecosystem of Ecuador. Here we have a larger sample due to the larger extent and number of glaciers. We focus here in the nearest time frame and see that some cells have larger final values than the initial values. With the conditional formula these units will be considered $RS=0$ and this means that the magnitude of the improvement is lost. The consequence of this interpretation for the risk assessment needs to be discussed in more detail, but it is unlikely to be of much consequence in this case study where the trend is overwhelmingly negative. For studied focused on ecosystem recovery, a negative value of $OD$ might be informative, but its relationship with the $MD$ could be explored in alternative ways.
+
+```{r}
+
+d <- RS_results %>% 
+  filter(
+    unit %in% "Ecuador",
+    timeframe %in% "2011-2040",
+    pathway %in% "ssp126",
+    modelname %in% "mri-esm2-0",
+    threshold %in% "ess"
+    ) %>%
+  mutate(cat = case_when(
+    IV == CV ~"Collapsed<br>(MD == 0)",
+    FV < CV ~"Collapsed<br>(FV>CV)",
+    OD > MD ~ "Collapsed<br>(OD > MD)",
+    OD < 0 ~ "Improved\n(OD < 0)",
+    IV < CV ~"Collapsed<br>(IV>CV)",
+    TRUE ~ "Degradation\n(0 < RS < 1)"
+  ))
+
+
+colline.fmt = list(dash="dash", width = 0.5, color='red')
+ncline.fmt = list(dash="dot", width = 0.5, color='brown')
+
+fig <- plot_ly(
+  d, x = ~IV, y = ~FV,
+  # Hover text:
+  text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>Rel. sev. (cond): %0.3f<br>%s", 
+                  OD, MD,RS,RS_cor,cat)
+)
+fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
+            symbol = ~cat, symbols = c('o','x','circle')) 
+fig <- add_lines(fig, x = ~IV, y = ~IV, name="no change", line=ncline.fmt)
+fig <- add_lines(fig, y = unique(d$CV), name="collapse threshold", line=colline.fmt)
+fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.fmt)
+
+
+layout(fig,
+       title = "Example Relative Severity calculation (Ecuador)",
+       xaxis = list(title="Initial value"),
+       yaxis = list(title="Final value")
+       )
+```
+
