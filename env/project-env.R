@@ -14,6 +14,9 @@ if (Sys.getenv("GISDATA") != "") {
    sysname <- out[["sysname"]]
    script.dir <- sprintf("%s/%s/%s",Sys.getenv("HOME"), projectdir, projectname)
 
+   if (sysname %in% "Darwin")
+      hostname <- "roraima"
+
    switch(hostname,
       terra={
          gis.data <- sprintf("/opt/gisdata/")

@@ -36,3 +36,11 @@ calcCT <- function(pred_values,obs_values) {
   )
   return(CT)
 }
+
+RSvExt <- function(RSvals) {
+  f <- ecdf((1-RSvals)*100)
+  x <- seq(0,100,length=100)
+  y <- f(x)
+  z <-tibble(RS=100-x,Extent=y*100)
+  return(z)
+}
