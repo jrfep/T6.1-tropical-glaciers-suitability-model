@@ -13,14 +13,8 @@
 
 require(dplyr)
 require(sf)
-#require(magrittr)
 require(tibble)
-require(raster)
-#require(stringr)
-#require(tidyr)
-#library(caret)
-#require(dismo)
-#require(readr)
+require(terra)
 
 ## Set up / Programing environment variables  -------
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
@@ -58,16 +52,16 @@ registerDoParallel(cl)
 input_raster_data <- 
     foreach (
         j = jjs,
-        .packages=c("raster", "sf", "dplyr", "magrittr", "stringr"),
+        .packages=c("terra", "sf", "dplyr", "magrittr", "stringr"),
         .combine=bind_rows
     ) %dopar% {
         mapfiles <- dir(sprintf("%s/Group-%02d/modvars", input.dir, j), "1981-2010", full.names=T)
-        maps<- stack(mapfiles)
+        maps<- terra::rast(mapfiles)
         names(maps) <- sprintf(
-            "bio10_%02d",
+            "bio_%02d",
             as.numeric(str_extract(str_extract(mapfiles, "bio[0-9]+"), "[0-9]+"))
             )
-        e0 <- raster(
+        e0 <- terra::rast(
             sprintf(
                 '%s/Group-%02d/GMTED/elevation_1KMmd_GMTEDmd.tif',
                 input.dir, 
@@ -84,7 +78,7 @@ input_raster_data <-
             filter(grp %in% j) %>% 
             dplyr::select(X1,X2)
         cellnr <- 1:ncell(maps)
-        glaz_qry <- raster::cellFromXY(maps, data.frame(glaz_points ))
+        glaz_qry <- terra::cellFromXY(maps, data.frame(glaz_points ))
 
         ss <- rowSums(is.na(vals))==0
         xys <- xyFromCell(maps, (1:ncell(maps))[ss])
