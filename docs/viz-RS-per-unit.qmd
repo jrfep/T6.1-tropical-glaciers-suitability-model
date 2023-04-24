@@ -157,12 +157,13 @@ plot_b <-
 
 ggarrange(plot_a + coord_flip(), 
           plot_b +  
+            geom_hline(yintercept = c(30,50,80), col = "maroon", lty=3) +
             geom_point(data=RS_ext_pts, aes(x=exts,y=rss), col = "maroon") +
-            geom_text(data=RS_ext_pts, 
+            geom_label(data=RS_ext_pts, 
                       aes(x=exts, y=rss, 
-                          label=sprintf("RS≥%d %%\nExt=%0.1f %%",rss,exts)),
+                          label=sprintf("%0.1f %%",exts)),
                       col = "maroon",
-                      cex=2,adj=1)) 
+                      cex=3)) 
 
 ```
 

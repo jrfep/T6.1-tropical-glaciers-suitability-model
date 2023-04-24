@@ -4,14 +4,20 @@ editor_options:
   chunk_output_type: console
 ---
 
-
 ```{r}
+#| warning: false
+#| message: false
+library(sf)
+require(leaflet)
+library(dplyr)
+library(ggplot2)
 
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-
+here::i_am("docs/TGE-units.qmd")
+target.dir <- "sandbox"
+trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
+load(here::here(target.dir,"bioclim-model-data-groups.rda"))
 ```
+
 
 
 ## Scope of the assessment
@@ -38,6 +44,15 @@ IUCN Global Ecosystem Typology
       - Subgroup: Tropical Glacier Ecosystems
       - Level 4: T6.1-SA-01-VE-01 Tropical Glacier Ecosystem of the Cordillera de Mérida
 
+```{r}
+trop_glaz_names <- trop_glaz %>% 
+  dplyr::select(group_name,id) %>% 
+  st_drop_geometry()  %>% 
+  arrange(group_name) 
+
+trop_glaz_names %>% 
+  print.AsIs()
+```
 
 ## Spatial distribution
 
@@ -52,25 +67,19 @@ The changes in occurrence and extent of the glacier and ice fields in the Cordil
 #| fig-cap: Satellite image and topographic maps of Cordillera de Mérida and glacier outlines from RGI 6.0.
 #| warning: false
 
-t_lbls <- sprintf("<strong>%s</strong> (%s)",venezuela_rgi6$Name,venezuela_rgi6$RGIId) %>% lapply(htmltools::HTML)
+t_lbls <- sprintf("<strong>%s</strong> (%s)",trop_glaz$group_name,trop_glaz$id) %>% lapply(htmltools::HTML)
 
-#leaflet providers:
-#OpenStreetMap.Mapnik, MapTilesAPI.OSMEnglish, Stadia.OSMBright, Thunderforest.MobileAtlas, CyclOSM
-# not available? Jawg.Terrain, Wikimedia, Stadia.Outdoors
 leaflet() %>%
-  addProviderTiles(providers$Esri.WorldImagery,group='Esri WorldImagery') %>%
-  addProviderTiles(providers$OpenStreetMap.HOT,group='OpenStreetMap') %>% # not available
+  addProviderTiles(providers$OpenStreetMap.HOT,group='OpenStreetMap') %>%
   addProviderTiles(providers$OpenTopoMap,group='OpenTopoMap') %>%
-  addPolygons(data = venezuela_rgi6 , fillColor = "red", color='darkred',
+  addProviderTiles(providers$Esri.WorldImagery,group='Esri WorldImagery') %>%
+  addPolygons(data = trop_glaz , fillColor = "plum", color='magenta',
               weight = 0.8, fillOpacity = 0.15, label=t_lbls,
               highlightOptions = highlightOptions(weight = 2, color = 'orange'),
-              group='RGI 6.0 polygons') %>%
-  addPolygons(data = venezuela_buffer,color='black',
-              weight = 0.8,
-              group='Spatial buffer') %>%
+              group="T.G.E. units")  %>%
   addLayersControl(
-    baseGroups = c('Esri WorldImagery','OpenStreetMap','OpenTopoMap'),
-    overlayGroups = c("RGI 6.0 polygons","Spatial buffer"),
+    baseGroups = c('OpenStreetMap','OpenTopoMap','Esri WorldImagery'),
+    overlayGroups = c("T.G.E. units"),
     options = layersControlOptions(collapsed = FALSE),
     position = "topright"
   )  %>% hideGroup("Spatial buffer")
@@ -105,101 +114,6 @@ We used global datasets of interpolated climatic variables and time series of re
 @fig-climatogram shows how climatogram based on historical data [@Monasterio_1980_Clima_Merida] compared to climatograms estimated from time series of remote sensing data at different locations [@Funk_2015_CHIRPS_descriptor; @Wan_2015_LST_data].
 
 
-```{r}
-#| label: fig-climatogram
-#| fig-cap: Climate diagram from historical station data (Loma Redonda, 4045m, 1970s) and estimated from remote sensing time series for Pico Espejo, Pico Bolivar and Pico Humboldt (time frame 2000-2020). Bars show mean monthly precipitation in mm and lines show mean (red) and min (orange) monthly temperatures.
-#| warning: false
-
-
-ylim.prim <- c(0, 180)
-ylim.sec <- c(-4, 10)
-b <- diff(ylim.prim)/diff(ylim.sec)
-a <- ylim.prim[1] - (b*ylim.sec[1])
-
-
-LomaRedonda <- ggplot(LomaRedondaCD) +
-  geom_bar(aes(x=Month, y=Precip),stat="identity", fill = "skyblue") +
-  geom_line(aes(x=Month,y = a + Temp*b,group=1), colour = "orangered",lwd=2) +
-  scale_y_continuous("Precipitation [mm]", sec.axis = sec_axis(~ (. - a)/b, name = "Temperature [°C]")) +
-    ggtitle("Loma Redonda station")
-
-
-#load("../Rdata/RS-at-climate-station.rda")
-
-temps <- LST_PE %>% filter(LST>100) %>%
-  mutate(value=set_units(LST,'degK'),
-         LST=set_units(value,'degC'),
-         month=month(date),
-         year=year(date)) %>%
-  pivot_wider(id_cols=c(date,month,year),names_from=var,values_from=LST) %>%
-  group_by(month) %>% summarise(min_temp=mean(LST_Night,na.rm=T), max_temp=mean(LST_Day,na.rm=T))
-
-precs <- CHIRPS_PE %>% filter(year %in% 2000:2020) %>% mutate(month=as.numeric(month)) %>% group_by(month) %>% summarise(n=n_distinct(year),precip=sum(precip)/n)
-
-ylim.prim <- c(0, 180)
-ylim.sec <- c(-4, 10)
-b <- diff(ylim.prim)/diff(ylim.sec)
-a <- ylim.prim[1] - (b*ylim.sec[1]) # there was a bug here
-
-RSdata <- precs %>% left_join(temps,by=c("month")) %>%
-  mutate(monthn=factor(month.abb[month],levels=month.abb),
-    mean_temp=(min_temp+max_temp)/2)
-
-PicoEspejo <- ggplot(RSdata %>%  drop_units) +
-     geom_bar(aes(x=monthn, y=precip,group=month),stat="identity",fill = "skyblue") +
-     geom_line(aes(x=monthn,y = a + min_temp*b,group=1), colour = "orange",lwd=2,alpha=.7) +
-     geom_line(aes(x=monthn,y = a + mean_temp*b,group=1), colour = "orangered",lwd=2,alpha=.7) +
-     scale_y_continuous("CHIRPS+ [mm]", sec.axis = sec_axis(~ (. - a)/b, name = "Modis LST [°C]"),limits=c(0,NA)) +
-  xlab("Month") +
-    ggtitle("Pico Espejo")
-
-
-#load('../Rdata/modis-LST-and-CHIRPS.rda')
-
-f1 <- clim_vars %>% filter(glacier) %>% pull(cellnr)
-
-temps <- rslts_LST %>% filter(cellnr %in% f1) %>%
-  mutate(value=set_units(value*0.02,'degK'), # adding the Scale value from gdalinfo
-         LST=set_units(value,'degC')) %>%
-  pivot_wider(id_cols=c(cellnr,year,month,day),names_from=var,values_from=LST) %>%
-  group_by(cellnr,month) %>% summarise(min_temp=mean(LST_Night,na.rm=T), max_temp=mean(LST_Day,na.rm=T))
-
-precs <- precip_data %>% filter(!is.na(RGIId)) %>% pivot_longer(cols=starts_with("X")) %>% mutate(date=ym(str_replace(name,"X",""))) %>% mutate(year=year(date),month=month(date)) %>% filter(year %in% 2000:2020) %>% group_by(RGIId,cellnr=LSTcell,month) %>% summarise(n=n_distinct(year),precip=sum(value)/n)
-
-ylim.prim <- c(0, 180)
-ylim.sec <- c(-4, 10)
-b <- diff(ylim.prim)/diff(ylim.sec)
-a <- ylim.prim[1] - (b*ylim.sec[1]) # there was a bug here
-
-RSdata <- precs %>% left_join(temps,by=c("cellnr","month")) %>%
-  mutate(monthn=factor(month.abb[month],levels=month.abb),
-    mean_temp=(min_temp+max_temp)/2)
-
-Bolivar <- ggplot(RSdata %>%
-                     filter(RGIId %in% "RGI60-16.01388") %>%
-                     drop_units) +
-                     geom_bar(aes(x=monthn, y=precip,group=month),stat="identity",fill = "skyblue") +
-                     geom_line(aes(x=monthn,y = a + min_temp*b,group=1), colour = "orange",lwd=2,alpha=.7) +
-                     geom_line(aes(x=monthn,y = a + mean_temp*b,group=1), colour = "orangered",lwd=2,alpha=.7) +
-                        scale_y_continuous("CHIRPS+ [mm]", sec.axis = sec_axis(~ (. - a)/b, name = "Modis LST [°C]"),limits=c(0,NA)) +
-      xlab("Month") +
-        ggtitle("Pico Bolivar")
-
-Humboldt <- ggplot(RSdata %>%
-                     filter(RGIId %in% "RGI60-16.01391") %>%
-     drop_units) +
-     geom_bar(aes(x=monthn, y=precip,group=month),stat="identity",fill = "skyblue") +
-     geom_line(aes(x=monthn,y = a + min_temp*b,group=1), colour = "orange",lwd=2,alpha=.7) +
-     geom_line(aes(x=monthn,y = a + mean_temp*b,group=1), colour = "orangered",lwd=2,alpha=.7) +
-      scale_y_continuous("CHIRPS+ [mm]", sec.axis = sec_axis(~ (. - a)/b, name = "Modis LST [°C]"),limits=c(0,NA)) +
-      xlab("Month") +
-        ggtitle("Pico Humboldt")
-
-
-  ggarrange(LomaRedonda, PicoEspejo, Bolivar, Humboldt, ncol = 2, nrow = 2)
-
-```
-
 ### Bioclimatic conditions in regional context
 
 We characterised the 25 km spatial buffers around the glacier outlines of the Cordillera de Merida and the two nearest tropical glacier ecosystem units in the Sierra Nevada de Santa Marta and the Sierra Nevada del Cocuy (Colombia). We extracted the mean values of 19 bioclimatic variables, snow days and frost change frequency (fcf) for the period 1979-2013 based on the CHELSA dataset [ @Karger_2017_CHELSA_descriptor, @Karger_2018_CHELSA_data ].
@@ -207,11 +121,15 @@ We characterised the 25 km spatial buffers around the glacier outlines of the Co
 Small areas of these buffers (expressed as percentage of raster cells) have extreme cryogenic conditions (seasonal/permanent snow cover or frost conditions):
 
 ```{r}
-bioclim_dat %>% group_by(Region=group) %>%
+bioclim_dat <- trop_glaz_names %>% left_join(rawdata,by="id") %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
+bioclim_tbl <- bioclim_dat %>% group_by(Unit=group_name) %>%
   summarise(`Nr. of cells`=n(),
-            `fcf > 0`=set_units(mean(fcf>0),1) %>% set_units("%"),
-            `snow_days > 0`=set_units(mean(snow_days>0),1) %>% set_units("%"),
-            ) %>% knitr::kable(digits=2)
+            `Glacier cells`=sum(glacier),
+            ) 
+
+bioclim_tbl %>% arrange(`Glacier cells`) %>% knitr::kable(digits=2)
+
+
 ```
 
 @fig-bioclim shows the distribution of three bioclimatic variables in the three regions, highlighting how the cryogenic areas differ from the rest of the spatial buffer (blue vs. red areas in each plot), and how the distribution of values differs between the three regions. The extreme cryogenic areas of the Cordillera de Mérida are exposed to different bioclimatic conditions than the nearest glacier areas in Colombia. They are exposed to similar mean annual temperatures as the Sierra Nevada del Cocuy, but has lower annual temperature ranges and much lower levels of precipitation in the coldest quarter.
@@ -222,8 +140,10 @@ bioclim_dat %>% group_by(Region=group) %>%
 #| fig-cap: Histogram of three bioclimatic variables in the three regions.
 #| warning: false
 
-pbio01 <- ggplot(bioclim_dat %>% mutate(bio01=bio1/10)) + geom_histogram(aes(x=bio01,fill=fcf>0), bins=25) +
-  facet_col(group ~.) + xlab("Annual Mean Temp.") + ylab("Nr. of cells")
+slc <- bioclim_tbl %>% filter(`Glacier cells`>100) %>% pull(Unit)
+
+pbio01 <- ggplot(bioclim_dat %>% filter(group_name %in% slc) %>% mutate(bio01=bio10_01/10)) + geom_histogram(aes(x=bio01,fill=glacier), bins=25) +
+  facet_wrap(group_name ~.) + xlab("Annual Mean Temp.") + ylab("Nr. of cells")
 
 pbio07 <- ggplot(bioclim_dat %>% mutate(bio07=bio7/10)) + geom_histogram(aes(x=bio07,fill=fcf>0), bins=25) +
   facet_col(group ~.) + xlab("Temp. Annual Range") + ylab("Nr. of cells")
@@ -291,27 +211,6 @@ Atmospheric or aeolian deposition (windfall) provide key nutrients to the biota 
 
 The role of the supra- and subglacial microbiota on the exposed glacier forefield has not been studied in the Cordillera de Mérida, but the pioneer lichen and bryophyte species might have a facilitation effect on the long-term establishment of wind-dispersed and -pollinated vascular plants [@Llambi_2021_periglacial_merida].
 
-## Threats
-
-The two main threats to the Tropical Glacier Ecosystem of the Cordillera de Mérida are climate changes and severe weather, and pollution by air borne pollutants (@tbl-threats).
-
-Reconstruction of glacier advances in the last 1500 years highlights their sensibility to natural changes in climate, and this has likely been magnified by the human influence on climate [@Polissar_2006_IceAge_Andes]. The effect of increasing temperatures and decreasing precipitations  on the venezuelan glaciers over the last decades has been discussed by @Braun_2013_glacier_venezuela. Evidence suggests that this is an ongoing threat affecting the whole distribution of the ecosystem and is likely to cause rapid declines.
-
-Although pollution by light absorbing particles could account for up to 22% of albedo reduction in parts of the tropical Andes [@Gilardoni_2022_LAPs_SouthAmerica], the effect of such pollutants in the Cordillera de Mérida have not been measured [@Hamburger_2013_pollution_Merida]. Thus the scope and severity of this threat are not known.
-
-+-----------------------------------------+---------+--------------+----------------+-------------+
-| Threat classification                   | Timing  | Scope        |  Severity      | Score       |
-+=========================================+=========+==============+================+=============+
-| - 9 Pollution                           | Ongoing | Unknown      | Unknown        | Unknown     |
-|   - 9.5 Air-borne pollutants            |         |              |                |             |
-|     - 9.5.4 Type Unknown/Unrecorded     |         |              |                |             |
-+-----------------------------------------+---------+--------------+----------------+-------------+
-| - 11 Climate change & severe weather    | Ongoing | Whole (>90%) | Rapid declines | High Impact |
-|   - 11.1 Habitat shifting & alteration  |         |              |                |             |
-|   - 11.5 Other impacts                  |         |              |                |             |
-+-----------------------------------------+---------+--------------+----------------+-------------+
-: Threats to the Tropical Glacier Ecosystem of the Cordillera de Mérida according to the IUCN Threat Classification and Threat Impact Scoring System {#tbl-threats}
-
 ## Collapse definition
 
 According to @Braun_2013_glacier_venezuela and @Ramirez_2020_glacier_Venezuela there is historical evidence of five or six glaciers or ice patches in the Cordillera de Mérida in the last 150 years, with earliest records dating back to 1864 (from paintings) and 1886 (from scientific literature). All but one have disappeared and can be considered collapsed due to the complete absence of permanent snow or ice:
@@ -331,396 +230,3 @@ Thus we consider that the complete disappearance of permanent snow and ice is th
 Tropical glaciers are very sensitive to changes in climate, thus the evaluation of climate variables can help us infer the temporal changes in glacier conditions leading to their collapse. In the Cordillera de Mérida the equilibrium-line altitude (ELA; the elevation of the dividing line between the glacier accumulation and ablation areas) and the atmospheric freezing level height (FLH; the altitude of the 0°C isotherm) have been used as indicators of change in glacier extent [@Polissar_2006_IceAge_Andes; @Braun_2013_glacier_venezuela]. The increase in ELA or FLH reduces the available area for long-term glacier persistence, and a collapse threshold can be set according to peak height or the maximum elevation of the snow accumulation.
 
 We also use an indirect approach to project the probability of persistence of Tropical Glacier Ecosystems into the future by means of correlative models of environmental suitability (Ferrer-Paris et al. in prep.). In this case the bioclimatic conditions of areas with and without glaciers are compared using a machine learning algorithm and a probability or suitability index is produced. This index can be calibrated with existing data to find optimal classification thresholds for discriminating presence and absence of the glacier under current conditions, and the model is then used to predict future suitability. In this case, the classification threshold is assumed to represent a collapse threshold.
-
-## Risk assessment
-
-### Criterion A
-
-Cartographic estimates of glacier extent were reviewed by @Ramirez_2020_glacier_Venezuela for three peaks in the Cordillera de Mérida (Concha, Bolívar and Humboldt). For this assessment we added the values of these three peaks and calculated their standard errors (@tbl-extent).
-
-```{r}
-#| label: tbl-extent
-#| tbl-cap: Cartographic estimates of glacier extent in the Cordillera de Mérida.
-
-# Table 1 in Ramirez et al 2020
-peaks <- rep(c('La Concha','Bolivar','Humboldt'),c(2,3,7))
-year <- set_units(c(1910,1952,1910,1952,1998,1910,1952,1998,2009,2015,2016,2019),year)
-glacier_area <- c(0.379,	0.103,	1.273,	0.601,	0.047,	3.374,	1.613,	0.386,	0.164,	0.11,	0.079,	0.045) %>% set_units(km^2)
-glacier_area_se <- c(NA,0.008,NA,0.04,0.009,NA,0.044,0.027,0.019,0.005,0.005,0.004) %>% set_units(km^2)
-perimeter <- c(3.98,2.15,7.16,10.39,1.69,11.48,11.62,4.99,3.32,2.13,2.27,1.46) %>% set_units(km)
-terminus <- c(4420,4623,4280,4482,4735,4280,4460,4620,4720,4740,4780,4800)%>% set_units(m)
-
-ven_rslts <- tibble(peaks,years=year,glacier_extent=glacier_area,glacier_extent_error=glacier_area_se,perimeter,terminus)
-# rslts %>% drop_units %>% dplyr::select(1:4) %>% rename(Peak=peaks,Year=years,`Extent (km^2)`=glacier_extent,`S.E. (km^2)`=glacier_extent_error) %>% knitr::kable()
-
-totals <- ven_rslts %>% group_by(years) %>%
-  summarise(
-    eco_extent=sum(glacier_extent),
-    error_extent=sqrt(sum(glacier_extent_error^2,na.rm=T))
-)
-totals$error_extent[1] <- max(totals$error_extent)
-totals %>% drop_units %>% rename(Year=years,`Extent (km^2)`=eco_extent,`S.E. (km^2)`=error_extent) %>% knitr::kable()
-```
-
-For calculations we assume that the threshold of collapse is when the glacier extent reduces to zero $km^2$ (absolute threshold).
-
-#### Subriterion A1
-
-There is no direct estimate of decline in extent for the last 50 years, but calculations of rates of decline from selected rows of @tbl-extent can be used as minimum and maximum bounds:
-
-```{r}
-calc_decline(totals,start=2:3,end=7) %>% rename(`S.E.`="error")%>% rename_with(~str_replace_all(.x,"_"," ")) %>% knitr::kable()
-```
-
-The decline in the last 50 years is estimated to be between 89 and 98%, both estimates meet the threshold for **Critically Endangered** for subcriterion A1.
-
-#### Subriterion A2
-
-We used the data from @tbl-extent above to extrapolate the expected rate of decline for a 50 year period including the present and future (subcriterion A2b). We fitted a generalised linear model with quasi-poisson distribution and logarithmic link function, and weighted observations by the inverse of the standard error of the measurements. We used the model to predict expected values of extent and standard errors for the time frame 1990 to 2040, and then derived the back-transformed best estimate and 90% confidence intervals considering over-dispersion and a normal approximation of the error distribution.
-
-```{r}
-#| label: fig-A2b
-#| fig-cap: Projected rates of decline into the future.
-#| warning: false
-
-mod1 <- glm(eco_extent~years,data=totals %>% drop_units, weights=1/sqrt(error_extent),
-            family=quasipoisson(log))
-prd1 <- futurePred(mod1,eval.years=1910:2040)
-
-mod2 <- glm(eco_extent~years,data=totals %>% drop_units %>% filter(years>1990) , weights=1/sqrt(error_extent),
-            family=quasipoisson(log))
-prd2 <- futurePred(mod2,eval.years=1990:2048)
-
-figa <- ggplot() + #geom_point(data=rslts,aes(y=glacier_extent,x=years,colour=peaks)) +
-  geom_point(data=totals %>% drop_units,aes(y=eco_extent,x=years)) +
-  geom_line(data=prd1,aes(x=years,y=best),color='orangered') +
-  geom_ribbon(data=prd1,aes(x=years,ymin=lower,ymax=upper),fill="orange",alpha=.2) +
-  xlab("Year") + ylab("Extent [km²]")
-
-
-figb <- figa + coord_cartesian(xlim=c(1990,2040),ylim=c(0,1)) +
-geom_line(data=prd2,aes(x=years,y=best),color='slateblue4') +
-geom_ribbon(data=prd2,aes(x=years,ymin=lower,ymax=upper),fill="lightblue",alpha=.2)
-
-ggarrange(figa, figb, ncol = 2, nrow = 1)
-
-cf1 <- coef(mod1)
-cf1.int <- confint(mod1, level=0.9)
-cf2 <- coef(mod2)
-cf2.int <- confint(mod2, level=0.9)
-```
-
-A model fitted using all observations from 1910 onwards suggests a large proportional rate of decline (`r sprintf("%0.3f, 90%% C.I.: %0.3f -- %0.3f",cf1[2],cf1.int[2,1],cf1.int[2,2])`, @fig-A2b; left panel), but the most recent observation clearly deviate from the expected values (@fig-A2b; right panel). Another model fitted only to the most recent observations (1998 onwards), predicts a more pronounced decline, but it overestimates values before 1998 and has very narrow confidence intervals due to the small number of observations used  (`r sprintf("%0.3f, 90%% C.I.: %0.3f -- %0.3f", cf2[2], cf2.int[2,1], cf2.int[2,2])`).
-
-The clear recent acceleration of the rate of decline makes it difficult to fit a consistent model with so few observations [@Ramirez_2020_glacier_Venezuela], but given the very rapid decline of the glacier in the Bolívar Peak between 1998 and 2017, and the comparable size of the Humboldt glacier at the time of the last measurement (0.045 $km^2$ by 2019) it is reasonable to expect that it would disappear completely in the next 20-30 years.
-
-
-```{r, message=FALSE, warning=FALSE,echo=FALSE}
-prd <- prd1 %>% filter(years %in% c(1990,2040))
-final.prd1 <- 100*(1-(prd[2,-1]/prd[1,-1]))
-prd <- prd2 %>% filter(years %in% c(1998,2048))
-final.prd2 <- 100*(1-(prd[2,-1]/prd[1,-1]))
-
-```
-
-Based on the results of both models the total decline for the 50 year period is predicted as `r sprintf("%0.1f (%0.1f -- %0.1f) %%",final.prd1["best"],final.prd1["upper"],final.prd2["lower"])`, and the assessment unit should be considered **Critically Endangered**, with plausible bounds between **Endangered** and **Critically Endangered**: CR (EN-CR).
-
-#### Subriterion A3
-
-The decline between the oldest and the most recent estimates of extent in @tbl-extent is  estimated as:
-
-```{r, message=FALSE, warning=FALSE,echo=FALSE}
-calc_decline(totals,start=1,end=7) %>% rename(`S.E.`="error")%>% rename_with(~str_replace_all(.x,"_"," ")) %>% knitr::kable()
-```
-
-Reconstruction of the historical evolution of glaciers in South America suggests that the maximum glacial extent in Venezuela occurred around the year 1730 and glaciers retreated continuously in the following centuries with only minor readvances around 1760, 1820 and 1880 [@Jomelli_2009_glacier_history,Polissar_2006_IceAge_Andes]. Thus we can assume that the observed decline between 1910 and the present represents a lower bound of the total decline between 1750 and the present.
-
-For subcriterion A3 we can assume that the historical decline in extent is >99 %, thus the Tropical Glacier Ecosystems of the Cordillera de Merida are considered **Critically Endangered** with high risk of imminent Collapse: CR (CR-CO).
-
-
-### Criterion B
-
-Spatial data is sufficient for estimation of extent of occurrence (EOO) and area of occupancy (AOO), thus we will assess the quantiative subcriteria B1 and B2 instead of the qualitative subcriterion B3.
-
-For the assessment of subcriteria B1 and B2 we considered that three conditions are met:
-
-- there is an observed continuing decline in spatial extent,
-- these is an inferred threatening process that is likely to cause continuing declines in geographic distribution within the next 20 years, and
-- the ecosystem exists at only one threat-defined location.
-
-#### Subcriterion B1
-
-```{r}
-buffsize <- 5000
-cellsize <- 10000
-prj.venezuela <- "+proj=utm +zone=20 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs" #REGVEN / UTM zone 20N
-VEN <- venezuela_rgi6 %>% st_transform(prj.venezuela)
-tgt.glaz <- VEN %>% st_union
-
-bf.glaz <- tgt.glaz %>% st_buffer(buffsize) %>% st_union
-raw.grid <- st_make_grid(bf.glaz,cellsize=cellsize)
-raw.grid <- st_make_grid(tgt.glaz,cellsize=cellsize)
-raw.grid %>%  st_sf(layer=1:length(raw.grid),
-                    geoms = ., stringsAsFactors = FALSE) -> grid
-
-
-```
-
-The extent of occurrence (EOO) was calculated as the area of the convex hull around the glacier outlines from the RGI 6.0 database. The EOO for the outline corresponding to the Humboldt Peak is `r {VEN %>% st_convex_hull() %>% st_area %>% set_units('km^2') %>% max %>% round(3)}` $km^2$ and for all outlines together including the collapsed glaciers is `r {VEN %>% st_union %>% st_convex_hull() %>% st_area %>% set_units('km^2') %>% round(3)}` $km^2$. Both estimates are below the threshold of 20000 $km^2$.
-
-The ecosystem is **Critically Endangered** under subcriterion B1a(i)bc
-
-#### Subriterion B2
-
-All occurrences (extant and collapsed) occupy one 10x10 km cell.
-
-The ecosystem is **Critically Endangered** under subcriterion B2a(i)bc
-
-### Criterion C
-
-#### Subcriterion C1
-
-@Braun_2013_glacier_venezuela compared the freeze level height (FLH in meters) from climate reanalysis data in the Cordillera de Merida for the period 1948 to 2011. We use this time series and fit a local polynomial regression (_loess_ with gaussian distribution, span = 0.75 and degree = 2, equivalent number of parameters = 4.35) to smooth the temporal trend and compare these values with the altitudinal range of glaciers for each peak as reported by @Ramirez_2020_glacier_Venezuela [@fig-FLH].
-
-In the case of Pico La Concha the glacier ice had an estimated maximum elevation of 4840 m in the year 1952, and disappeared before 1998. The mean FLH was almost 10 meter below the maximum elevation in 1948 and rose to more than 83 meters above the maximum elevation in 2010. The smoothed FLH mean surpassed the 4840 m threshold between 1972 and 1981.
-
-```{r}
-#| label: fig-FLH
-#| fig-cap: Time series of freeze level height (FLH in meters) in the Cordillera de Mérida for the period 1948 to 2011. Grey circles and lines represent the annual values of FLH from a climate reanalysis dataset [as reported by @Braun_2013_glacier_venezuela]. The light grey lines and polygons represent the local polynomial regression of the FLH data. The horizontal lines represent the last recorded elevation of glacier ice in different peaks [@Ramirez_2020_glacier_Venezuela].
-#| warning: false
-
-
-FLH.lo <- loess(FLH ~ years, FLH.df)
-prdTS <- predict(FLH.lo, data.frame(years=c(1960:2010)), se = TRUE)
-#max(c(1960:2010)[(prdTS$fit - prdTS$se.fit) < 4840])
-#max(c(1960:2010)[(prdTS$fit) < 4840])
-#max(c(1960:2010)[(prdTS$fit + prdTS$se.fit) < 4970])
-
-bls <- brewer.pal(4,"Greys")
-
-peak_height <- tibble(peak=c("La Concha in 1952","Bolívar in 1998","Humboldt in 2019"),hmin=c(4623,4745,4720),hmax=c(4840,4970,4920))
-ggplot() +
-  geom_hline(data=peak_height,aes(yintercept=hmax,colour=peak),lty=1) +
-  geom_point(data=FLH.df,aes(x=years,y=FLH),colour=bls[4]) + geom_line(data=FLH.df,aes(x=years,y=FLH),colour=bls[2]) +
-  scale_colour_brewer(palette = "Dark2") +
-  geom_smooth(data=FLH.df,aes(x=years,y=FLH),method = loess,colour=bls[1],fill=bls[3]) +
-  theme(legend.position = "right") +
-  labs(colour='Maximum ice elevation',x='Year',y='FLH [m]')
-```
-
-For the assessment of the risk of collapse of the last remaining glacier in peak Humboldt we use the values of the smoothed FLH to calculate initial and final values of the time series and assume that the collapse value for the FLH is between the maximum elevations of the glaciers in the peaks Bolívar and Humboldt (between 4920 and 4970 m).
-
-
-```{r }
-relativeSeverity <- function(datevect,varvect,start,end,collapse,errorvect=NULL) {
-  start_date <- datevect[start]
-  end_date <- datevect[end]
-  IV <- varvect[start]
-  FV <- varvect[end]
-  CV <- collapse
-  OD=IV-FV
-  MD=IV-CV
-  res <- tibble(
-    start_date,
-    end_date,
-    period=end_date-start_date,
-    `Collapse value`=abs(CV),
-    observed=OD,maximum=MD,
-    RS=(OD/MD) %>% set_units('1') %>% set_units('%'))
-  if (!is.null(errorvect)) {
-    ## error propagation (according to https://astro.subhashbose.com/tools/error-propagation-calculator)
-     start_error <- errorvect[start]
-     end_error <- errorvect[end]
-     res$s.e. <- sqrt(((start_error^2 * (CV-FV)^2) + (end_error^2 * (IV-CV)^2) ) / ((IV-CV)^4)) %>% set_units('1')%>% set_units('%')
-  }
-  return(res)
-}
-
-prd <- predict(FLH.lo, data.frame(years=c(1960,2010)), se = TRUE)
-relativeSeverity(c(1960,2010),-prd$fit,1,2,-c(4920,4970),prd$se.fit) %>% rename(`S.E.`="s.e.")%>% rename_with(~str_replace_all(.x,"_"," ")) %>% knitr::kable()
-
-```
-
-Relative severity was calculated as 67 and 100 % (observed decline higher than maximum decline) for these collapse values, but the large standard error of the estimate suggest large uncertainty due to the wide variation of the time series. Thus we adopt a best estimate of 83.6% and a plausible range of 48 to 100%.
-
-The subcriterion C1 is assessed as **Critically Endangered** with a plausible range from **Vulnerable** to **Collapsed**: *CR (VU-CO)*.
-
-#### Subcriterion C2
-
-For Criterion C we analysed the potential effect of climate change on the suitability of bioclimatic conditions for the presence of Tropical Glacier Ecosystems. We used a Gradient Boosting Machine (GBM) model to analyse the current climatic conditions in areas occupied by Tropical Glacier Ecosystems in all the tropics. Details of the model fitting and validation process are in preparation (Ferrer-Paris et al. MS), brief summary follows.
-
-Occurrence records were selected using stratified random sampling from all the glacier outlines in tropical areas and 25 km distance buffers around glacier outlines. We applied a first partition of the data by withhold the occurrence records of the target assessment unit for final model evaluation of prediction performance of the model (target partition) and the rest of the occurrence records were used for model fitting (modeling partition). Random subsets of the modeling partition were divided in calibration (80%) and test partitions (20%) for tuning of model parameters (number of trees, interaction depth, shrinkage and minimum number of observations per node) using cross validation.
-
-We used 19 bioclimatic variables from the CHELSA dataset representing climatological mean values for present conditions (1981-2010) as predictor variables. Eight variables were excluded from the model due to high correlation to other variables. Variables were centered and scaled to zero mean and unit variance.
-
-We fitted the GBM model for classification (two classes: glacier or not-glacier) using a bernoulli error distribution, and evaluated the predictive performance of the final model on the target partition:
-
-```{r}
-#| echo: false
-
-##rda.results <- '../Rdata/gbm-model-Cordillera-de-Merida.rda'
-##load(rda.results)
-#model
-# plot(model)
-
-test.features = testing %>% dplyr::select(bio10_01:bio10_19)
-test.target = testing %>% pull(glacier)
-predictions = predict(model, newdata = test.features, type='prob')
-
-e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
-
-#e1
-# par(las=2)
-#summary(model)
-
-```
-
-We used the final fitted model to predict the suitability in the present timeframe (1981-2010) and future timeframes (2011-2040 and 2041-2071). We considered uncertainty due to climate change projections (five general circulation models and three representative pathways), and due to the choice of cut-off values to classify predicted suitability into binary score (glacier/non-glacier):
-
-- modeled prevalence is closest to observed prevalence
-- maximum sum of the sensitivity (true positive rate) and specificity (true negative rate),
-- equal sensitivity and specificity
-
-We summarised the outcomes for each combination of models, pathways and cut-off values and calculated relative severity of each outcome in two ways.
-
-First we counted the number of raster cells classified as glacier using each cut-off value, in this case the initial value was three cells and the collapse threshold is zero cells [@fig-C2a; upper panels]. Both extreme outcomes are equally likely, either all cells remain (**Least Concern**) or all cells disappear (**Critically Endangered**).
-
-Next we estimated relative severity by comparing the predicted suitability to the cut-off value [@fig-C2a; lower panels]. Here we assume that the predicted suitability represent the initial and final value and the cut-off value represents the collapse threshold (transition from Glacier to Non-glacier class). We then calculated the mean relative severity of all cells for each combination:
-
-```{r}
-#| label: fig-C2a
-#| fig-cap: Outcome of model projections for two future timeframes considering five general circulation models three representative pathways and three collapse thresholds. Upper panels show frequency of the number of cells classified as glacier, lower panels show the calculated mean relative severity.
-#| warning: false
-
-rslts <- rslts %>% mutate(
-  pathway=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3")
-  )
-
-fig_data <- filter(rslts,modelname!="observed",timeframe %in% c("2011-2040","2041-2070")) 
-
-figa <- ggplot(fig_data) +
-  geom_histogram(aes(x=predCells,fill=pathway),bins = 4) + facet_wrap(timeframe~.) + xlab("Nr. of cells") + ylab("Frequency") + theme(legend.position = "none")
-
-figb <- ggplot(rslts %>% filter(!is.na(pathway),timeframe %in% c("2011-2040","2041-2070"))) + geom_boxplot(aes(y=meanRS,x=pathway,colour=pathway)) + facet_wrap(timeframe~.) + theme(legend.position = "none") + xlab("Pathways") + ylab("Mean Relative Severity")
-
-ggarrange(figa, figb, ncol = 1, nrow = 2)
-
-```
-
-```{r}
-#| echo: false
-# rslts %>% filter(modelname!="observed",timeframe %in% c("2011-2040","2041-2070")) %>% mutate(RS=(3-predCells)/3) %>% pull(RS) %>% table
-
-qs <- round(quantile(rslts %>% filter(!is.na(pathway),timeframe %in% c("2011-2040","2041-2070")) %>% pull(meanRS),p=c(0.95,0.9,0.5,0.1,0.05)) * 100,1)
-```
-
-The best estimate of mean relative severity across all predictions is `r qs[3]` % with a 90% confidence interval of `r qs[5]` to `r qs[1]`%.
-
-The subcriterion C2a is assessed as **Critically Endangered** with a plausible bound of **Endangered** to **Collapsed**: CR (EN-CO)
-
-#### Subcriterion C3
-
-@Polissar_2006_IceAge_Andes used the equilibrium-line altitude (ELA; the elevation of the dividing line between the glacier accumulation and ablation areas) as a climatically sensitive measure of variations in glacier extent.
-
-They first reconstructed the Mucubají valley paleoglacier topography from field data, aerial photographs, and topographic maps. They used this information to construct a normalized cumulative area vs. elevation profile and the ratio of accumulation area to total glacier area. This correspond to the period of maximum glacier extent between 1180 and 1820. Similarly, they calculated the cumulative elevation profiles of modern glaciers at the Pico Bolívar from existing maps of the year 1972. They compared the ratio of accumulation area to total glacier area to determine the respective ELA for both cases and provide estimates of their difference ($\Delta$ ELA).
-
-The $\Delta$ ELA was calculated between -300m for the timeframe of the analysis (1820 to 1972) and -500 m considering the observed declines after 1972 and before 2006. This last value is considered to be near to the maximum possible value of $\Delta$ ELA.
-
-Using three plausible values of $\Delta$ ELA (-300, -400 and -500 m) as the observed decline and a value of -550 m as the maximum decline we calculate that the relative severity is between 54 % and 90 %, with a middle value of 72.3%.
-
-Subcriterion C3 is assessed as **Endangered** with a plausible bound from **Vulnerable** to **Critically Endangered**: EN (VU-CR).
-
-### Criterion D
-
-The biota of this assessment unit is poorly known, and there is no direct information on temporal changes in microbial communities in the different habitats after the loss of the ice substrate. 
-
-The study of the glacier forefield at Humboldt peak provide a post-glacial chronosequence: vascular vegetation is already present after 10 years of the glacier retreat, and soil properties change significantly after 21 and 60 years [@Llambi_2021_periglacial_merida]. 
-
-Criterion D is evaluated as **Data Deficient**.
-
-### Criterion E
-
-We use ice mass balance projections for the glacier of the Cordillera de Mérida based on a glacier evolution model [@Rounce_2023_MassBalance_Global]. This hybrid model combines a mass balance module and a glacier dynamics module to model glaciers independently from 2000-2100 for various ensembles of Global Circulation Models and scenarios. 
-
-According to the published methods [@Rounce_2023_MassBalance_Global]:
-
-> The model computes the climatic mass balance (i.e., snow accumulation minus melt plus refreezing) for each surface elevation bin using a monthly time step. The model computes glacier melt using a degree-day model, accumulation using a temperature threshold, and refreezing based on the annual air temperature. Glacier geometry is updated annually using a flowline model based on the Shallow-Ice Approximation to explicitly account for glacier dynamics using a density of 900 kg m-3 for converting mass to volume. 
-
-The values used here are the output values (ice mass \pm median absolute deviation) of the model for the four glacier outlines of the Randolph Glacier Inventory for the cordillera de Mérida downloaded from @Rounce_2022_MassBalance_Global_Data and presented in @fig-Ea. These values clearly overestimate the existing ice mass but we focus the analysis on the point of collapse and not on the mass value _per se_.
-
-```{r}
-#| label: fig-Ea
-#| fig-cap: Estimated ice mass in Megatonnes for all glacier outlines of the Cordillera de Mérida for each shared socioeconomic pathways. 
-#| warning: false
-
-plot_data <- {massbalance_results %>% 
-    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-           mass=set_units(mass,'kg') %>% 
-             set_units("Mt"),
-           mad=set_units(mad,'kg') %>% 
-             set_units("Mt")) %>% 
-    drop_units() %>% 
-    group_by(year,scn,model_nr) %>% 
-    summarise(mean_mass=sum(mass,na.rm=T),
-              max_mass=sum(mass+mad,na.rm=T),
-              min_mass=sum(mass-mad,na.rm=T))}
-
-ggplot(data=plot_data, aes(x=year,y=mean_mass)) +
-  geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
-                 position=position_dodge(.9),
-                alpha=.5,col="gray") +
-	 geom_point(aes(colour=scn),cex=.5) +
-	 facet_wrap(.~scn) +
-  ylab("Projected annual mass of ice [Mt]") +
-  xlab("Year") + 
-  theme(legend.position = "none")
-
-```
-
-We use these mass projections to estimate the year of collapse (first year when mass reaches zero) for each combination of models and scenarios. The empirical cumulative distribution function of the year of collapse (@fig-Eb) allow us to estimate the proportion of models indicating collapse for each year. 
-
-```{r}
-#| label: fig-Eb
-#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
-#| warning: false
-
-plot_data <- massbalance_results %>% 
-    mutate(
-      ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-      non_collapsed=if_else(mass>0,year,2000),
-           max_non_collapsed=if_else(mass+mad>0,year,2000),
-           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
-    group_by(ssp,model_nr) %>% 
-    summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
-              max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
-              min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
-
-label_xy <- tibble(ssp=unique(plot_data$ssp),
-                   x=c(2025, 2085, 2080, 2085, 2055), 
-                   y=c(.7,.55,.91,.99,.91))
-
-ggplot(data=plot_data) +
-#  geom_histogram(aes(x=collapse_year,fill=scn)) +
-  stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
-              geom = "step") +
-  stat_ecdf(aes(x=collapse_year), 
-              geom = "step",lwd=1.3) +
-    geom_label_repel(
-    aes(x=x,y=y,label = ssp, color=ssp), data = label_xy,
-    size = 3) +
-  xlab("Year of collapse") + 
-  theme(legend.position = "none")
-
-```
-
-Focusing on the 50 year time frame between 2020 and 2070 we find that `r sprintf("%0.1f %%", ecdf(plot_data$collapse_year)(2070)*100)` of the models end in collapse. Uncertainty in mass estimates (mean absolute deviation) do not have a major effect on the estimated year of collapse. Considering each scenarios separately, the proportion of models that predict collapse by 2070 is higher than 50% (threshold for CR) in all cases, except for scenario SSP1-2.6.
-
-Criterion E is evaluated as **Critically Endangered**.
-
-## Assessment outcome
-
-The Tropical Glacier Ecosystem of the Cordillera de Mérida is **Critically Endangered** with strong evidence of being **Collapsed**: CR (CR-CO) based on most of the criteria assessed A1, A2b, A3, B1+2a(i)bc, C1, C2a, E.
-
-All criteria with sufficient data indicate the highest level of threat from historical (A1, A3, C1), present (A2b, B1 and B2) and future (C2a, E) processes.
-
-All evidence suggests that the small remaining patch of glacier ice in Humboldt peak is experimenting rapid decline and unlikely to recover mass before its disappearance.

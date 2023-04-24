@@ -182,10 +182,10 @@ d <- RS_results %>%
     ) %>%
   mutate(cat = case_when(
     IV == CV ~"Collapsed<br>(MD == 0)",
+    IV < CV ~"Collapsed<br>(IV>CV)",
     FV < CV ~"Collapsed<br>(FV>CV)",
     OD > MD ~ "Collapsed<br>(OD > MD)",
     OD < 0 ~ "Improved\n(OD < 0)",
-    IV < CV ~"Collapsed<br>(IV>CV)",
     TRUE ~ "Degradation\n(0 < RS < 1)"
   ))
 
@@ -200,7 +200,7 @@ fig <- plot_ly(
                   OD, MD,RS,RS_cor,cat)
 )
 fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
-            symbol = ~cat, symbols = c('o','x','circle')) 
+            symbol = ~cat, symbols = c('o','x','circle','+')) 
 fig <- add_lines(fig, x = ~IV, y = ~IV, name="no change", line=ncline.fmt)
 fig <- add_lines(fig, y = unique(d$CV), name="collapse threshold", line=colline.fmt)
 fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.fmt)

@@ -24,7 +24,8 @@ idx <- my_project_components %>% filter(name %in% "Environmental suitability mod
   pull(id) 
 env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
-osf_all_files <- osf_ls_files(global_data_comp)
+osf_data_all_files <- osf_ls_files(global_data_comp)
+osf_download(osf_data_all_files, path=here::here(target.dir), conflicts="skip")
 
 file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", output.dir)
 

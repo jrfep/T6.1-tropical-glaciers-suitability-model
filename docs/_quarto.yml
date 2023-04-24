@@ -10,10 +10,9 @@ book:
     - index.qmd
     - part: "Suitability model"
       chapters:
-        - GBM-model.qmd
+        - RS-formula.qmd
     - part: "Relative Severity"
       chapters:
-        - RS-formula.qmd
         - viz-RS-per-unit.qmd
     - references.qmd
   appendices:
@@ -26,9 +25,9 @@ book:
       - icon: twitter
         href: https://twitter.com/neomapas
 bibliography: 
-  - bibTeX/references.bib
-  - bibTeX/glacier-assessments.bib
-csl: bibTeX/oryx.csl
+  - bibtex/references.bib
+  - bibtex/glacier-assessments.bib
+csl: bibtex/ecological-indicators.csl
 
 execute:
   echo: false
