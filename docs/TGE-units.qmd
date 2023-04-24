@@ -15,8 +15,24 @@ library(ggplot2)
 here::i_am("docs/TGE-units.qmd")
 target.dir <- "sandbox"
 trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
-load(here::here(target.dir,"bioclim-model-data-groups.rda"))
+load(here::here(target.dir,"current-bioclim-data-all-groups.rda"))
 ```
+
+```{r}
+#| eval: false
+
+## This code checks if the ids of the groups match
+
+input_bioclim_data <-
+    st_as_sf(
+        input_raster_data, 
+        coords = c("lon", "lat"), 
+        crs = 4326
+    )
+tst <- st_intersection(trop_glaz, slice_sample(input_bioclim_data,n=100)) 
+tst %>% transmute(test=id==id.1) %>% st_drop_geometry %>% pull %>% table
+```
+
 
 
 
@@ -121,10 +137,11 @@ We characterised the 25 km spatial buffers around the glacier outlines of the Co
 Small areas of these buffers (expressed as percentage of raster cells) have extreme cryogenic conditions (seasonal/permanent snow cover or frost conditions):
 
 ```{r}
-bioclim_dat <- trop_glaz_names %>% left_join(rawdata,by="id") %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
+bioclim_dat <- trop_glaz_names %>% 
+  left_join(input_raster_data,by="id", multiple="all") # %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
 bioclim_tbl <- bioclim_dat %>% group_by(Unit=group_name) %>%
   summarise(`Nr. of cells`=n(),
-            `Glacier cells`=sum(glacier),
+            `Glacier cells`=sum(glacier,na.rm=T),
             ) 
 
 bioclim_tbl %>% arrange(`Glacier cells`) %>% knitr::kable(digits=2)
