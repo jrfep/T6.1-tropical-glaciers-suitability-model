@@ -15,7 +15,7 @@ require(dplyr)
 require(sf)
 require(magrittr)
 require(tibble)
-require(raster)
+require(terra)
 require(stringr)
 require(tidyr)
 library(caret)
@@ -72,7 +72,7 @@ for (timeframe in c("2011-2040","2041-2070","2071-2100")) {
                                 pattern=sprintf("%s_%s_%s",timeframe,modelname,pathway),
                                 full.names=T)
             if (length(archs)>0) {
-               r0 <- stack(archs)
+               r0 <- rast(archs)
                names(r0) <- sprintf("bio_%02d",as.numeric(str_extract(str_extract(basename(archs),"bio[0-9]+"),"[0-9]+")))
                vals <- values(r0)
                cellnr <- 1:ncell(r0)
