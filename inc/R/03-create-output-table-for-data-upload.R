@@ -22,7 +22,7 @@ source(
 
 input.dir <- sprintf("%s%s/OUTPUT/",gis.out,projectname)
 
-RS_results <- tibble()
+
 groups <- dir(sprintf("%s/",input.dir))
 
 
@@ -37,7 +37,8 @@ all_RS_results <-
   ) %dopar% {
 
   load(sprintf("%s/%s/gbm-model-current.rda",input.dir,grp))
-  all_results <- tibble()
+  
+  RS_results <- tibble()
   for (arch in list.files(sprintf("%s/%s",input.dir,grp),pattern="rds")) {
     comps <- str_replace(arch,"gbm-prediction-","") %>% str_replace(".rds","") %>% str_split_1("-")
     timeframe <- str_c(comps[1:2],collapse="-")
@@ -49,11 +50,10 @@ all_RS_results <-
               grp,
               arch))
     
-    rslts <- testing %>% 
+    all_results <- testing %>% 
       inner_join(future_prediction, by=c("id", "cellnr", "glacier")) %>% 
       dplyr::select(id, cellnr, glacier, IV, FV) %>% 
       mutate(unit=grp, timeframe, modelname, pathway)
-    all_results <- all_results %>% bind_rows(rslts)
     
   
   CT <- calcCT(testing$IV, testing$glacier)
@@ -95,18 +95,17 @@ stopCluster(cl)
 gc()
 
 
-glimpse(all_RS_results)
+# glimpse(all_RS_results)
 
 ## Output: save data to csv or rds file ----
 
-## csv file is too big!
-##write.csv(all_RS_results %>% select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat),
-##          file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv",
-##                       gis.out,projectname),
-##          row.names = FALSE)
+## csv file is very big!
+write.csv(all_RS_results %>% select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat),
+          file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv",
+                       gis.out,projectname),
+          row.names = FALSE)
 
 saveRDS(all_RS_results %>% select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat),
           file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds",
-                       gis.out,projectname),
-          row.names = FALSE)
+                       gis.out,projectname))
 

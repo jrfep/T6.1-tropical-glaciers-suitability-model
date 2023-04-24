@@ -53,6 +53,13 @@ data_file  <- osf_upload(env_suitability_comp,
                          conflicts = conflict_answer
 )
 
+file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", output.dir)
+
+data_file  <- osf_upload(env_suitability_comp, 
+                         path = file_to_upload,
+                         conflicts = conflict_answer
+)
+
 ## Download/update our target directory
 
 osf_data_all_files <- osf_ls_files(global_data_comp)
