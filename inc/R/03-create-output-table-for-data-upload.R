@@ -3,28 +3,14 @@ library(ROCR)
 library(stringr)
 require(doParallel)
 
-env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
-source(
-  sprintf(
-    "%s/%s/env/project-env.R",
-    Sys.getenv("HOME"),
-    env_file_path
-  )
-)
+here::i_am("inc/R/03-create-output-table-for-data-upload.R")
 
-source(
-  sprintf(
-    "%s/%s/inc/R/RS-functions.R",
-    Sys.getenv("HOME"),
-    env_file_path
-  )
-)
+source(here::here("env","project-env.R"))
+source(here::here("inc","R","RS-functions.R"))
 
 input.dir <- sprintf("%s%s/OUTPUT/",gis.out,projectname)
 
-
 groups <- dir(sprintf("%s/",input.dir))
-
 
 cl <- makeCluster(round(detectCores()*.8))
 registerDoParallel(cl)
@@ -33,7 +19,8 @@ all_RS_results <-
   foreach (
     grp = grep("rda$", groups, invert=TRUE, value=TRUE),
     .packages=c("ROCR", "dplyr", "stringr"),
-    .combine=bind_rows
+    .combine=bind_rows,
+    .export="calcCT"
   ) %dopar% {
 
   load(sprintf("%s/%s/gbm-model-current.rda",input.dir,grp))

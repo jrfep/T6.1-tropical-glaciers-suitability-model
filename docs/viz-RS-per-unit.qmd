@@ -61,7 +61,7 @@ For small assessment units the number of calculated RS values is small and diffe
 
 ```{r}
 RS_results %>% 
-  filter(unit %in% "Rwenzori") %>% 
+  filter(unit %in% "Ruwenzori") %>% 
   group_by(timeframe, modelname, pathway, threshold) %>% 
   summarise(
     n=n(),
@@ -75,9 +75,9 @@ RS_results %>%
 #| label: fig-ruwenzori
 #| fig-cap: Boxplot of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ruwenzori. 
 ggplot(RS_results %>% 
-  filter(unit %in% "Rwenzori") ) +
+  filter(unit %in% "Ruwenzori", threshold=="acc") ) +
   geom_boxplot(aes(y = RS_cor, colour = timeframe)) +
-  facet_grid(~threshold) 
+  facet_grid(pathway~modelname) 
 ```
 
 ## Ecuador
@@ -106,8 +106,13 @@ Histograms of the relative severity values show a wide spread in the nearest fut
 ```{r}
 #| label: fig-hist-ecuador
 #| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+d <- RS_results %>% 
+  filter(threshold=="acc", 
+         unit=="Ecuador", 
+         modelname == "mri-esm2-0",
+         pathway == "ssp126")
 plot_a <- 
-  ggplot(RS_results %>% filter(threshold=="acc", unit=="Ecuador")) +
+  ggplot(d) +
     geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
     facet_col(~timeframe) +
     scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
@@ -123,9 +128,9 @@ Although there is now a large number of cell with very high values of relative s
 ```{r}
 #| label: fig-hist-ecdf-ecuador
 #| fig-cap: Comparing the histogram of the $RS_{cor}$ values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
-tfm <- RS_results %>% distinct(timeframe) %>% pull
+tfm <- d %>% distinct(timeframe) %>% pull
 
-RS_ecdf_f <- RS_results %>% filter(threshold=="acc", unit=="Ecuador") %>% 
+RS_ecdf_f <- d %>% 
   split(.$timeframe) %>%   # splits the dataset by timeframe 
   map(~RS_ecdf(.x$RS_cor))
 
@@ -140,7 +145,7 @@ RS_ext_pts <-
     )
 
 
-RS_ecdf_ext <- RS_results %>% filter(threshold=="acc", unit=="Ecuador") %>% 
+RS_ecdf_ext <- d %>% 
   split(.$timeframe) %>%   # splits the dataset by timeframe 
   map(~RSvExt(.x$RS_cor)) %>%
   bind_rows  %>%
@@ -188,13 +193,34 @@ We see that the top curve overlaps with the threshold for the category VU, and t
 
 ## Cordilleras-Norte-de-Peru
 
+The last plot above allows a more compact comparison of different scenarios and timeframes, for example this plot:
+
+```{r}
+#| label: fig-hist-norte-peru
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+d <- RS_results %>% 
+  filter(threshold=="acc", 
+         unit=="Cordilleras-Norte-de-Peru", 
+         modelname == "mri-esm2-0")
+plot_a <- 
+  ggplot(d) +
+    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
+    facet_grid(pathway~timeframe) +
+    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+#    scale_fill_manual(values = IUCN_cat_colours) +
+    theme(legend.position = "none") +
+    xlab("Relative severity") +
+    ylab("Nr. of cells") 
+plot_a 
+```
 this is probably an error? not including all clusters?
 
 ```{r}
 tt <- RS_results %>% 
-  filter(unit == "Cordilleras-Norte-de-Peru",
-    timeframe == "2041-2070",
-    threshold == "acc") %>% 
+  filter(threshold=="acc", 
+         unit=="Cordilleras-Norte-de-Peru", 
+         modelname == "mri-esm2-0",
+         pathway == "ssp126") %>% 
   pull(IUCN_cat) %>% table
 
 tt

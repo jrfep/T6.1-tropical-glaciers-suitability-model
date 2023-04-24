@@ -40,5 +40,17 @@ tree $GISOUT/$PROJECTNAME
 
 ### Calculate Relative Severity
 
+
+```{sh}
+#| eval: false
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/03-create-output-table-for-data-upload.R
+```
+
+### Upload data to cloud repository
+```{sh}
+#| eval: false
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/05-upload-files-to-OSF.R overwrite
+```
+
 ### Visualise results
 

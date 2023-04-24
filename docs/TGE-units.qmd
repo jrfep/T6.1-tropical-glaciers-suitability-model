@@ -157,9 +157,10 @@ bioclim_tbl %>% arrange(`Glacier cells`) %>% knitr::kable(digits=2)
 #| fig-cap: Histogram of three bioclimatic variables in the three regions.
 #| warning: false
 
-slc <- bioclim_tbl %>% filter(`Glacier cells`>100) %>% pull(Unit)
+slc <- bioclim_tbl %>% filter(`Glacier cells`<50) %>% pull(Unit)
+slc <- bioclim_tbl %>% filter(`Nr. of cells`<5000) %>% pull(Unit)
 
-pbio01 <- ggplot(bioclim_dat %>% filter(group_name %in% slc) %>% mutate(bio01=bio10_01/10)) + geom_histogram(aes(x=bio01,fill=glacier), bins=25) +
+pbio01 <- ggplot(bioclim_dat %>% filter(group_name %in% slc, elevation_1KMmd>3500) ) + geom_histogram(aes(x=bio_01,fill=glacier), bins=25) +
   facet_wrap(group_name ~.) + xlab("Annual Mean Temp.") + ylab("Nr. of cells")
 
 pbio07 <- ggplot(bioclim_dat %>% mutate(bio07=bio7/10)) + geom_histogram(aes(x=bio07,fill=fcf>0), bins=25) +
@@ -172,42 +173,6 @@ pbio19 <- ggplot(bioclim_dat) + geom_histogram(aes(x=bio19,fill=fcf>0), bins=25)
 ```
 
 
-```{r}
-#| eval: false
-
-bioclim_dat %>% filter(fcf>0) %>% group_by(group) %>% summarise(across(bio10_01:bio10_19,~ mean(.x, na.rm = TRUE))) %>% knitr::kable(digits=2)
-
-```
-
-```{r}
-#| eval: false
-
-#| label: fig-LSTTS
-#| fig-cap: Total annual precipitation estimated from CHIRPS+ time series for the timeframe 1980-2020.
-#| warning: false
-
-
-f1 <- clim_vars %>% filter(glacier) %>% pull(cellnr)
-
-rslts_LST %>% filter(cellnr %in% f1) %>%
-  mutate(value=set_units(value,'degK'),
-         LST=set_units(value,'degC')) %>% mutate(fecha=ymd(sprintf("%04d%02d%02d",year,month,day))) %>%
-         drop_units %>% filter(var=='LST_Night') %>%
-         ggplot(aes(x=fecha,y=LST)) + geom_point(colour='red',alpha=.2) + geom_smooth() +
-         ylab("Modis LST Night [°C]") + xlab("Date")
-```
-
-```{r}
-#| eval: false
-#| label: fig-ChirpsTS
-#| fig-cap: Total annual precipitation estimated from CHIRPS+ time series for the timeframe 1980-2020.
-#| warning: false
-
-precip_data %>% filter(!is.na(RGIId)) %>% pivot_longer(cols=starts_with("X")) %>% mutate(date=ym(str_replace(name,"X",""))) %>% mutate(year=year(date),month=month(date)) %>%
-filter(year < 2021) %>%  group_by(cellnr=LSTcell,year) %>% summarise(precip=sum(value)) %>% ggplot(aes(x=year,y=precip)) + geom_point() + geom_hline(yintercept = 1173) + geom_smooth() +
-ylab("Precipitation from CHIRPS+ [mm]")+ xlab("Year")
-
-```
 
 ## Processes and interactions
 

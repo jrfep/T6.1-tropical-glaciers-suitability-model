@@ -27,8 +27,8 @@ here::i_am("docs/viz-RS-per-unit.qmd")
 #| eval: true
 #| message: false
 target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.rds")
+RS_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
 ```
 
@@ -47,11 +47,19 @@ $$
     \frac{\mathrm{OD}}{\mathrm{MD}} =
     \frac{V_{0} - V_{F}}{V_{0} - V_{C}}
 $$
-Where $V_{0}$ is the initial value of the indicator, $V_{F}$ is the final value, and $V_{C}$ is the collapse threshold. There are several inconveniences with this formulation:
+Where $V_{0}$ is the initial value of the indicator, $V_{F}$ is the final value, and $V_{C}$ is the collapse threshold. 
 
-- if $V_{F}>V_{0}$ the value of $\mathrm{OD}$ is negative and $\mathrm{RS}$ is negative,
-- if $V_{C}>V_{0}$ the value of $\mathrm{MD}$ is negative and $\mathrm{RS}$ is negative,
+We can use a simple plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visualise the different situations that arise when measure change in time in terms of the values of RS (@fig-interpretation). For risk assessment we are mostly interested in what happens in the lower right half of the plot, i.e. degradation and collapse during the period of observation. Fringe results (small improvements or initial values below the collapse threshold) should not influence the main outcomes of the assessment. However in practice, the application of the original RS formula can produce very unexpected and uninformative results, especially in the left side of the plot, where the initial values are below the collapse threshold.
+
+
+There are several inconveniences with this formulation:
+
+- if $V_{F}>V_{0}$ the value of $\mathrm{OD}$ is negative and $\mathrm{RS}$ is negative, but the magnitude can change dramatically with different values of $\mathrm{MD}$,
+- if $V_{C}>V_{0}$ the value of $\mathrm{MD}$ is negative and $\mathrm{RS}$ is also negative,
+- if both $V_{C}>V_{0}$ and $V_{F}>V_{0}$ the value of  $\mathrm{OD}$ and $\mathrm{MD}$ are negative and $\mathrm{RS}$ is positive,
 - if $|\mathrm{OD}| > |\mathrm{MD}|$ the value of $\mathrm{RS}$ increases disproportionatly.
+
+This means that negative values of RS can have completely different meanings.
 
 We propose to use a conditional formula to avoid artifacts:
 
@@ -63,10 +71,37 @@ $$
       1, & \text{if}\ V_{0} ≤ V_{C} \\
     \end{cases}
 $$
+This formula focuses on measuring degradation, and we suggest the use of alternative measures or indices for other purposes. Although values of $RS<0$ could be informative for indicating recovery or improvement, we argue that their magnitude would not be informative for decision making purposes and could be confusing. 
 
-We show the differences between both formulas with some examples.
 
-## Rwenzori
+```{r}
+#| label: fig-interpretation
+#| fig-cap: Plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visualise the different situations that arise when measure change in time in terms of the values of $\mathrm{RS}$.
+artificial_data <- data.frame(iv=seq(0,1,length=25),fv=seq(0,1,length=25))
+label_data <- tibble(x=c(0.75,0.45,0.05,0.5,0.05,0.85),
+       y=c(0.45,0.65,0.35,0.05,0.05,0.85),
+       type=c("Degradation occurring\n 0 < RS < 1",
+              "Improvement\nRS < 0",
+              "Collapsed\nto\nrecovered?\n RS = ?",
+              "Collapsed\nRS > 1",
+              "Already\ncollapsed\n RS > 1 ?",
+              "No change\nRS=0"))
+ggplot(artificial_data) +
+  xlab("Initial values") +
+  ylab("Final values") +
+  geom_line(aes(x=iv,y=fv),lty=2) +
+  geom_hline(yintercept = 0.15,lty=3, colour="maroon") +
+  geom_vline(xintercept = 0.15,lty=3, colour="maroon") +
+  geom_label(data=label_data,aes(x=x,y=y,label=type),alpha=.85) +
+  annotate("text",x=0.8,y=0.12,label="collapse threshold",colour="maroon",size=3.4) +
+  annotate("text",x=0.12,y=0.8,label="collapse threshold",colour="maroon",size=3.4, angle=90) +
+  theme_classic2()
+
+```
+
+We illustrate these problems and the differences between both formulas with some examples.
+
+### Ruwenzori
 
 We focus initially in the case of the tropical glacier ecosystems of Rwenzori mountains in Africa. 
 
@@ -76,7 +111,7 @@ When we consider future projections from one model and scenario (mri-esm2-0, ssp
 ```{r}
 RS_results %>% 
   filter(
-    unit %in% "Rwenzori",
+    unit %in% "Ruwenzori",
     pathway %in% "ssp126",
     modelname %in% "mri-esm2-0",
     timeframe %in% "2041-2070",
@@ -92,17 +127,18 @@ In this interactive plot, we can visualise these problems
 
 d <- RS_results %>% 
   filter(
-    unit %in% "Rwenzori",
+    unit %in% "Ruwenzori",
     pathway %in% "ssp126",
     modelname %in% "mri-esm2-0",
+    timeframe %in% "2041-2070",
     threshold %in% "ess"
     ) %>%
   mutate(cat = case_when(
     IV == CV ~"Collapsed<br>(MD == 0)",
-    FV < CV ~"Collapsed<br>(FV>CV)",
+    IV < CV ~"Collapsed<br>(IV < CV)",
+    FV < CV ~"Collapsed<br>(FV < CV)",
     OD > MD ~ "Collapsed<br>(OD > MD)",
     OD < 0 ~ "Improved\n(OD < 0)",
-    IV < CV ~"Collapsed<br>(IV>CV)",
     TRUE ~ "Degradation\n(0 < RS < 1)"
   ))
 
@@ -153,11 +189,11 @@ Aggregating the original RS values can be problematic. In this table we can comp
 ```{r}
 RS_results %>% 
   filter(
-    unit %in% "Rwenzori",
-    pathway %in% "ssp126",
+    unit %in% "Ruwenzori",
+    threshold %in% "ess",
     modelname %in% "mri-esm2-0"
     ) %>% 
-  group_by(timeframe, threshold) %>% 
+  group_by( pathway, timeframe) %>% 
   summarise(
     n=n(),
     mean_RS=mean(RS,na.rm=T),
