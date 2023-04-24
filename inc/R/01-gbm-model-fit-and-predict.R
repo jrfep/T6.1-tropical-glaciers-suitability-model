@@ -63,18 +63,30 @@ if (file.exists(rda.file)) {
 
 # Exclude low elevations
 # table(input_raster_data$glacier,input_raster_data$elevation_1KMmd>3500)
-data <- input_raster_data %>% tibble %>% mutate(id=factor(id)) %>% left_join(grp_table,by="id") %>%
-   filter(!unit_name %in% slc_unit,unit_name %in% all_units,elevation_1KMmd>3500) 
+data <- input_raster_data %>%
+   tibble %>%
+   mutate(id = factor(id)) %>%
+   left_join(grp_table, by = "id") %>%
+   filter(
+      !unit_name %in% slc_unit,
+      unit_name %in% all_units,
+      elevation_1KMmd > 3500
+      )
 
 tt <- table(data$id)
 
-training <- data %>% mutate(prob=if_else(glacier,5,.5)*(sum(tt)/tt[id])) %>% slice_sample(n=10000,weight_by = prob) %>%
+training <- data %>% 
+   mutate(prob=if_else(glacier,5,.5)*(sum(tt)/tt[id])) %>% 
+   slice_sample(n=10000,weight_by = prob) %>%
    dplyr::select(glacier,bio_01:bio_19) %>%
    mutate(glacier=factor(if_else(glacier,"G","N")))
 
-testing <- input_raster_data %>% tibble %>% mutate(id=factor(id)) %>% left_join(grp_table,by="id") %>%
+testing <- input_raster_data %>% 
+   tibble %>%
+   mutate(id = factor(id)) %>% 
+   left_join(grp_table, by = "id") %>%
    filter(unit_name %in% slc_unit,elevation_1KMmd>3500) %>%
-   mutate(glacier=factor(if_else(glacier,"G","N")))
+   mutate(glacier = factor(if_else(glacier,"G","N")))
 
 
 ## Step 2: tune model parameters  -------
@@ -86,8 +98,8 @@ ctrl <- trainControl(
 tuneGrid <- expand.grid(
    n.trees = c(50, 75, 100, 125, 150, 200),
    interaction.depth = (1:5),
-   shrinkage = c(0.05,0.1,0.5),
-   n.minobsinnode = c(5,7,10,12)
+   shrinkage = c(0.05, 0.1, 0.5),
+   n.minobsinnode = c(5, 7, 10, 12)
 )
 
 model <- caret::train(
@@ -109,7 +121,11 @@ model <- caret::train(
 test.features = testing %>% dplyr::select(bio_01:bio_19)
 test.target = testing %>% pull(glacier)
 
-rda.results <- sprintf('%s/%s/gbm-model-current.rda',output.dir,str_replace_all(slc_unit," ","-"))
+rda.results <- sprintf(
+   '%s/%s/gbm-model-current.rda',
+   output.dir,
+   str_replace_all(slc_unit," ","-")
+   )
 
 ## Step 4: save model predictions at test location  -------
 
