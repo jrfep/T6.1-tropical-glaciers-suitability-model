@@ -12,6 +12,13 @@ target.dir <- "sandbox"
 if (!file.exists(here::here(target.dir)))
   dir.create(here::here(target.dir))
 
+## read value for conflicts argument
+args = commandArgs(trailingOnly=TRUE)
+if (args[1] %in% c("skip","overwrite")) {
+  conflict_answer <- args[1]
+} else {
+  conflict_answer <- "skip"
+}
 
 osfcode <- Sys.getenv("OSF_PROJECT")
 osf_project <- osf_retrieve_node(sprintf("https://osf.io/%s", osfcode))
@@ -26,24 +33,31 @@ idx <- my_project_components %>% filter(name %in% "Environmental suitability mod
   pull(id) 
 env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
-osf_data_all_files <- osf_ls_files(global_data_comp)
-osf_download(osf_data_all_files, path=here::here(target.dir), conflicts="skip")
 
-file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", output.dir)
-
-data_file  <- osf_upload(env_suitability_comp, 
-                         path = file_to_upload,
-                         conflicts = "skip"
-)
-
+## First upload to data component
 
 file_to_upload <- sprintf("%s/OUTPUT/current-bioclim-data-all-groups.rda", output.dir)
 
 data_file  <- osf_upload(global_data_comp, 
                          path = file_to_upload,
-                         conflicts = "skip"
+                         conflicts = conflict_answer
 )
 
+
+## Now upload the result table in env model component
+
+file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds", output.dir)
+
+data_file  <- osf_upload(env_suitability_comp, 
+                         path = file_to_upload,
+                         conflicts = conflict_answer
+)
+
+## Download/update our target directory
+
+osf_data_all_files <- osf_ls_files(global_data_comp)
+osf_download(osf_data_all_files, path=here::here(target.dir), conflicts=conflict_answer)
+
 project_files <- osf_ls_files(env_suitability_comp)
-osf_download(project_files, path=here::here(target.dir))
+osf_download(project_files, path=here::here(target.dir), conflicts=conflict_answer)
 
