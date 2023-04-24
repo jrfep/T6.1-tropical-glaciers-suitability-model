@@ -31,7 +31,9 @@ output.dir <- sprintf("%s/%s/OUTPUT", gis.out, projectname)
 ## Input: Load data in R session ----
 
 ## Load spatial data for the group polygons and glacier points
-grp_table <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg", input.dir)) %>%
+trop_glaz_pols <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg", input.dir)) 
+
+grp_table <- trop_glaz_pols  %>%
    st_drop_geometry %>% 
    transmute(id=factor(id),unit_name=group_name)
 trop_glaciers_classified <- readRDS(
@@ -100,6 +102,8 @@ input_raster_data <-
 
 stopCluster(cl)
 gc()
+
+
 
 ## Output: save data to Rdata file ----
 
