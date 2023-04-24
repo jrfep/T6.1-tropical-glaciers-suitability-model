@@ -48,6 +48,9 @@ trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-g
 all_units <- unique(grp_table$unit_name)
 slc_unit <- all_units[ifelse(is.na(pick),12,pick)]
 
+if (slc_unit == "Temperate Glacier Ecosystems") {
+  stop("Skipping temperate glacier ecosystems")
+}
 
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 

@@ -5,7 +5,7 @@
 #PBS -N GBMmodelGlaz
 #PBS -k eod
 #PBS -j oe
-#PBJ -J 2-16
+#PBJ -J 1-16
 
 ## set up bash environment variables
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh

@@ -15,6 +15,7 @@ require(dplyr)
 require(sf)
 require(tibble)
 require(terra)
+require(doParallel)
 
 ## Set up / Programing environment variables  -------
 env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
@@ -44,10 +45,12 @@ all_units <- unique(grp_table$unit_name)
 
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
-require(doParallel)
+## take the ids directly from the table
+jjs <- grp_table %>% filter(!unit_name %in% "Temperate Glacier Ecosystems") %>% pull(id) %>% as.numeric()
 
-jjs <- unique(trop_glaciers_classified$grp)
-jjs <- jjs[jjs %in% 3:36]
+## jjs <- unique(trop_glaciers_classified$grp)
+## jjs <- jjs[jjs %in% 3:36]
+
 cl <- makeCluster(round(detectCores()*.8))
 registerDoParallel(cl)
 
