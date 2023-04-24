@@ -69,7 +69,7 @@ data <- input_raster_data %>% tibble %>% mutate(id=factor(id)) %>% left_join(grp
 tt <- table(data$id)
 
 training <- data %>% mutate(prob=if_else(glacier,5,.5)*(sum(tt)/tt[id])) %>% slice_sample(n=10000,weight_by = prob) %>%
-   dplyr::select(glacier,bio10_01:bio10_19) %>%
+   dplyr::select(glacier,bio_01:bio_19) %>%
    mutate(glacier=factor(if_else(glacier,"G","N")))
 
 testing <- input_raster_data %>% tibble %>% mutate(id=factor(id)) %>% left_join(grp_table,by="id") %>%
@@ -106,7 +106,7 @@ model <- caret::train(
 
 ## Step 3: save model, training and testing subsets  -------
 
-test.features = testing %>% dplyr::select(bio10_01:bio10_19)
+test.features = testing %>% dplyr::select(bio_01:bio_19)
 test.target = testing %>% pull(glacier)
 
 rda.results <- sprintf('%s/%s/gbm-model-current.rda',output.dir,str_replace_all(slc_unit," ","-"))
