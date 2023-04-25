@@ -6,12 +6,66 @@ editor_options:
 
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+library(purrr)
+here::i_am("docs/Mass-balance-model.qmd")
+# sessionInfo()
+
+```
+
+```{r}
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
+source(here::here("inc","R","RS-functions.R"))
+```
+
+
+
+```{r}
 
 old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
 
 ```
+
+```{r}
+year_of_collapse_data <- massbalance_results %>% 
+    mutate(
+      ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+      non_collapsed=if_else(mass>0,year,2000),
+           max_non_collapsed=if_else(mass+mad>0,year,2000),
+           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
+    group_by(unit_name,ssp,model_nr) %>% 
+    summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
+              max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+              min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
+
+totalmass_year_data <- {
+  massbalance_results %>% 
+    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+           mass=set_units(mass,'kg') %>% 
+             set_units("Mt"),
+           mad=set_units(mad,'kg') %>% 
+             set_units("Mt")) %>% 
+    drop_units() %>% 
+    group_by(unit_name,year,scn,model_nr) %>% 
+    summarise(mean_mass=sum(mass,na.rm=T),
+              max_mass=sum(mass+mad,na.rm=T),
+              min_mass=sum(mass-mad,na.rm=T))
+  }
+```
+
 
 We use ice mass balance projections for the glacier of the Cordillera de Mérida based on a glacier evolution model [@Rounce_2023_MassBalance_Global]. This hybrid model combines a mass balance module and a glacier dynamics module to model glaciers independently from 2000-2100 for various ensembles of Global Circulation Models and scenarios. 
 
@@ -21,24 +75,44 @@ According to the published methods [@Rounce_2023_MassBalance_Global]:
 
 The values used here are the output values (ice mass \pm median absolute deviation) of the model for the four glacier outlines of the Randolph Glacier Inventory for the cordillera de Mérida downloaded from @Rounce_2022_MassBalance_Global_Data and presented in @fig-Ea. These values clearly overestimate the existing ice mass but we focus the analysis on the point of collapse and not on the mass value _per se_.
 
+
+```{r}
+RSts <- function(years, values, init_year = 2000, collapse_threshold=0) {
+  IV <- values[years==init_year]
+  FV <- values[years>init_year]
+  CT <- collapse_threshold
+  OD <- IV -FV
+  MD <- IV - CT
+  RS <- OD/MD
+  return(tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS))
+}
+```
+
+
+Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
+
+```{r}
+RSvals <- totalmass_year_data %>% 
+  filter(unit_name %in% "Cordillera de Merida",scn == "SSP1-2.6") %>%
+  split(.$model_nr) %>%
+  map(~RSts(.x$year,.x$mean_mass))
+
+
+ggplot(RSvals[[5]]) +
+  geom_point(aes(x=year,y=RS))
+
+```
+
+
 ```{r}
 #| label: fig-Ea
 #| fig-cap: Estimated ice mass in Megatonnes for all glacier outlines of the Cordillera de Mérida for each shared socioeconomic pathways. 
 #| warning: false
 
-plot_data <- {massbalance_results %>% 
-    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-           mass=set_units(mass,'kg') %>% 
-             set_units("Mt"),
-           mad=set_units(mad,'kg') %>% 
-             set_units("Mt")) %>% 
-    drop_units() %>% 
-    group_by(year,scn,model_nr) %>% 
-    summarise(mean_mass=sum(mass,na.rm=T),
-              max_mass=sum(mass+mad,na.rm=T),
-              min_mass=sum(mass-mad,na.rm=T))}
+# "Kilimanjaro", "Ecuador", "Mexico"
 
-ggplot(data=plot_data, aes(x=year,y=mean_mass)) +
+
+ggplot(data=totalmass_year_data %>% filter(unit_name == "Cordillera de Merida"), aes(x=year,y=mean_mass)) +
   geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
                  position=position_dodge(.9),
                 alpha=.5,col="gray") +
@@ -52,27 +126,57 @@ ggplot(data=plot_data, aes(x=year,y=mean_mass)) +
 
 We use these mass projections to estimate the year of collapse (first year when mass reaches zero) for each combination of models and scenarios. The empirical cumulative distribution function of the year of collapse (@fig-Eb) allow us to estimate the proportion of models indicating collapse for each year. 
 
+
+```{r}
+year_of_collapse_data %>% 
+  group_by(unit_name,ssp) %>% 
+  summarise(
+    prob_collapse=mean(collapse_year<2100)*100,
+    prob_min=mean(min_collapse_year<2100)*100,
+    prob_max=mean(max_collapse_year<2100)*100
+    ) %>%
+  transmute(
+    unit_name,ssp,
+    prob_collapse=case_when(
+      prob_collapse == prob_max & prob_collapse == prob_min ~ sprintf("%0.1f", prob_collapse),
+      TRUE ~ sprintf("%0.1f (%0.1f -- %0.1f)", prob_collapse, prob_max, prob_min)
+    )
+  ) %>%
+  pivot_wider(names_from=ssp,values_from=prob_collapse)
+```
+
+For nine units the massbalance models predict total loss of ice between 2040 and 2010
+
 ```{r}
 #| label: fig-Eb
 #| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
 #| warning: false
 
-plot_data <- massbalance_results %>% 
-    mutate(
-      ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-      non_collapsed=if_else(mass>0,year,2000),
-           max_non_collapsed=if_else(mass+mad>0,year,2000),
-           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
-    group_by(ssp,model_nr) %>% 
-    summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
-              max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
-              min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
 
-label_xy <- tibble(ssp=unique(plot_data$ssp),
-                   x=c(2025, 2085, 2080, 2085, 2055), 
-                   y=c(.7,.55,.91,.99,.91))
+ggplot(data=year_of_collapse_data %>% filter(collapse_year < 2100)) +
+  geom_histogram(aes(x=collapse_year,fill=ssp)) +
+  xlab("Year of collapse") + 
+  facet_wrap(~unit_name) +
+  theme(legend.position = "top")
 
-ggplot(data=plot_data) +
+```
+
+
+```{r}
+#| label: fig-Eb
+#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
+#| warning: false
+
+
+label_xy <- 
+  year_of_collapse_data %>% 
+  filter(unit_name=="Mexico") %>%
+    group_by(ssp) %>% 
+  summarise(x=median(collapse_year)) %>%
+  mutate(y=0.5)
+
+ggplot(data=year_of_collapse_data %>% 
+  filter(unit_name=="Mexico") ) +
 #  geom_histogram(aes(x=collapse_year,fill=scn)) +
   stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
               geom = "step") +
@@ -85,7 +189,6 @@ ggplot(data=plot_data) +
   theme(legend.position = "none")
 
 ```
-
 Focusing on the 50 year time frame between 2020 and 2070 we find that `r sprintf("%0.1f %%", ecdf(plot_data$collapse_year)(2070)*100)` of the models end in collapse. Uncertainty in mass estimates (mean absolute deviation) do not have a major effect on the estimated year of collapse. Considering each scenarios separately, the proportion of models that predict collapse by 2070 is higher than 50% (threshold for CR) in all cases, except for scenario SSP1-2.6.
 
 Criterion E is evaluated as **Critically Endangered**.
