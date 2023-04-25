@@ -1,13 +1,11 @@
 #! R --no-save --no-restore
 
 source(sprintf("%s/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.R", Sys.getenv("HOME")))
-output.dir <- sprintf("%s/%s/",gis.out,projectname)
 
 library(dplyr)
 library(osfr)
 
-here::i_am("inc/R/05-upload-files-to-OSF.R")
-#target.dir <- tempdir()
+here::i_am("inc/R/11-download-files-from-OSF.R")
 target.dir <- "sandbox"
 if (!file.exists(here::here(target.dir)))
   dir.create(here::here(target.dir))
@@ -32,33 +30,6 @@ global_data_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 idx <- my_project_components %>% filter(name %in% "Environmental suitability model for Tropical Glacier Ecosystems") %>%
   pull(id) 
 env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
-
-
-## First upload to data component
-
-file_to_upload <- sprintf("%s/OUTPUT/current-bioclim-data-all-groups.rda", output.dir)
-
-data_file  <- osf_upload(global_data_comp, 
-                         path = file_to_upload,
-                         conflicts = conflict_answer
-)
-
-
-## Now upload the result table in env model component
-
-file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds", output.dir)
-
-data_file  <- osf_upload(env_suitability_comp, 
-                         path = file_to_upload,
-                         conflicts = conflict_answer
-)
-
-file_to_upload <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", output.dir)
-
-data_file  <- osf_upload(env_suitability_comp, 
-                         path = file_to_upload,
-                         conflicts = conflict_answer
-)
 
 ## Download/update our target directory
 
