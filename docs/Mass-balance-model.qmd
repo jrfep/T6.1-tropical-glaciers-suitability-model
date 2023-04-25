@@ -223,23 +223,61 @@ ggplot(dats) +
 Very simple model
 ```{r}
 
+slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
+dat1 <- RS_results %>% 
+  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2040,
+    timeframe %in% "2041-2070"~2070,
+    timeframe %in% "2071-2100"~2100
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(unit,scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
+  ungroup %>%
+  transmute(unit_name=str_replace_all(unit,"-"," "),scn,threshold,year,RS)
+
+dat2 <- totalmass_year_data %>% 
+  filter(year %in% c(2000,2040,2070,2100)) %>% 
+  filter(unit_name %in% slc_unit) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  ungroup %>% 
+  transmute(unit_name,scn,threshold="MBM",year,RS)
+
+
 dats <- dat1 %>% 
   bind_rows(dat2) %>% 
   mutate(
   yr=(year-2040)/30, 
   mtd=factor(threshold,levels=c("MBM","acc","ess")))
 
-mod1 <- lm(RS ~ yr + mtd + scn, data = dats)
-mod2 <- lm(RS ~ yr + mtd * scn, data = dats)
+#mod1 <- lm(RS ~ yr + mtd + scn, data = dats)
+#mod2 <- lm(RS ~ yr + mtd * scn, data = dats)
 
 ```
 
 a mixed effect model with units and replicates as random effects would make more sense (and binomial family?)
 
+Using a beta family  is probably best given the RS is related to a proportion not a binomial outcome.
+suggestion is to use glmmTMB:
+- https://stats.stackexchange.com/questions/233366/how-to-fit-a-mixed-model-with-response-variable-between-0-and-1
+
+The problem is that we have values of 1 (collapse), a solution is to:
+> However, you can construct this model yourself with a bit more effort, since (unlike in discrete-count models) the three components (y==0, 0<y<1, y==1) are completely disjoint: a) fit a logistic model for "zero vs non-zero", b) fit a logistic model for "non-one vs one", c) fit a Beta model for the non-zero, non-one data. This will be equivalent (but more cumbersome) to fitting a combination zero-one-inflated model. The log-likelihood will be the sum of the three log-likelihoods.
+
+- https://github.com/glmmTMB/glmmTMB/issues/660
+
 ```{r}
 
 require(lme4)
+mod1 <- lmer(RS ~ yr + mtd + scn + (1|unit_name), data = dats)
 
+require(glmmTMB)
+mod1A <- glmmTMB(RS ~ yr + mtd + scn + (1|unit_name), data = subset(dats,RS<1), family=beta_family)
+mod1B <- glmmTMB((RS==1) ~ yr + mtd + scn + (1|unit_name), data = dats, family=binomial)
+
+             
 ```
 
 
