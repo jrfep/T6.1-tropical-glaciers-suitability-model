@@ -15,6 +15,7 @@ library(units)
 library(stringr)
 library(ggrepel)
 library(purrr)
+library(readr)
 here::i_am("docs/Mass-balance-model.qmd")
 # sessionInfo()
 
@@ -26,6 +27,8 @@ here::i_am("docs/Mass-balance-model.qmd")
 target.dir <- "sandbox"
 results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE)
 source(here::here("inc","R","RS-functions.R"))
 ```
 
@@ -77,14 +80,31 @@ The values used here are the output values (ice mass \pm median absolute deviati
 
 
 ```{r}
-RSts <- function(years, values, init_year = 2000, collapse_threshold=0) {
+RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax) {
   IV <- values[years==init_year]
   FV <- values[years>init_year]
   CT <- collapse_threshold
   OD <- IV -FV
   MD <- IV - CT
   RS <- OD/MD
-  return(tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS))
+  res <- tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS)
+  if (!missing(vmin)) {
+    IV <- vmin[years==init_year]
+    FV <- vmin[years>init_year]
+    OD <- IV -FV
+    MD <- IV - CT
+    RS <- OD/MD
+    res <- res %>% bind_cols(tibble(IV_min=IV,FV_min=FV,OD_min=OD,MD_min=MD,RS_min=RS))
+  }
+  if (!missing(vmax)) {
+    IV <- vmax[years==init_year]
+    FV <- vmax[years>init_year]
+    OD <- IV -FV
+    MD <- IV - CT
+    RS <- OD/MD
+    res <- res %>% bind_cols(tibble(IV_max=IV,FV_max=FV,OD_max=OD,MD_max=MD,RS_max=RS))
+  }
+  return(res)
 }
 ```
 
@@ -92,14 +112,133 @@ RSts <- function(years, values, init_year = 2000, collapse_threshold=0) {
 Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
 
 ```{r}
+
+#RSvals <- totalmass_year_data %>% 
+#  filter(unit_name %in% "Cordillera de Merida") %>%
+#  group_by(model_nr,scn) %>% 
+#  group_split() %>%
+#  map(~RSts(.x$year,.x$mean_mass)) %>% 
+#  bind_rows()
+
 RSvals <- totalmass_year_data %>% 
-  filter(unit_name %in% "Cordillera de Merida",scn == "SSP1-2.6") %>%
-  split(.$model_nr) %>%
-  map(~RSts(.x$year,.x$mean_mass))
+  filter(unit_name %in% c("Cordilleras de Colombia",
+                          "Sierra Nevada de Santa Marta", 
+                          "Cordilleras Norte de Peru" ,
+                          "Ecuador")) %>%
+#  filter(unit_name %in% c("Ecuador")) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
+
+ggplot(RSvals) +
+  ## geom error bar is small compared to intermodel variability, keep out of the plot
+  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
+  facet_grid(scn~unit_name) +
+  theme(legend.position = "none")
+
+RSvals%>% filter(year==2100) %>% select(RS,RS_min,RS_max) %>%
+  ggplot() +
+  geom_histogram(aes(x=RS,fill=scn))
 
 
-ggplot(RSvals[[5]]) +
-  geom_point(aes(x=year,y=RS))
+RSvals%>% ungroup %>% filter(year==2100) %>% 
+  group_by(unit_name,scn) %>% 
+  summarise(RS=median(RS),RS_lower=min(RS_max),RS_upper=max(RS_min)) 
+
+```
+
+
+
+
+
+```{r}
+slc_unit <- "Ecuador"
+dat1 <- RS_results %>% 
+  filter(unit %in% slc_unit, threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2025,
+    timeframe %in% "2041-2070"~2055,
+    timeframe %in% "2071-2100"~2085
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor))
+
+dat2 <- totalmass_year_data %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) 
+
+ggplot(dat2) +
+  annotate("rect",
+           xmin=c(2011,2041,2071),
+           ymin=0,
+           xmax=c(2040,2070,2100),
+           ymax=1,
+           fill="pink4",alpha=.15) +
+  geom_point(aes(x=year,y=RS),alpha=.50,cex=.5) +
+  geom_boxplot(data=dat1,
+               aes(y = RSmean, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,timeframe))) + 
+  facet_grid(scn~.) 
+```
+
+
+```{r}
+slc_unit <- "Ecuador"
+slc_unit <- "Cordilleras Norte de Peru"
+dat1 <- RS_results %>% 
+  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2040,
+    timeframe %in% "2041-2070"~2070,
+    timeframe %in% "2071-2100"~2100
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
+  ungroup %>%
+  select(scn,threshold,year,RS)
+
+dat2 <- totalmass_year_data %>% 
+  filter(year %in% c(2000,2040,2070,2100)) %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  ungroup %>% 
+  transmute(scn,threshold="MBM",year,RS)
+
+dats <- dat1 %>% bind_rows(dat2)
+ggplot(dats) +
+  geom_boxplot(data=dats,
+               aes(y = RS, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,year))) + 
+  facet_grid(scn~.) 
+```
+
+Very simple model
+```{r}
+
+dats <- dat1 %>% 
+  bind_rows(dat2) %>% 
+  mutate(
+  yr=(year-2040)/30, 
+  mtd=factor(threshold,levels=c("MBM","acc","ess")))
+
+mod1 <- lm(RS ~ yr + mtd + scn, data = dats)
+mod2 <- lm(RS ~ yr + mtd * scn, data = dats)
+
+```
+
+a mixed effect model with units and replicates as random effects would make more sense (and binomial family?)
+
+```{r}
+
+require(lme4)
 
 ```
 
