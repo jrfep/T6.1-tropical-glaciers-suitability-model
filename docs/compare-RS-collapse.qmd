@@ -1,0 +1,356 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: load libraries and functions
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+#library(purrr)
+library(readr)
+require(glmmTMB)
+require(lme4)
+here::i_am("docs/Mass-balance-model.qmd")
+#sessionInfo()
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+#| label: read input data 
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
+  mutate(unit_name=str_replace_all(unit," ","-"))
+```
+
+
+```{r}
+#| label: ggplot theme
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+```
+
+```{r}
+#| label: year of collapse and total mass from mass balance data
+year_of_collapse_data <- massbalance_results %>% 
+    mutate(
+      ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+      non_collapsed=if_else(mass>0,year,2000),
+           max_non_collapsed=if_else(mass+mad>0,year,2000),
+           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
+    group_by(unit_name,ssp,model_nr) %>% 
+    summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
+              max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+              min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
+
+totalmass_year_data <- {
+  massbalance_results %>% 
+    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+           mass=set_units(mass,'kg') %>% 
+             set_units("Mt"),
+           mad=set_units(mad,'kg') %>% 
+             set_units("Mt")) %>% 
+    drop_units() %>% 
+    group_by(unit_name,year,scn,model_nr) %>% 
+    summarise(mean_mass=sum(mass,na.rm=T),
+              max_mass=sum(mass+mad,na.rm=T),
+              min_mass=sum(mass-mad,na.rm=T))
+  }
+```
+
+
+Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
+
+```{r}
+#| label: apply RSts function
+# alternative with purrr:
+#RSvals <- totalmass_year_data %>% 
+#  filter(unit_name %in% "Cordillera de Merida") %>%
+#  group_by(model_nr,scn) %>% 
+#  group_split() %>%
+#  map(~RSts(.x$year,.x$mean_mass)) %>% 
+#  bind_rows()
+
+RSvals <- totalmass_year_data %>% 
+  filter(unit_name %in% c("Cordilleras de Colombia",
+                          "Sierra Nevada de Santa Marta", 
+                          "Cordilleras Norte de Peru" ,
+                          "Ecuador")) %>%
+#  filter(unit_name %in% c("Ecuador")) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
+
+ggplot(RSvals) +
+  ## geom error bar is small compared to intermodel variability, keep out of the plot
+  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
+  facet_grid(scn~unit_name) +
+  theme(legend.position = "none")
+
+```
+
+
+```{r}
+
+RSvals%>% filter(year==2100) %>% select(RS,RS_min,RS_max) %>%
+  ggplot() +
+  geom_histogram(aes(x=RS,fill=scn))
+
+
+```
+
+```{r}
+
+RSvals%>% ungroup %>% filter(year==2100) %>% 
+  group_by(unit_name,scn) %>% 
+  summarise(RS=median(RS),RS_lower=min(RS_max),RS_upper=max(RS_min)) 
+
+```
+
+
+```{r}
+slc_unit <- "Ecuador"
+dat1 <- RS_results %>% 
+  filter(unit %in% slc_unit, threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2025,
+    timeframe %in% "2041-2070"~2055,
+    timeframe %in% "2071-2100"~2085
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor))
+
+dat2 <- totalmass_year_data %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) 
+
+ggplot(dat2) +
+  annotate("rect",
+           xmin=c(2011,2041,2071),
+           ymin=0,
+           xmax=c(2040,2070,2100),
+           ymax=1,
+           fill="pink4",alpha=.15) +
+  geom_point(aes(x=year,y=RS),alpha=.50,cex=.5) +
+  geom_boxplot(data=dat1,
+               aes(y = RSmean, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,timeframe))) + 
+  facet_grid(scn~.) 
+```
+
+
+```{r}
+slc_unit <- "Ecuador"
+slc_unit <- "Cordilleras Norte de Peru"
+dat1 <- RS_results %>% 
+  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2040,
+    timeframe %in% "2041-2070"~2070,
+    timeframe %in% "2071-2100"~2100
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
+  ungroup %>%
+  select(scn,threshold,year,RS)
+
+dat2 <- totalmass_year_data %>% 
+  filter(year %in% c(2000,2040,2070,2100)) %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  ungroup %>% 
+  transmute(scn,threshold="MBM",year,RS)
+
+dats <- dat1 %>% bind_rows(dat2)
+ggplot(dats) +
+  geom_boxplot(data=dats,
+               aes(y = RS, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,year))) + 
+  facet_grid(scn~.) 
+```
+
+Very simple model
+```{r}
+
+#slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
+dat1 <- RS_results %>% 
+  # filter(unit_name %in% slc_unit) %>%
+  filter(threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2040,
+    timeframe %in% "2041-2070"~2070,
+    timeframe %in% "2071-2100"~2100
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(unit,scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
+  ungroup %>%
+  transmute(unit_name=str_replace_all(unit,"-"," "), 
+            scn, threshold, year, RS)
+
+dat2 <- totalmass_year_data %>% 
+  filter(year %in% c(2000,2040,2070,2100)) %>% 
+  # filter(unit_name %in% slc_unit) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  ungroup %>% 
+  transmute(unit_name,scn,threshold="MBM",year,RS)
+
+
+dats <- dat1 %>% 
+  bind_rows(dat2) %>% 
+  mutate(
+  yr=(year-2040)/30, 
+  mtd=factor(threshold,levels=c("MBM","acc","ess")))
+
+#mod1 <- lm(RS ~ yr + mtd + scn, data = dats)
+#mod2 <- lm(RS ~ yr + mtd * scn, data = dats)
+
+```
+
+a mixed effect model with units and replicates as random effects would make more sense (and binomial family?)
+
+Using a beta family  is probably best given the RS is related to a proportion not a binomial outcome.
+suggestion is to use glmmTMB:
+- https://stats.stackexchange.com/questions/233366/how-to-fit-a-mixed-model-with-response-variable-between-0-and-1
+
+The problem is that we have values of 1 (collapse), a solution is to:
+> However, you can construct this model yourself with a bit more effort, since (unlike in discrete-count models) the three components (y==0, 0<y<1, y==1) are completely disjoint: a) fit a logistic model for "zero vs non-zero", b) fit a logistic model for "non-one vs one", c) fit a Beta model for the non-zero, non-one data. This will be equivalent (but more cumbersome) to fitting a combination zero-one-inflated model. The log-likelihood will be the sum of the three log-likelihoods.
+
+- https://github.com/glmmTMB/glmmTMB/issues/660
+
+
+
+We used a generalised linear mixed effect model (GLMM) to test the effect of the choice of indicator in predicting collapse (RS=1) and the magnitude of decline (value of RS). In all models we included fixed effects of the scenarios and time frame, and random effects of the assessment units. 
+
+We considered three different indicators: (a) RS of the loss of ice mass with $CT=0 \mathrm{kg}$ for the years 2040, 2070 and 2100, and RS of the decline in suitability for three timeframes (2011-2040, 2041-2070, 2070-2100), using (b) the $CT$ of maximum accuracy, and (c) the $CT$ of equal sensitivity and specificity. The time frames were coded as values 0, 1 and 2, respectively.
+
+We considered that the indicator could have both a fixed (systematic effect or bias) and a random effect (increased variability) in both collapse and magnitude of RS. We used a binomial GLMM with logit link function to test the proportion of models reaching collapse (using $y=1$ if $RS=1$ and $y=0$ otherwise), and a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. 
+
+
+```{r}
+
+## with lme4
+#mod2 <- glmer((RS==1) ~ yr + mtd + scn + (1|unit_name), 
+#             family = binomial,
+#             data = dats) # no significant fixed effects
+
+mod_degradation_sat <- 
+  glmmTMB(RS ~ yr + mtd + scn + (1|unit_name/mtd), 
+          data = subset(dats,RS<1), 
+          family=beta_family,
+          REML=FALSE)
+mod_degradation_disp <- 
+  update(mod_degradation_sat, 
+         dispformula=~mtd)
+
+mod_degradation_rand <- 
+  glmmTMB(RS ~ yr + scn + (1|unit_name/mtd), 
+       data = subset(dats,RS<1), 
+       family=beta_family,
+       REML=FALSE)
+
+## nested effects makes more sense and much better AIC
+mod_collapse_sat <- 
+  glmmTMB((RS==1) ~ yr + mtd + scn + (1|unit_name/mtd), 
+       data = dats, 
+       family=binomial,
+       REML=FALSE)
+mod_collapse_disp <- 
+  update(mod_collapse_sat, dispformula=~mtd)
+mod_collapse_rand <- 
+  glmmTMB((RS==1) ~ yr + scn + (1|unit_name/mtd), 
+     data = dats, 
+     family=binomial,
+     REML=FALSE)
+
+
+```
+
+The effect of the choice of indicator was different for the prediction of collapse and the magnitude of RS. There is no significant difference between the indicators in the proportion of models predicting collapse, and in the model without fixed effects of indicator, we found that the indicator explains a similar proportion of the random variance as the unit of assessment.
+
+```{r}
+sigma(mod_degradation_sat )
+
+bbmle::AICtab(mod_degradation_sat,
+              mod_degradation_disp,
+              mod_degradation_rand)
+MuMIn::r.squaredGLMM(mod_degradation_sat)
+
+```
+
+For the magnitude of RS there is a significant fixed effect in the magnitude of RS, but a minor effect on the variance. The model suggest a significant underestimation of the indicators based on suitability compared with the ice mass indicator.
+
+
+```{r}
+bbmle::AICtab(mod_collapse_sat,
+              mod_collapse_disp,
+              mod_collapse_rand)
+MuMIn::r.squaredGLMM(mod_collapse_sat)
+summary(mod_collapse_sat)
+```
+
+Diagnostics of the fitted model
+```{r}
+require(DHARMa)
+mod_collapse_simres<-simulateResiduals(mod_collapse_sat)
+plot(mod_collapse_simres)
+testDispersion(mod_collapse_simres)
+outliers(mod_collapse_simres)
+testUniformity(mod_collapse_simres)
+
+```
+
+```{r}
+require(DHARMa)
+mod_degradation_simres<-simulateResiduals(mod_degradation_sat)
+
+plot(mod_degradation_simres)
+testDispersion(mod_degradation_simres)
+
+outliers(mod_degradation_simres)
+testUniformity(mod_degradation_simres)
+
+## not sure if this makes sense
+mod_degradation_simres2 <- recalculateResiduals(mod_degradation_simres, group = mod_degradation_sat$frame$unit_name)
+testUniformity(mod_degradation_simres2)
+##plot(mod_degradation_simres2) 
+
+plot_data <- tibble(fittedPredictedResponse = mod_degradation_simres$fittedPredictedResponse,
+       unit_name = mod_degradation_sat$frame$unit_name,
+       scn = mod_degradation_sat$frame$scn)
+ggplot(plot_data) +
+  geom_boxplot(aes(y=fittedPredictedResponse,
+                   group=interaction(scn,unit_name))) +
+  facet_wrap(~scn)
+
+rr <- ranef(mod_degradation_sat)
+#print(rr, simplify=FALSE)
+## extract Subject conditional modes for conditional model
+x <- rr$cond$unit_name %>% pull(`(Intercept)`)
+
+rr <- ranef(mod_collapse_sat)
+y <- rr$cond$unit_name %>% pull(`(Intercept)`)
+
+```

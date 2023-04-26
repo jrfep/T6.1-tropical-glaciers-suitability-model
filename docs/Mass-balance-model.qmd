@@ -6,6 +6,7 @@ editor_options:
 
 
 ```{r}
+#| label: load libraries and functions
 #| eval: true
 #| echo: false
 #| message: false
@@ -18,31 +19,28 @@ library(purrr)
 library(readr)
 here::i_am("docs/Mass-balance-model.qmd")
 # sessionInfo()
-
+source(here::here("inc","R","RS-functions.R"))
 ```
 
 ```{r}
+#| label: read input data 
 #| eval: true
 #| message: false
 target.dir <- "sandbox"
 results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE)
-source(here::here("inc","R","RS-functions.R"))
 ```
 
 
-
 ```{r}
-
+#| label: ggplot theme
 old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
-
 ```
 
 ```{r}
+#| label: year of collapse and total mass from mass balance data
 year_of_collapse_data <- massbalance_results %>% 
     mutate(
       ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
@@ -79,207 +77,6 @@ According to the published methods [@Rounce_2023_MassBalance_Global]:
 The values used here are the output values (ice mass \pm median absolute deviation) of the model for the four glacier outlines of the Randolph Glacier Inventory for the cordillera de Mérida downloaded from @Rounce_2022_MassBalance_Global_Data and presented in @fig-Ea. These values clearly overestimate the existing ice mass but we focus the analysis on the point of collapse and not on the mass value _per se_.
 
 
-```{r}
-RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax) {
-  IV <- values[years==init_year]
-  FV <- values[years>init_year]
-  CT <- collapse_threshold
-  OD <- IV -FV
-  MD <- IV - CT
-  RS <- OD/MD
-  res <- tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS)
-  if (!missing(vmin)) {
-    IV <- vmin[years==init_year]
-    FV <- vmin[years>init_year]
-    OD <- IV -FV
-    MD <- IV - CT
-    RS <- OD/MD
-    res <- res %>% bind_cols(tibble(IV_min=IV,FV_min=FV,OD_min=OD,MD_min=MD,RS_min=RS))
-  }
-  if (!missing(vmax)) {
-    IV <- vmax[years==init_year]
-    FV <- vmax[years>init_year]
-    OD <- IV -FV
-    MD <- IV - CT
-    RS <- OD/MD
-    res <- res %>% bind_cols(tibble(IV_max=IV,FV_max=FV,OD_max=OD,MD_max=MD,RS_max=RS))
-  }
-  return(res)
-}
-```
-
-
-Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
-
-```{r}
-
-#RSvals <- totalmass_year_data %>% 
-#  filter(unit_name %in% "Cordillera de Merida") %>%
-#  group_by(model_nr,scn) %>% 
-#  group_split() %>%
-#  map(~RSts(.x$year,.x$mean_mass)) %>% 
-#  bind_rows()
-
-RSvals <- totalmass_year_data %>% 
-  filter(unit_name %in% c("Cordilleras de Colombia",
-                          "Sierra Nevada de Santa Marta", 
-                          "Cordilleras Norte de Peru" ,
-                          "Ecuador")) %>%
-#  filter(unit_name %in% c("Ecuador")) %>%
-  group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
-
-ggplot(RSvals) +
-  ## geom error bar is small compared to intermodel variability, keep out of the plot
-  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
-  facet_grid(scn~unit_name) +
-  theme(legend.position = "none")
-
-RSvals%>% filter(year==2100) %>% select(RS,RS_min,RS_max) %>%
-  ggplot() +
-  geom_histogram(aes(x=RS,fill=scn))
-
-
-RSvals%>% ungroup %>% filter(year==2100) %>% 
-  group_by(unit_name,scn) %>% 
-  summarise(RS=median(RS),RS_lower=min(RS_max),RS_upper=max(RS_min)) 
-
-```
-
-
-
-
-
-```{r}
-slc_unit <- "Ecuador"
-dat1 <- RS_results %>% 
-  filter(unit %in% slc_unit, threshold %in% c("acc","ess")) %>% 
-  mutate(year=case_when(
-    timeframe %in% "2011-2040"~2025,
-    timeframe %in% "2041-2070"~2055,
-    timeframe %in% "2071-2100"~2085
-    ),
-    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
-  group_by(scn,threshold,timeframe,year,modelname) %>%
-  summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor))
-
-dat2 <- totalmass_year_data %>% 
-  filter(unit_name %in% c(slc_unit)) %>%
-  group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) 
-
-ggplot(dat2) +
-  annotate("rect",
-           xmin=c(2011,2041,2071),
-           ymin=0,
-           xmax=c(2040,2070,2100),
-           ymax=1,
-           fill="pink4",alpha=.15) +
-  geom_point(aes(x=year,y=RS),alpha=.50,cex=.5) +
-  geom_boxplot(data=dat1,
-               aes(y = RSmean, 
-                   x = year, 
-                   colour=threshold, 
-                   group=interaction(threshold,timeframe))) + 
-  facet_grid(scn~.) 
-```
-
-
-```{r}
-slc_unit <- "Ecuador"
-slc_unit <- "Cordilleras Norte de Peru"
-dat1 <- RS_results %>% 
-  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
-  mutate(year=case_when(
-    timeframe %in% "2011-2040"~2040,
-    timeframe %in% "2041-2070"~2070,
-    timeframe %in% "2071-2100"~2100
-    ),
-    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
-  group_by(scn,threshold,timeframe,year,modelname) %>%
-  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
-  ungroup %>%
-  select(scn,threshold,year,RS)
-
-dat2 <- totalmass_year_data %>% 
-  filter(year %in% c(2000,2040,2070,2100)) %>% 
-  filter(unit_name %in% c(slc_unit)) %>%
-  group_by(model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
-  ungroup %>% 
-  transmute(scn,threshold="MBM",year,RS)
-
-dats <- dat1 %>% bind_rows(dat2)
-ggplot(dats) +
-  geom_boxplot(data=dats,
-               aes(y = RS, 
-                   x = year, 
-                   colour=threshold, 
-                   group=interaction(threshold,year))) + 
-  facet_grid(scn~.) 
-```
-
-Very simple model
-```{r}
-
-slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
-dat1 <- RS_results %>% 
-  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
-  mutate(year=case_when(
-    timeframe %in% "2011-2040"~2040,
-    timeframe %in% "2041-2070"~2070,
-    timeframe %in% "2071-2100"~2100
-    ),
-    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
-  group_by(unit,scn,threshold,timeframe,year,modelname) %>%
-  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
-  ungroup %>%
-  transmute(unit_name=str_replace_all(unit,"-"," "),scn,threshold,year,RS)
-
-dat2 <- totalmass_year_data %>% 
-  filter(year %in% c(2000,2040,2070,2100)) %>% 
-  filter(unit_name %in% slc_unit) %>%
-  group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
-  ungroup %>% 
-  transmute(unit_name,scn,threshold="MBM",year,RS)
-
-
-dats <- dat1 %>% 
-  bind_rows(dat2) %>% 
-  mutate(
-  yr=(year-2040)/30, 
-  mtd=factor(threshold,levels=c("MBM","acc","ess")))
-
-#mod1 <- lm(RS ~ yr + mtd + scn, data = dats)
-#mod2 <- lm(RS ~ yr + mtd * scn, data = dats)
-
-```
-
-a mixed effect model with units and replicates as random effects would make more sense (and binomial family?)
-
-Using a beta family  is probably best given the RS is related to a proportion not a binomial outcome.
-suggestion is to use glmmTMB:
-- https://stats.stackexchange.com/questions/233366/how-to-fit-a-mixed-model-with-response-variable-between-0-and-1
-
-The problem is that we have values of 1 (collapse), a solution is to:
-> However, you can construct this model yourself with a bit more effort, since (unlike in discrete-count models) the three components (y==0, 0<y<1, y==1) are completely disjoint: a) fit a logistic model for "zero vs non-zero", b) fit a logistic model for "non-one vs one", c) fit a Beta model for the non-zero, non-one data. This will be equivalent (but more cumbersome) to fitting a combination zero-one-inflated model. The log-likelihood will be the sum of the three log-likelihoods.
-
-- https://github.com/glmmTMB/glmmTMB/issues/660
-
-```{r}
-
-require(lme4)
-mod1 <- lmer(RS ~ yr + mtd + scn + (1|unit_name), data = dats)
-
-require(glmmTMB)
-mod1A <- glmmTMB(RS ~ yr + mtd + scn + (1|unit_name), data = subset(dats,RS<1), family=beta_family)
-mod1B <- glmmTMB((RS==1) ~ yr + mtd + scn + (1|unit_name), data = dats, family=binomial)
-
-             
-```
-
 
 ```{r}
 #| label: fig-Ea
@@ -288,16 +85,17 @@ mod1B <- glmmTMB((RS==1) ~ yr + mtd + scn + (1|unit_name), data = dats, family=b
 
 # "Kilimanjaro", "Ecuador", "Mexico"
 
-
-ggplot(data=totalmass_year_data %>% filter(unit_name == "Cordillera de Merida"), aes(x=year,y=mean_mass)) +
-  geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
-                 position=position_dodge(.9),
+totalmass_year_data %>% 
+  filter(unit_name == "Cordillera de Merida") %>%
+  ggplot(aes(x=year,y=mean_mass)) +
+    geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
+                  position=position_dodge(.9),
                 alpha=.5,col="gray") +
-	 geom_point(aes(colour=scn),cex=.5) +
-	 facet_wrap(.~scn) +
-  ylab("Projected annual mass of ice [Mt]") +
-  xlab("Year") + 
-  theme(legend.position = "none")
+    geom_point(aes(colour=scn),cex=.5) +
+    facet_wrap(.~scn) +
+    ylab("Projected annual mass of ice [Mt]") +
+    xlab("Year") + 
+    theme(legend.position = "none")
 
 ```
 

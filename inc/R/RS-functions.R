@@ -55,3 +55,30 @@ RSvExt <- function(RSvals) {
   z <-tibble(RS=100-x,Extent=y*100)
   return(z)
 }
+
+RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax) {
+  IV <- values[years==init_year]
+  FV <- values[years>init_year]
+  CT <- collapse_threshold
+  OD <- IV -FV
+  MD <- IV - CT
+  RS <- OD/MD
+  res <- tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS)
+  if (!missing(vmin)) {
+    IV <- vmin[years==init_year]
+    FV <- vmin[years>init_year]
+    OD <- IV -FV
+    MD <- IV - CT
+    RS <- OD/MD
+    res <- res %>% bind_cols(tibble(IV_min=IV,FV_min=FV,OD_min=OD,MD_min=MD,RS_min=RS))
+  }
+  if (!missing(vmax)) {
+    IV <- vmax[years==init_year]
+    FV <- vmax[years>init_year]
+    OD <- IV -FV
+    MD <- IV - CT
+    RS <- OD/MD
+    res <- res %>% bind_cols(tibble(IV_max=IV,FV_max=FV,OD_max=OD,MD_max=MD,RS_max=RS))
+  }
+  return(res)
+}

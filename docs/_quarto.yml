@@ -8,12 +8,17 @@ book:
   date: "2023-04-03"
   chapters:
     - index.qmd
-    - part: "Suitability model"
+    - part: "Assessment units"
       chapters:
-        - RS-formula.qmd
+        - TGE-units.qmd
+    - part: "Indicators of collapse"
+      chapters:
+        - Mass-balance-model.qmd
     - part: "Relative Severity"
       chapters:
+        - RS-formula.qmd
         - viz-RS-per-unit.qmd
+        - compare-RS-collapse.qmd
     - references.qmd
   appendices:
     - general-workflow.qmd
