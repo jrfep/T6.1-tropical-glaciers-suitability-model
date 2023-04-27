@@ -4,6 +4,16 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+## Original RS formula
+
+The original Relative Severity formula is given by:
+
+$$
+\mathrm{RS} =
+    \frac{\mathrm{OD}}{\mathrm{MD}} =
+    \frac{V_{0} - V_{F}}{V_{0} - V_{C}}
+$$
+Where $V_{0}$ is the initial value of the indicator, $V_{F}$ is the final value, and $V_{C}$ is the collapse threshold. 
 
 
 ```{r}
@@ -40,38 +50,10 @@ panel.grid.major = element_line(colour = "rosybrown3"))
 
 ```
 
-The original Relative Severity formula is given by:
-
-$$
-\mathrm{RS} =
-    \frac{\mathrm{OD}}{\mathrm{MD}} =
-    \frac{V_{0} - V_{F}}{V_{0} - V_{C}}
-$$
-Where $V_{0}$ is the initial value of the indicator, $V_{F}$ is the final value, and $V_{C}$ is the collapse threshold. 
+### Visualisation of initial and final values
 
 We can use a simple plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visualise the different situations that arise when measure change in time in terms of the values of RS (@fig-interpretation). For risk assessment we are mostly interested in what happens in the lower right half of the plot, i.e. degradation and collapse during the period of observation. Fringe results (small improvements or initial values below the collapse threshold) should not influence the main outcomes of the assessment. However in practice, the application of the original RS formula can produce very unexpected and uninformative results, especially in the left side of the plot, where the initial values are below the collapse threshold.
 
-
-There are several inconveniences with this formulation:
-
-- if $V_{F}>V_{0}$ the value of $\mathrm{OD}$ is negative and $\mathrm{RS}$ is negative, but the magnitude can change dramatically with different values of $\mathrm{MD}$,
-- if $V_{C}>V_{0}$ the value of $\mathrm{MD}$ is negative and $\mathrm{RS}$ is also negative,
-- if both $V_{C}>V_{0}$ and $V_{F}>V_{0}$ the value of  $\mathrm{OD}$ and $\mathrm{MD}$ are negative and $\mathrm{RS}$ is positive,
-- if $|\mathrm{OD}| > |\mathrm{MD}|$ the value of $\mathrm{RS}$ increases disproportionatly.
-
-This means that negative values of RS can have completely different meanings.
-
-We propose to use a conditional formula to avoid artifacts:
-
-$$
-\mathrm{RS}_{cor}=
-    \begin{cases}
-      0, & \text{if}\ V_{0} ≤ V_{F} \\
-      \mathrm{OD}/\mathrm{MD}, & \text{otherwise} \\
-      1, & \text{if}\ V_{0} ≤ V_{C} \\
-    \end{cases}
-$$
-This formula focuses on measuring degradation, and we suggest the use of alternative measures or indices for other purposes. Although values of $RS<0$ could be informative for indicating recovery or improvement, we argue that their magnitude would not be informative for decision making purposes and could be confusing. 
 
 
 ```{r}
@@ -99,7 +81,36 @@ ggplot(artificial_data) +
 
 ```
 
-We illustrate these problems and the differences between both formulas with some examples.
+### Problems
+
+There are several inconveniences with this formulation:
+
+- if $V_{F}>V_{0}$ the value of $\mathrm{OD}$ is negative and $\mathrm{RS}$ is negative, but the magnitude can change dramatically with different values of $\mathrm{MD}$,
+- if $V_{C}>V_{0}$ the value of $\mathrm{MD}$ is negative and $\mathrm{RS}$ is also negative,
+- if both $V_{C}>V_{0}$ and $V_{F}>V_{0}$ the value of  $\mathrm{OD}$ and $\mathrm{MD}$ are negative and $\mathrm{RS}$ is positive,
+- if $|\mathrm{OD}| > |\mathrm{MD}|$ the value of $\mathrm{RS}$ increases disproportionatly.
+
+This means that negative values of RS can have completely different meanings.
+
+## Conditional formula for RS
+
+We propose to use a conditional formula to avoid artifacts:
+
+$$
+\mathrm{RS}_{cor}=
+    \begin{cases}
+      0, & \text{if}\ V_{0} ≤ V_{F} \\
+      \mathrm{OD}/\mathrm{MD}, & \text{otherwise} \\
+      1, & \text{if}\ V_{0} ≤ V_{C} \\
+    \end{cases}
+$$
+
+This formula focuses on measuring degradation, and we suggest the use of alternative measures or indices for other purposes. Although values of $RS<0$ could be informative for indicating recovery or improvement, we argue that their magnitude would not be informative for decision making purposes and could be confusing. 
+
+
+## Examples
+
+We illustrate the differences between both formulas with some illustrative examples.
 
 ### Ruwenzori
 
@@ -173,7 +184,7 @@ In this unit, the positive predictive rate threshold if very high (0.698) and we
 ```{r}
 RS_results %>% 
   filter(
-    unit %in% "Rwenzori",
+    unit %in% "Ruwenzori",
     pathway %in% "ssp126",
     modelname %in% "mri-esm2-0",
     timeframe %in% "2041-2070",
@@ -202,7 +213,7 @@ RS_results %>%
 
 ```
 
-## Ecuador
+### Ecuador
 
 Let's consider now the case of the tropical glacier ecosystem of Ecuador. Here we have a larger sample due to the larger extent and number of glaciers. We focus here in the nearest time frame and see that some cells have larger final values than the initial values. With the conditional formula these units will be considered $RS=0$ and this means that the magnitude of the improvement is lost. The consequence of this interpretation for the risk assessment needs to be discussed in more detail, but it is unlikely to be of much consequence in this case study where the trend is overwhelmingly negative. For studied focused on ecosystem recovery, a negative value of $OD$ might be informative, but its relationship with the $MD$ could be explored in alternative ways.
 

@@ -4,8 +4,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Projection of Ice Mass Balance
-
 
 ```{r}
 #| label: load libraries and functions
@@ -19,13 +17,9 @@ library(stringr)
 library(ggrepel)
 library(purrr)
 library(readr)
-library(tidyr)
 here::i_am("docs/Mass-balance-model.qmd")
 # sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
-# Suppress summarise info
-#options(dplyr.summarise.inform = FALSE)
-# or use the .groups argument as suggested
 ```
 
 ```{r}
@@ -33,12 +27,8 @@ source(here::here("inc","R","RS-functions.R"))
 #| eval: true
 #| message: false
 target.dir <- "sandbox"
-#results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
-#massbalance_results <- readRDS(results_file)
-rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
-year_of_collapse_data <- readRDS(rds.file)
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
 ```
 
 
@@ -48,6 +38,35 @@ old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
 ```
+
+```{r}
+#| label: year of collapse and total mass from mass balance data
+year_of_collapse_data <- massbalance_results %>% 
+    mutate(
+      ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+      non_collapsed=if_else(mass>0,year,2000),
+           max_non_collapsed=if_else(mass+mad>0,year,2000),
+           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
+    group_by(unit_name,ssp,model_nr) %>% 
+    summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
+              max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+              min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
+
+totalmass_year_data <- {
+  massbalance_results %>% 
+    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+           mass=set_units(mass,'kg') %>% 
+             set_units("Mt"),
+           mad=set_units(mad,'kg') %>% 
+             set_units("Mt")) %>% 
+    drop_units() %>% 
+    group_by(unit_name,year,scn,model_nr) %>% 
+    summarise(mean_mass=sum(mass,na.rm=T),
+              max_mass=sum(mass+mad,na.rm=T),
+              min_mass=sum(mass-mad,na.rm=T))
+  }
+```
+
 
 We use ice mass balance projections for the glacier of the Cordillera de Mérida based on a glacier evolution model [@Rounce_2023_MassBalance_Global]. This hybrid model combines a mass balance module and a glacier dynamics module to model glaciers independently from 2000-2100 for various ensembles of Global Circulation Models and scenarios. 
 
@@ -76,23 +95,20 @@ totalmass_year_data %>%
     facet_wrap(.~scn) +
     ylab("Projected annual mass of ice [Mt]") +
     xlab("Year") + 
-    theme(legend.position = "none") 
+    theme(legend.position = "none")
 
 ```
 
-We use these mass projections to estimate the year of collapse (first year when mass reaches zero) for each combination of models and scenarios. The empirical cumulative distribution function of the year of collapse (@fig-ECDF-collapse-year) allow us to estimate the proportion of models indicating collapse for each year. 
+We use these mass projections to estimate the year of collapse (first year when mass reaches zero) for each combination of models and scenarios. The empirical cumulative distribution function of the year of collapse (@fig-Eb) allow us to estimate the proportion of models indicating collapse for each year. 
 
 
 ```{r}
-#| table-cap: Proportion of models predicting collapse by 2100 for each assessment unit.
-
 year_of_collapse_data %>% 
   group_by(unit_name,ssp) %>% 
   summarise(
     prob_collapse=mean(collapse_year<2100)*100,
     prob_min=mean(min_collapse_year<2100)*100,
-    prob_max=mean(max_collapse_year<2100)*100,
-              .groups="keep"
+    prob_max=mean(max_collapse_year<2100)*100
     ) %>%
   transmute(
     unit_name,ssp,
@@ -101,14 +117,13 @@ year_of_collapse_data %>%
       TRUE ~ sprintf("%0.1f (%0.1f -- %0.1f)", prob_collapse, prob_max, prob_min)
     )
   ) %>%
-  pivot_wider(names_from=ssp,values_from=prob_collapse) %>%
-  DT::datatable()
+  pivot_wider(names_from=ssp,values_from=prob_collapse)
 ```
 
 For nine units the massbalance models predict total loss of ice between 2040 and 2010
 
 ```{r}
-#| label: fig-Histogram-collapse-year
+#| label: fig-Eb
 #| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
 #| warning: false
 
@@ -123,8 +138,8 @@ ggplot(data=year_of_collapse_data %>% filter(collapse_year < 2100)) +
 
 
 ```{r}
-#| label: fig-ECDF-collapse-year
-#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines) for the assessment unit of the T.G.E. of Mexico.
+#| label: fig-Eb
+#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
 #| warning: false
 
 
@@ -132,8 +147,7 @@ label_xy <-
   year_of_collapse_data %>% 
   filter(unit_name=="Mexico") %>%
     group_by(ssp) %>% 
-  summarise(x=median(collapse_year),
-              .groups="keep") %>%
+  summarise(x=median(collapse_year)) %>%
   mutate(y=0.5)
 
 ggplot(data=year_of_collapse_data %>% 
@@ -150,7 +164,7 @@ ggplot(data=year_of_collapse_data %>%
   theme(legend.position = "none")
 
 ```
-Focusing on the 50 year time frame between 2020 and 2070 we find that ... of the models end in collapse. Uncertainty in mass estimates (mean absolute deviation) do not have a major effect on the estimated year of collapse. Considering each scenarios separately, the proportion of models that predict collapse by 2070 is higher than 50% (threshold for CR) in all cases, except for scenario SSP1-2.6.
+Focusing on the 50 year time frame between 2020 and 2070 we find that `r sprintf("%0.1f %%", ecdf(plot_data$collapse_year)(2070)*100)` of the models end in collapse. Uncertainty in mass estimates (mean absolute deviation) do not have a major effect on the estimated year of collapse. Considering each scenarios separately, the proportion of models that predict collapse by 2070 is higher than 50% (threshold for CR) in all cases, except for scenario SSP1-2.6.
 
 Criterion E is evaluated as **Critically Endangered**.
 

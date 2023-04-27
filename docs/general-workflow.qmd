@@ -10,7 +10,7 @@ editor_options:
 
 ### Consolidate input data
 
-```{sh}
+```bash
 #| eval: false
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
@@ -23,7 +23,7 @@ Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
 
 ### Run models for each unit
 
-```{sh}
+```bash
 #| eval: false
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
 cd $WORKDIR
@@ -33,7 +33,7 @@ qsub -J 1-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
 ```
 
 
-```{sh}
+```bash
 #| eval: false
 tree $GISOUT/$PROJECTNAME
 ```
@@ -41,7 +41,7 @@ tree $GISOUT/$PROJECTNAME
 ### Calculate Relative Severity
 
 
-```{sh}
+```bash
 #| eval: false
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/03-create-output-table-for-data-upload.R
 ```
@@ -50,13 +50,13 @@ Rscript --no-restore --no-save $SCRIPTDIR/inc/R/03-create-output-table-for-data-
 ### Read mass balance model results
 
 
-```{sh}
+```bash
 #| eval: false
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/06-massbalance-model-results.R
 ```
 
 ### Upload data to cloud repository
-```{sh}
+```bash
 #| eval: false
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/10-upload-files-to-OSF.R overwrite
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/11-download-files-from-OSF.R overwrite

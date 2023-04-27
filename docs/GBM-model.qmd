@@ -4,15 +4,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-
-```{r}
-
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-
-```
-
+## Bioclimatic suitability model
 
 For Criterion C we analysed the potential effect of climate change on the suitability of bioclimatic conditions for the presence of Tropical Glacier Ecosystems. We used a Gradient Boosting Machine (GBM) model to analyse the current climatic conditions in areas occupied by Tropical Glacier Ecosystems in all the tropics. Details of the model fitting and validation process are in preparation (Ferrer-Paris et al. MS), brief summary follows.
 
@@ -21,27 +13,6 @@ Occurrence records were selected using stratified random sampling from all the g
 We used 19 bioclimatic variables from the CHELSA dataset representing climatological mean values for present conditions (1981-2010) as predictor variables. Eight variables were excluded from the model due to high correlation to other variables. Variables were centered and scaled to zero mean and unit variance.
 
 We fitted the GBM model for classification (two classes: glacier or not-glacier) using a bernoulli error distribution, and evaluated the predictive performance of the final model on the target partition:
-
-```{r}
-#| echo: false
-#| eval: false
-
-##rda.results <- '../Rdata/gbm-model-Cordillera-de-Merida.rda'
-##load(rda.results)
-#model
-# plot(model)
-
-test.features = testing %>% dplyr::select(bio10_01:bio10_19)
-test.target = testing %>% pull(glacier)
-predictions = predict(model, newdata = test.features, type='prob')
-
-e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
-
-#e1
-# par(las=2)
-#summary(model)
-
-```
 
 We used the final fitted model to predict the suitability in the present timeframe (1981-2010) and future timeframes (2011-2040 and 2041-2071). We considered uncertainty due to climate change projections (five general circulation models and three representative pathways), and due to the choice of cut-off values to classify predicted suitability into binary score (glacier/non-glacier):
 

@@ -15,7 +15,7 @@ quarto preview docs
 Look for - https://github.com/citation-style-language/styles
 ```sh
 cd docs/bibtex
-wget https://github.com/citation-style-language/styles/blob/master/dependent/ecological-indicators.csl
+wget https://raw.githubusercontent.com/citation-style-language/styles/master/dependent/ecological-indicators.csl
 ```
 
 

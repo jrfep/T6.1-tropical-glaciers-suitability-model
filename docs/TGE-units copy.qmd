@@ -1,0 +1,214 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| warning: false
+#| message: false
+library(sf)
+require(leaflet)
+library(dplyr)
+library(ggplot2)
+
+here::i_am("docs/TGE-units.qmd")
+target.dir <- "sandbox"
+trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
+load(here::here(target.dir,"current-bioclim-data-all-groups.rda"))
+```
+
+```{r}
+#| eval: false
+
+## This code checks if the ids of the groups match
+
+input_bioclim_data <-
+    st_as_sf(
+        input_raster_data, 
+        coords = c("lon", "lat"), 
+        crs = 4326
+    )
+tst <- st_intersection(trop_glaz, slice_sample(input_bioclim_data,n=100)) 
+tst %>% transmute(test=id==id.1) %>% st_drop_geometry %>% pull %>% table
+```
+
+
+
+
+## Scope of the assessment
+
+This is a global and national assessment for this ecosystem unit. The assessment unit is defined in a global context but its whole distribution is contained in one country (Venezuela). Thus, the assessment outcomes will inform both global and national RLE initiatives.
+
+## Ecosystem description
+
+Tropical Glacier Ecosystems are cryogenic ecosystems in tropical environments where the main substrate is formed by ice accumulated over several years and provides different habitats to microbiological communities and other meso- and macro-biota.
+
+Tropical Glacier Ecosystems are originally formed by processes of snow and ice accumulation and ablation over geological time frames. However the characteristic microbiota can persist in the ice substrate even if processes of ice accumulation have ceased or the overall mass balance of ice is negative.
+
+The Tropical Glacier Ecosystem of the Cordillera de Mérida is geographically isolated from the nearest occurrences of Tropical Glacier Ecosystems in Colombia and has distinct bioclimatic characteristics.
+
+## Classification
+
+We use the IUCN Global Ecosystem Typology [@Keith_2020_Ecosystem_Typology] as a reference ecosystem classification system and identify ***Tropical Glacier Ecosystems*** as a subgroup within the ecosystem functional group _T6.1 Ice sheets, glaciers and perennial snowfields_:
+
+IUCN Global Ecosystem Typology
+
+- Level 1: Terrestrial Realm
+  - Level 2: T6 Polar/Alpine (cryogenic) functional biome
+    - Level 3: T6.1 Ice sheets, glaciers and perennial snowfields
+      - Subgroup: Tropical Glacier Ecosystems
+      - Level 4: T6.1-SA-01-VE-01 Tropical Glacier Ecosystem of the Cordillera de Mérida
+
+```{r}
+trop_glaz_names <- trop_glaz %>% 
+  dplyr::select(group_name,id) %>% 
+  st_drop_geometry()  %>% 
+  arrange(group_name) 
+
+trop_glaz_names %>% 
+  print.AsIs()
+```
+
+## Spatial distribution
+
+The Tropical Glacier Ecosystem of the Cordillera de Mérida included at least five occurrences of glaciers or ice patches in the Sierra Nevada de Mérida and one in the Sierra de Santo Domingo, but is currently represented by a single ice mass in the former range.
+
+Available global data of glacier extent overestimates its distribution in the Cordillera de Mérida. The Randolph Glacier Inventory version 6.0 [@RGI_2017_glacier_inventory] includes glacier outlines for the Humboldt and Bolivar Peaks shown in @fig-map. These outlines were digitised between 2000 and 2003 but do not include ground calibration and appear to overestimate the extent of the glaciers at that point in time.
+
+The changes in occurrence and extent of the glacier and ice fields in the Cordillera de Mérida have been described by @Braun_2013_glacier_venezuela and @Ramirez_2020_glacier_Venezuela based on measures on the ground or estimated from cartographic and remote sensing analysis. The extent of the current single occurrence is less than 1 $km^2$ and can be seen in recent satellite imagery [@fig-map].
+
+```{r}
+#| label: fig-map
+#| fig-cap: Satellite image and topographic maps of Cordillera de Mérida and glacier outlines from RGI 6.0.
+#| warning: false
+
+t_lbls <- sprintf("<strong>%s</strong> (%s)",trop_glaz$group_name,trop_glaz$id) %>% lapply(htmltools::HTML)
+
+leaflet() %>%
+  addProviderTiles(providers$OpenStreetMap.HOT,group='OpenStreetMap') %>%
+  addProviderTiles(providers$OpenTopoMap,group='OpenTopoMap') %>%
+  addProviderTiles(providers$Esri.WorldImagery,group='Esri WorldImagery') %>%
+  addPolygons(data = trop_glaz , fillColor = "plum", color='magenta',
+              weight = 0.8, fillOpacity = 0.15, label=t_lbls,
+              highlightOptions = highlightOptions(weight = 2, color = 'orange'),
+              group="T.G.E. units")  %>%
+  addLayersControl(
+    baseGroups = c('OpenStreetMap','OpenTopoMap','Esri WorldImagery'),
+    overlayGroups = c("T.G.E. units"),
+    options = layersControlOptions(collapsed = FALSE),
+    position = "topright"
+  )  %>% hideGroup("Spatial buffer")
+```
+
+## Characteristic biota
+
+Tropical Glacier Ecosystems have five main ecological zones [@Hotaling_2017_glacier_ecosystem]: the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields. The few available ecological studies on the Cordillera de Mérida have focused on some elements of the supraglacial surfaces and the vegetation succession in the glacier forefield, while sediments and pollen of proglacial lakes have been studied to reconstruct paleoclimates and do not provide information on their biota  [@Polissar_2006_IceAge_Andes, @Stansell_2014_ProglacialLakes_Merida].
+
+### Supraglacial surfaces
+
+Bacteria have been isolated and characterised from glacial and subglacial samples from the Humboldt glacier @Ball_2014_biota_merida, @Balcazar_2015_biota_merida and the Bolívar glacier @Rondon_2016_biota_merida. These prospective studies found abundant, morphologically diverse and active bacterial cells, including very small or "dwarf cells". Isolates were grouped in five different phyla/classes (Alpha-, Beta- and Gamma-proteobacteria, Actinobacteria and Flavobacteria), many were psychrophilic or psychrotolerant and there was evidence of metal resistance and excreted cold-active extracellular proteases and amylases.
+
+Glacier-mice (Moss balls) have been studied in high mountain areas with páramo vegetation in the Cordillera de Mérida [@Perez_1991_biota_merida] but there are no published records of their presence in former or current glacier areas. @Edwards_1987_nival_arthropods mentions a nival entomofauna of at least two species of carabids and several anyphaenid, salticid and erigonid spiders that depend on arthropod fallout in the surroundings of Pico Espejo and Pico Bolívar.
+
+### Glacier forefield
+
+@Llambi_2021_periglacial_merida studied the soil development and vegetation assembly in a chronosequence of four sites where the Humboldt glacier retreated between 1910 and 2009. Biological soil crusts (BSCs) are present near the borders of the receding glacier of peak Humboldt, but there was no significant interaction between time and BSC presence or between BSCs and soil properties. Soil organic matter and soil nitrogen increases progressively during the succession while some exchangeable bases (magnesium and calcium) decreased in sites older than 21 years.
+
+The areas exposed in the last 10 years show a strong dominance of lichenized fungi (families Hymeneliaceae, Peltigeraceae, Stereocaulaceae, and Trapeliaceae) and bryophytes (Andreaeaceae, Bryaceaea, Cephaloziellaceae, Dicranaceae, Grimmiaceae, Polytrichaceae, Pottiaceae) with very few vascular plants.  Vascular plant cover remained low during the first six decades, and was almost exclusively represented by wind dispersed/pollinated grasses.
+
+## Abiotic environment
+
+The Tropical Glacier Ecosystem of the Cordillera de Mérida belong to the inner tropics subregion according to @Sagredo_2012_climatology_andes. Glaciers in this region are exposed to annual and diurnal variation in temperature, but diurnal temperature variability far exceeds yearly differences in monthly mean temperatures (less than 3°C between the coldest and the warmest month). Precipitation can occur throughout the year, but it can often be in the form of rain due to temperature fluctuations.
+
+Current annual precipitation at the highest elevations in the Sierra Nevada de Mérida is estimated to be 1,000 to 1,200 mm with high interannual variability [@Ramirez_2020_glacier_Venezuela].  The dry period extends between December and March, when the influence of the northeastern trade winds predominates [@Andressen_2007_clima_merida]. Hence, both rainfall and snowfall concentrate during the wet season, with snow increasing in frequency with elevation above c. 4,000 m  In this region the interannual mass balance variability is more likely to be controlled by year-to-year temperature variations rather than seasonal variation. Dry periods with significant reductions in precipitation are associated with El Niño–Southern Oscillation years [@RodriguezMorales_2019_hydrology_merida, @Andressen_2007_clima_merida].
+
+Both precipitation and temperature decrease with elevation in the study area from 1,811 mm mean annual precipitation and 7.1°C mean temperature at La Aguada cable car station (3,446 m) to 1,173 mm and −0.4°C in the highest station where records are available in the country (4,766 m). Mean temperature decreases 0.63°C for every 100 m increase in elevation  [@Azocar_2003_Paramos_Venezuela]. However variability between years can lead to large differences in published summaries [see @Pulwarty_1998_precipitation_Merida].
+
+We used global datasets of interpolated climatic variables and time series of remote sensing products to compare the climatic conditions of different Tropical Glacier Ecosystems around the world. Methods and spatial resolution (pixel size from 500 m to 5 km) of the datasets means that estimated values are not directly comparable to field measurements and can not provide rigorous mass balance insights, but they allow to compare relative differences in the climate of each glacier site [@Sagredo_2012_climatology_andes].
+
+@fig-climatogram shows how climatogram based on historical data [@Monasterio_1980_Clima_Merida] compared to climatograms estimated from time series of remote sensing data at different locations [@Funk_2015_CHIRPS_descriptor; @Wan_2015_LST_data].
+
+
+### Bioclimatic conditions in regional context
+
+We characterised the 25 km spatial buffers around the glacier outlines of the Cordillera de Merida and the two nearest tropical glacier ecosystem units in the Sierra Nevada de Santa Marta and the Sierra Nevada del Cocuy (Colombia). We extracted the mean values of 19 bioclimatic variables, snow days and frost change frequency (fcf) for the period 1979-2013 based on the CHELSA dataset [ @Karger_2017_CHELSA_descriptor, @Karger_2018_CHELSA_data ].
+
+Small areas of these buffers (expressed as percentage of raster cells) have extreme cryogenic conditions (seasonal/permanent snow cover or frost conditions):
+
+```{r}
+bioclim_dat <- trop_glaz_names %>% 
+  left_join(input_raster_data,by="id", multiple="all") # %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
+bioclim_tbl <- bioclim_dat %>% group_by(Unit=group_name) %>%
+  summarise(`Nr. of cells`=n(),
+            `Glacier cells`=sum(glacier,na.rm=T),
+            ) 
+
+bioclim_tbl %>% arrange(`Glacier cells`) %>% knitr::kable(digits=2)
+
+
+```
+
+@fig-bioclim shows the distribution of three bioclimatic variables in the three regions, highlighting how the cryogenic areas differ from the rest of the spatial buffer (blue vs. red areas in each plot), and how the distribution of values differs between the three regions. The extreme cryogenic areas of the Cordillera de Mérida are exposed to different bioclimatic conditions than the nearest glacier areas in Colombia. They are exposed to similar mean annual temperatures as the Sierra Nevada del Cocuy, but has lower annual temperature ranges and much lower levels of precipitation in the coldest quarter.
+
+
+```{r}
+#| label: fig-bioclim
+#| fig-cap: Histogram of three bioclimatic variables in the three regions.
+#| warning: false
+
+slc <- bioclim_tbl %>% filter(`Glacier cells`<50) %>% pull(Unit)
+slc <- bioclim_tbl %>% filter(`Nr. of cells`<5000) %>% pull(Unit)
+
+pbio01 <- ggplot(bioclim_dat %>% filter(group_name %in% slc, elevation_1KMmd>3500) ) + geom_histogram(aes(x=bio_01,fill=glacier), bins=25) +
+  facet_wrap(group_name ~.) + xlab("Annual Mean Temp.") + ylab("Nr. of cells")
+
+pbio07 <- ggplot(bioclim_dat %>% mutate(bio07=bio7/10)) + geom_histogram(aes(x=bio07,fill=fcf>0), bins=25) +
+  facet_col(group ~.) + xlab("Temp. Annual Range") + ylab("Nr. of cells")
+pbio19 <- ggplot(bioclim_dat) + geom_histogram(aes(x=bio19,fill=fcf>0), bins=25) +
+  facet_col(group ~.) + xlab("Precip. of Coldest Quarter") + ylab("Nr. of cells")
+
+ ggarrange(pbio01, pbio07, pbio19, ncol = 3, nrow = 1, common.legend = TRUE)
+
+```
+
+
+
+## Processes and interactions
+
+Tropical Glacier Ecosystem in the Cordillera de Mérida have a dynamic of ice accumulation and ablation influenced by precipitation (in the form of snow- or rainfall due to temperature fluctuations), temperature and solar radiation that can trigger annual and diurnal cycles of melting and freezing conditions, and the geomorphology that modulates the rate of basal melting and movement of the ice on top of the rocky substrate.
+
+
+```{r out.height="800px"}
+#| label: fig-CEM
+#| fig-cap: Conceptual Ecosystem Model for the Tropical Glacier Ecosystem of the Cordillera de Mérida
+DiagrammeR::grViz("../assets/graphviz/CEM-Venezuela-TGE.gv")
+```
+
+Mass balance of the icy substrate is likely dominated by interannual fluctuations [@Andressen_2007_clima_merida; @Braun_2013_glacier_venezuela], but no quantitative studies have been conducted. Substantial reductions in precipitation and higher exposure to solar radiation are expected with El Niño–Southern Oscillation years, while high precipitations and more cloud coverage are expected during La Niña years.
+
+Deposition of light absorbing particles from the atmosphere on snow and ice can reduce glaciers surface albedo and enhance the melting process [@Gilardoni_2022_LAPs_SouthAmerica]. Concentration of black carbon in the high elevations of the Cordillera de Mérida have been linked to biomass burning in Venezuelan savannah, with higher fire activity and higher concentration following El Niño years [@Hamburger_2013_pollution_Merida].
+
+Atmospheric or aeolian deposition (windfall) provide key nutrients to the biota of the supraglacial zone [@Edwards_1987_nival_arthropods]. Nutrients and meltwater can be transported through interglacial cracks and crevasses to reach the subglacial zone, where it combines with small particles produced by rock comminution [Hotaling_2017_glacier_ecosystem].  Englacial and subglacial biota of this ecosystem are still undescribed.
+
+The role of the supra- and subglacial microbiota on the exposed glacier forefield has not been studied in the Cordillera de Mérida, but the pioneer lichen and bryophyte species might have a facilitation effect on the long-term establishment of wind-dispersed and -pollinated vascular plants [@Llambi_2021_periglacial_merida].
+
+## Collapse definition
+
+According to @Braun_2013_glacier_venezuela and @Ramirez_2020_glacier_Venezuela there is historical evidence of five or six glaciers or ice patches in the Cordillera de Mérida in the last 150 years, with earliest records dating back to 1864 (from paintings) and 1886 (from scientific literature). All but one have disappeared and can be considered collapsed due to the complete absence of permanent snow or ice:
+
+- A small ice/firn field below Pico Mucuñuque (at 4609 m) at the Sierra de Santo Domingo existed at least until 1922.
+- Perennial snow and ice cover on Pico El Toro (4728 m) existed around 1900 and a small glacier remained until about 1931.
+- Pico El Leon (4750 m) had perennial snow and ice cover around 1900 but was ice free in 1910.
+- La Concha was included in measurement of glacier extent in 1910 and 1952, but it disappeared before 1990.
+- A glacier at Pico Espejo was located below Pico Bolivar and disappeared between 1936 and 1956.
+- Bolivar was included in measurement of glacier extent in 1910 and 1952 and 1998, it had a small remaining ice mass in 2011 but was not longer considered a glacier, it finally disappeared by 2017.
+- Humboldt is the only remaining glaciated area.
+
+In the cases of Pico Mucuñuque and Pico Bolívar, small remnants of ice were considered 'static' or extinct glaciers due to the absence of dynamic processes of ice accumulation. However, prospective microbiological studies in Pico Bolivar [Rondon_2016_biota_merida, sampled ca. six years before its complete disappearance] and Pico Humboldt [@Ball_2014_biota_merida] suggest similar micro-biotas regardless of the size of the remaining ice substrate.
+
+Thus we consider that the complete disappearance of permanent snow and ice is the best indicator of collapse.
+
+Tropical glaciers are very sensitive to changes in climate, thus the evaluation of climate variables can help us infer the temporal changes in glacier conditions leading to their collapse. In the Cordillera de Mérida the equilibrium-line altitude (ELA; the elevation of the dividing line between the glacier accumulation and ablation areas) and the atmospheric freezing level height (FLH; the altitude of the 0°C isotherm) have been used as indicators of change in glacier extent [@Polissar_2006_IceAge_Andes; @Braun_2013_glacier_venezuela]. The increase in ELA or FLH reduces the available area for long-term glacier persistence, and a collapse threshold can be set according to peak height or the maximum elevation of the snow accumulation.
+
+We also use an indirect approach to project the probability of persistence of Tropical Glacier Ecosystems into the future by means of correlative models of environmental suitability (Ferrer-Paris et al. in prep.). In this case the bioclimatic conditions of areas with and without glaciers are compared using a machine learning algorithm and a probability or suitability index is produced. This index can be calibrated with existing data to find optimal classification thresholds for discriminating presence and absence of the glacier under current conditions, and the model is then used to predict future suitability. In this case, the classification threshold is assumed to represent a collapse threshold.

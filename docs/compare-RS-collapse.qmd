@@ -337,13 +337,16 @@ mod_degradation_simres2 <- recalculateResiduals(mod_degradation_simres, group = 
 testUniformity(mod_degradation_simres2)
 ##plot(mod_degradation_simres2) 
 
-plot_data <- tibble(fittedPredictedResponse = mod_degradation_simres$fittedPredictedResponse,
-       unit_name = mod_degradation_sat$frame$unit_name,
-       scn = mod_degradation_sat$frame$scn)
+plot_data <- tibble(
+  fittedPredictedResponse = predict(mod_collapse_sat, type="response"),
+  unit_name = mod_collapse_sat$frame$unit_name,
+  mtd = mod_collapse_sat$frame$mtd,
+  scn = mod_collapse_sat$frame$scn
+  )
 ggplot(plot_data) +
   geom_boxplot(aes(y=fittedPredictedResponse,
-                   group=interaction(scn,unit_name))) +
-  facet_wrap(~scn)
+                   group=interaction(scn,mtd,unit_name))) +
+  facet_wrap(~unit_name)
 
 rr <- ranef(mod_degradation_sat)
 #print(rr, simplify=FALSE)

@@ -3,8 +3,8 @@ project:
 
 book:
   author: "José R. Ferrer-Paris"
-  title: "Environmental suitability model for T6.1 tropical glaciers"
-  subtitle: "Analysis of future environmental degradation"
+  title: "Environmental degradation and collapse of Tropical Glacier Ecosystems"
+  subtitle: "Using relative severity and extent of degradation in collapse risk assessment"
   date: "2023-04-03"
   chapters:
     - index.qmd
@@ -14,11 +14,10 @@ book:
     - part: "Indicators of collapse"
       chapters:
         - Mass-balance-model.qmd
+        - GBM-model.qmd
     - part: "Relative Severity"
       chapters:
         - RS-formula.qmd
-        - viz-RS-per-unit.qmd
-        - compare-RS-collapse.qmd
     - references.qmd
   appendices:
     - general-workflow.qmd

@@ -5,14 +5,8 @@ editor_options:
 ---
 # Preface {.unnumbered}
 
-This document includes an overview and preliminary results of the asssessment of risk of collapse of the Tropical Glacier Ecosystems of the world and one example of the assessment of a regional unit (Tropical Glacier Ecosystem of the Cordillera de Mérida in Venezuela).
+Tropical Glacier Ecosystems are facing extreme pressure due to climate change and face imminent collapse in this century.
 
-We use the IUCN Red List of Ecosystem assessment protocol and follow the IUCN Global Ecosystem Typology for the classification of the units.
+We explore here future projections of one direct and one indirect indicator of key ecosystem properties and use these to explore the probable trajectories toward collapse of the ecosystem. We evaluate the usefulness of relative severity and extent of degradation to anticipate collapse.
 
-We start with a brief overview of the Tropical Glacier Ecosystems (chapter 1).
-
-Then we describe a GBM model to estimate bioclimatic or environmental suitability of the TGE using the present bioclimatic values and project future suitability values under different scenarios of future climate change (chapter 2).
-
-Then we explore the relative severity of degradation (decline in suitability) by projecting model predictions to future climatic scenarios. We use this case study to improve the RS formula and explore different alternatives for summary and visualisation. (chapter 3)
-
-Finally we explore the correlation between RS values, IUCN category thresholds and probabilities of collapse estimated from Mass balance models. (Chapter 4)
+We discuss here details of the suggested formula for calculation of relative severity $RS$ and different approaches to summarise and visualise data across the extent of the ecosystem assessment unit.
