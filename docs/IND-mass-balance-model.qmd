@@ -20,7 +20,7 @@ library(ggrepel)
 library(purrr)
 library(readr)
 library(tidyr)
-here::i_am("docs/Mass-balance-model.qmd")
+here::i_am("docs/IND-mass-balance-model.qmd")
 # sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 # Suppress summarise info
@@ -68,7 +68,7 @@ The values used here are the output values (ice mass \pm median absolute deviati
 
 totalmass_year_data %>% 
   filter(unit_name == "Cordillera de Merida") %>%
-  ggplot(aes(x=year,y=mean_mass)) +
+  ggplot(aes(x=year,y=total_mass)) +
     geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
                   position=position_dodge(.9),
                 alpha=.5,col="gray") +
@@ -84,7 +84,8 @@ We use these mass projections to estimate the year of collapse (first year when 
 
 
 ```{r}
-#| table-cap: Proportion of models predicting collapse by 2100 for each assessment unit.
+#| tbl-cap: "Proportion of models predicting collapse by 2100 for each assessment unit."
+#| label: tbl-collapse-2100
 
 year_of_collapse_data %>% 
   group_by(unit_name,ssp) %>% 

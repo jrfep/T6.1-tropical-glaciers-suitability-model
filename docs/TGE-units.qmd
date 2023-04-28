@@ -1,10 +1,9 @@
 ---
+title: "Ecosystem description"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-
-## Ecosystem description
 
 Tropical Glacier Ecosystems are cryogenic ecosystems in tropical environments where the main substrate is formed by ice accumulated over several years and provides different habitats to microbiological communities and other meso- and macro-biota.
 

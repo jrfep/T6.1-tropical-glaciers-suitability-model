@@ -1,0 +1,121 @@
+ Example from Ecuador:
+ We see from the mean RS values that there is an expected increase from 0.487 (VU) to 0.746 (EN).
+
+```{r}
+RS_results %>% 
+  filter(
+    threshold=="acc",
+    unit %in% "Ecuador",
+    modelname == "mri-esm2-0",
+         pathway == "ssp126"
+         ) %>% 
+  group_by(timeframe, pathway) %>% 
+  summarise(
+    n=n(),
+    mean_RS=mean(RS,na.rm=T),
+    mean_RS_cor=mean(RS_cor,na.rm=T)) %>% 
+  DT::datatable()
+
+```
+
+This arrangement allows to read the cummulative extent by different thresholds of relative severity. For example, there ecosystem extent with $RS ≥ 80%$ increases from less than 2% in the first timeframe to 37.2 and 29.1 %, and the extent with $RS ≥ 30%$ increases from just below 80% to more than 96%. 
+
+We can actually visualise the relationship between this curve and the IUCN category threshold in a convenient way:
+
+
+```{r}
+#| label: fig-ecdf-ecuador
+#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador with the thresholds for IUCN categories of threat. 
+plot_b +
+  geom_rect(data=RS_extent_combs, 
+            aes(fill = category, 
+                ymin = RS_min, ymax = RS_max,
+                xmin = extent_min, xmax = extent_max),
+            alpha=0.44)
+
+```
+
+We see that the top curve overlaps with the threshold for the category VU, and the two lower curves overlap both VU and EN.
+
+
+
+## Cordilleras-Norte-de-Peru
+
+The last plot above allows a more compact comparison of different scenarios and timeframes, for example this plot:
+
+```{r}
+#| label: fig-hist-norte-peru
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+d <- RS_results %>% 
+  filter(threshold=="acc", 
+         unit=="Cordilleras-Norte-de-Peru", 
+         modelname == "mri-esm2-0")
+plot_a <- 
+  ggplot(d) +
+    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
+    facet_grid(pathway~timeframe) +
+    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+#    scale_fill_manual(values = IUCN_cat_colours) +
+    theme(legend.position = "none") +
+    xlab("Relative severity") +
+    ylab("Nr. of cells") 
+plot_a 
+```
+this is probably an error? not including all clusters?
+
+```{r}
+tt <- RS_results %>% 
+  filter(threshold=="acc", 
+         unit=="Cordilleras-Norte-de-Peru", 
+         modelname == "mri-esm2-0",
+         pathway == "ssp126") %>% 
+  pull(IUCN_cat) %>% table
+
+tt
+
+tt/sum(tt)
+
+# RS_results %>% filter(timeframe=="2041-2070",threshold=="acc") %>% arrange(desc(RS_cor)) %>% select(RS,RS_cor)
+
+```
+
+## Cordilleras-Orientales-de-Peru-y-Bolivia
+this is the less threatened, shows a transition from VU for short time frames to EN in longer timeframes, histogram almost bimodal.
+
+```{r}
+#| eval: false
+
+RSecdf <- tibble()
+for (tfm in c("2011-2040", "2041-2070", "2071-2100")) {
+  for (thr in c("acc")) {
+    RSvals <- RS_results %>% 
+      filter(
+        unit == "Cordilleras-Orientales-de-Peru-y-Bolivia",
+        timeframe==tfm,
+        threshold==thr) %>% 
+      pull(RS_cor)
+    RSecdf <- RSecdf %>% 
+      bind_rows(
+        {RSvExt(RSvals) %>% mutate(timeframe = tfm, threshold = thr)}
+      )
+  }
+}
+
+
+
+
+ggplot(RSecdf) +
+  geom_rect(data=RS_extent_combs, 
+            aes(fill = category, 
+                ymin = RS_min, ymax = RS_max,
+                xmin = extent_min, xmax = extent_max),
+            alpha=1) +
+  geom_line(aes(x=Extent,y=RS,lty=timeframe)) +
+  scale_fill_manual(values = IUCN_cat_colours) +
+  labs(title="Cordilleras orientales de Peru y Bolivia", 
+    subtitle="Maximum accuracy threshold") +
+    xlab("Cummulative extent") +
+    ylab("Relative severity")
+```
+
+

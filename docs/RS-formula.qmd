@@ -28,9 +28,10 @@ library(DT)
 library(purrr)
 library(ggpubr)
 library(plotly)
-here::i_am("docs/viz-RS-per-unit.qmd")
+here::i_am("docs/RS-formula.qmd")
 # sessionInfo()
-
+# Suppress summarise info
+options(dplyr.summarise.inform = FALSE)
 ```
 
 ```{r}
@@ -39,6 +40,9 @@ here::i_am("docs/viz-RS-per-unit.qmd")
 target.dir <- "sandbox"
 results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.rds")
 RS_results <- readRDS(results_file)
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
+
 source(here::here("inc","R","RS-functions.R"))
 ```
 
@@ -58,7 +62,8 @@ We can use a simple plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visu
 
 ```{r}
 #| label: fig-interpretation
-#| fig-cap: Plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visualise the different situations that arise when measure change in time in terms of the values of $\mathrm{RS}$.
+#| fig-cap: Plot of initial ($V_{0}$) vs. final values ($V_{F}$) to visualise the different situations that arise when measure change in time in terms of the values of $\mathrm{RS}$
+#| 
 artificial_data <- data.frame(iv=seq(0,1,length=25),fv=seq(0,1,length=25))
 label_data <- tibble(x=c(0.75,0.45,0.05,0.5,0.05,0.85),
        y=c(0.45,0.65,0.35,0.05,0.05,0.85),
@@ -120,6 +125,10 @@ When we consider future projections from one model and scenario (mri-esm2-0, ssp
 
 
 ```{r}
+#| label: tbl-ruwenzori
+#| tbl-cap: "Calculation of RS using the original and the conditional formula for the T.G.E. of Ruwenzori."
+#| tbl-subcap: "The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) for the period 2041-2070 and using an equal sensitivity and specificity threshold."
+
 RS_results %>% 
   filter(
     unit %in% "Ruwenzori",
@@ -128,14 +137,20 @@ RS_results %>%
     timeframe %in% "2041-2070",
     threshold %in% "ess",
     )  %>% 
-  select(id,cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
-  DT::datatable()
+  select(cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
+  DT::datatable(
+    options = list(dom = 't')
+    )
 
 ```
 
-In this interactive plot, we can visualise these problems 
-```{r}
 
+In this interactive plot, we can visualise these problems 
+
+```{r}
+#| label: fig-ruwenzori
+#| fig-cap: "Plot of initial ($V_{0}$) vs. final values ($V_{F}$) for the T.G.E. of Ruwenzori."
+#| warning: false
 d <- RS_results %>% 
   filter(
     unit %in% "Ruwenzori",
@@ -182,6 +197,8 @@ In this unit, the positive predictive rate threshold if very high (0.698) and we
 
 
 ```{r}
+#| label: tbl-planets
+#| tbl-cap: Planets
 RS_results %>% 
   filter(
     unit %in% "Ruwenzori",
@@ -260,3 +277,27 @@ layout(fig,
        )
 ```
 
+## Kilimanjaro
+
+Problems with the time series of ice mass balance in Kilimanjaro, where there is a predicted increase in ice mass at the start of the time series
+
+```{r}
+
+RSvals <- massbalance_results %>% 
+  filter(
+    unit_name %in% c("Kilimanjaro"),
+    model_nr %in% c(" 3"," 6"," 9"),
+  ) %>%
+#  filter(unit_name %in% c("Ecuador")) %>%
+  mutate(min_mass=mass-mad,max_mass=mass+mad) %>% 
+  group_by(RGIId,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
+
+ggplot(RSvals) +
+  ## geom error bar is small compared to intermodel variability, keep out of the plot
+    geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
+  facet_grid(scn~model_nr) +
+  theme(legend.position = "none")
+
+```

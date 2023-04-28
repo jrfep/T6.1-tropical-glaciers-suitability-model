@@ -13,14 +13,17 @@ book:
         - TGE-units.qmd
     - part: "Indicators of collapse"
       chapters:
-        - Mass-balance-model.qmd
-        - GBM-model.qmd
+        - IND-mass-balance-model.qmd
+        - IND-suitability-model.qmd
     - part: "Relative Severity"
       chapters:
         - RS-formula.qmd
+        - RS-time-series.qmd
+        - RS-collapse-GLMM.qmd
+        - RS-spatial-variability.qmd
     - references.qmd
   appendices:
-    - general-workflow.qmd
+    - A1-general-workflow.qmd
   page-footer:
     left: "Created by: JR Ferrer-Paris"
     right:

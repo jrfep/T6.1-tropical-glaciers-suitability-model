@@ -10,3 +10,18 @@ Tropical Glacier Ecosystems are facing extreme pressure due to climate change an
 We explore here future projections of one direct and one indirect indicator of key ecosystem properties and use these to explore the probable trajectories toward collapse of the ecosystem. We evaluate the usefulness of relative severity and extent of degradation to anticipate collapse.
 
 We discuss here details of the suggested formula for calculation of relative severity $RS$ and different approaches to summarise and visualise data across the extent of the ecosystem assessment unit.
+
+
+
+We use the tropical glacier ecosystems as a model because:
+
+- risk of ecosystem collapse is very high and well documented
+- actual probabilities of collapse can be calculated from mechanistic models,
+- the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+
+We use projected degradation of climatic suitability because:
+
+- it is conceptually linked to models used to calculate probability of collapse
+- it uses the same underlying variables models and scenarios
+- we can explore different time frames (temporal scale of degradation)
+- we can explore uncertainty due to different models, scenarios and collapse thresholds

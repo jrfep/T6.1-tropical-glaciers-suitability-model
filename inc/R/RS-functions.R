@@ -56,13 +56,30 @@ RSvExt <- function(RSvals) {
   return(z)
 }
 
-RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax) {
+RSts <- function(
+  years, 
+  values, 
+  init_year = 2000, 
+  collapse_threshold=0,
+  vmin,
+  vmax, 
+  formula=c("original","conditional")
+  ) {
   IV <- values[years==init_year]
   FV <- values[years>init_year]
   CT <- collapse_threshold
   OD <- IV -FV
   MD <- IV - CT
   RS <- OD/MD
+
+  if (formula[1] == "conditional") {
+    RS <- case_when(
+                FV<CT ~ 1,
+                FV>IV ~ 0,
+                TRUE ~ RS
+              )
+  } 
+    
   res <- tibble(year=years[years>init_year],IV,FV,CT,OD,MD,RS)
   if (!missing(vmin)) {
     IV <- vmin[years==init_year]
@@ -70,6 +87,13 @@ RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax
     OD <- IV -FV
     MD <- IV - CT
     RS <- OD/MD
+    if (formula[1] == "conditional") {
+    RS <- case_when(
+                FV<CT ~ 1,
+                FV>IV ~ 0,
+                TRUE ~ RS
+              )
+  } 
     res <- res %>% bind_cols(tibble(IV_min=IV,FV_min=FV,OD_min=OD,MD_min=MD,RS_min=RS))
   }
   if (!missing(vmax)) {
@@ -78,6 +102,13 @@ RSts <- function(years, values, init_year = 2000, collapse_threshold=0,vmin,vmax
     OD <- IV -FV
     MD <- IV - CT
     RS <- OD/MD
+    if (formula[1] == "conditional") {
+    RS <- case_when(
+                FV<CT ~ 1,
+                FV>IV ~ 0,
+                TRUE ~ RS
+              )
+    } 
     res <- res %>% bind_cols(tibble(IV_max=IV,FV_max=FV,OD_max=OD,MD_max=MD,RS_max=RS))
   }
   return(res)

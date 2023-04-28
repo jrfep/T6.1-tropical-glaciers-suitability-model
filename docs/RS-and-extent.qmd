@@ -61,7 +61,7 @@ totalmass_year_data <- {
              set_units("Mt")) %>% 
     drop_units() %>% 
     group_by(unit_name,year,scn,model_nr) %>% 
-    summarise(mean_mass=sum(mass,na.rm=T),
+    summarise(total_mass=sum(mass,na.rm=T),
               max_mass=sum(mass+mad,na.rm=T),
               min_mass=sum(mass-mad,na.rm=T))
   }
@@ -87,7 +87,7 @@ The values used here are the output values (ice mass \pm median absolute deviati
 
 totalmass_year_data %>% 
   filter(unit_name == "Cordillera de Merida") %>%
-  ggplot(aes(x=year,y=mean_mass)) +
+  ggplot(aes(x=year,y=total_mass)) +
     geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
                   position=position_dodge(.9),
                 alpha=.5,col="gray") +

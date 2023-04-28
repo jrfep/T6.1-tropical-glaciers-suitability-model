@@ -65,7 +65,7 @@ totalmass_year_data <- {
              set_units("Mt")) %>% 
     drop_units() %>% 
     group_by(unit_name,year,scn,model_nr) %>% 
-    summarise(mean_mass=sum(mass,na.rm=T),
+    summarise(total_mass=sum(mass,na.rm=T),
               max_mass=sum(mass+mad,na.rm=T),
               min_mass=sum(mass-mad,na.rm=T))
   }
@@ -74,33 +74,6 @@ totalmass_year_data <- {
 
 Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
 
-```{r}
-#| label: apply RSts function
-# alternative with purrr:
-#RSvals <- totalmass_year_data %>% 
-#  filter(unit_name %in% "Cordillera de Merida") %>%
-#  group_by(model_nr,scn) %>% 
-#  group_split() %>%
-#  map(~RSts(.x$year,.x$mean_mass)) %>% 
-#  bind_rows()
-
-RSvals <- totalmass_year_data %>% 
-  filter(unit_name %in% c("Cordilleras de Colombia",
-                          "Sierra Nevada de Santa Marta", 
-                          "Cordilleras Norte de Peru" ,
-                          "Ecuador")) %>%
-#  filter(unit_name %in% c("Ecuador")) %>%
-  group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
-
-ggplot(RSvals) +
-  ## geom error bar is small compared to intermodel variability, keep out of the plot
-  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
-  facet_grid(scn~unit_name) +
-  theme(legend.position = "none")
-
-```
 
 
 ```{r}
@@ -137,7 +110,7 @@ dat1 <- RS_results %>%
 dat2 <- totalmass_year_data %>% 
   filter(unit_name %in% c(slc_unit)) %>%
   group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) 
+  group_modify(~RSts(.x$year,.x$total_mass)) 
 
 ggplot(dat2) +
   annotate("rect",
@@ -176,7 +149,7 @@ dat2 <- totalmass_year_data %>%
   filter(year %in% c(2000,2040,2070,2100)) %>% 
   filter(unit_name %in% c(slc_unit)) %>%
   group_by(model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  group_modify(~RSts(.x$year,.x$total_mass)) %>%
   ungroup %>% 
   transmute(scn,threshold="MBM",year,RS)
 
@@ -213,7 +186,7 @@ dat2 <- totalmass_year_data %>%
   filter(year %in% c(2000,2040,2070,2100)) %>% 
   # filter(unit_name %in% slc_unit) %>%
   group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(.x$year,.x$mean_mass)) %>%
+  group_modify(~RSts(.x$year,.x$total_mass)) %>%
   ungroup %>% 
   transmute(unit_name,scn,threshold="MBM",year,RS)
 
@@ -339,13 +312,14 @@ testUniformity(mod_degradation_simres2)
 
 plot_data <- tibble(
   fittedPredictedResponse = predict(mod_collapse_sat, type="response"),
-  unit_name = mod_collapse_sat$frame$unit_name,
-  mtd = mod_collapse_sat$frame$mtd,
-  scn = mod_collapse_sat$frame$scn
+  unit_name = mod_collapse_sat$frame$unit,
+  mtd = mod_collapse_sat$frame$method,
+  scn = mod_collapse_sat$frame$scenario
   )
 ggplot(plot_data) +
   geom_boxplot(aes(y=fittedPredictedResponse,
-                   group=interaction(scn,mtd,unit_name))) +
+                   x=unit_name)) 
++
   facet_wrap(~unit_name)
 
 rr <- ranef(mod_degradation_sat)
@@ -354,6 +328,6 @@ rr <- ranef(mod_degradation_sat)
 x <- rr$cond$unit_name %>% pull(`(Intercept)`)
 
 rr <- ranef(mod_collapse_sat)
-y <- rr$cond$unit_name %>% pull(`(Intercept)`)
+y <- rr$cond$unit %>% pull(`(Intercept)`)
 
 ```

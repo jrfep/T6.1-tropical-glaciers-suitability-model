@@ -1,0 +1,198 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Relative Severity and collapse
+
+Over the time frame of 100 years most of the assessment units are predicted to reach collapse by complete loss of ice mass. Since we are using a direct indicator of an ecosystem property (icy substrate) and we are predicting total ice mass for each unit, complete loss of ice is equivalent to a value of $RS_{ice}^{CT=0} = 1$. In the case of an indirect indicator such as bioclimatic suitability, we have more uncertainty in the real value of collapse, and thus use alternative collapse threshold to capture plausible ranges. 
+
+We expect that both direct and indirect indicators will have similar performance in describing the magnitude of degradation and predicting collapse. We will use two generalised linear mixed models (GLMM) to test if there are significant differences in inferences based on these estimates of relative severity.
+
+
+```{r}
+#| label: load libraries and functions
+#| eval: true
+#| echo: false
+#| warning: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+library(purrr)
+library(readr)
+library(tidyr)
+library(glmmTMB)
+library(lme4)
+library(DHARMa)
+here::i_am("docs/RS-collapse-GLMM.qmd")
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+#| label: read input data 
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds.file)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
+  mutate(unit_name=str_replace_all(unit," ","-"))
+rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds.file)
+
+```
+
+To compare both indicators we used the $RS_{bcs}^{CT=acc}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
+
+
+### Prediction of collapse
+
+We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels). [Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.]{.aside}
+
+Full model specification in `R` using the `glmmTMB` package is as follows:
+
+```{r}
+#| echo: true
+mod_collapse_sat <- 
+  glmmTMB((RS==1) ~ time + method + scenario + (1|unit/method), 
+       data = model_data, 
+       family = binomial,
+       REML = FALSE)
+```
+
+::: {.column-margin}
+```{r}
+#| echo: true
+#| eval: false
+
+## alternative with lme4
+library(lme4)
+mod2 <- glmer(
+    (RS==1) ~ time + method + scenario + (1|unit/method), 
+    family = binomial,
+    data = model_data) 
+```
+:::
+
+We test alternative specifications removing the fixed effect on $\mathrm{method}$:
+
+```{r}
+#| echo: true
+
+mod_collapse_rand <- 
+  glmmTMB((RS==1) ~ time + scenario + (1|unit/method), 
+     data = model_data, 
+     family=binomial,
+     REML=FALSE)
+
+```
+ 
+The AIC criterion favours the initial specification with all variables:
+
+```{r}
+#| echo: true
+bbmle::AICtab(mod_collapse_sat,
+              mod_collapse_rand)
+```
+ 
+Model diagnostics and residual plots look good for this model specification. [According to the [vignette of package DHARMa](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html#interpreting-residuals-and-recognizing-misspecification-problems) small significant effects in the residuals might be spurious due to large sample size.]{.aside}
+
+```{r}
+#| echo: true
+mod_collapse_simres<-simulateResiduals(mod_collapse_sat)
+plot(mod_collapse_simres)
+```
+ 
+Approximation of a $R^2$ statistic for this model suggests more than 90% of the variance explained by the full model (random and fixed effects) and at least 40% explained by the fixed effects alone.
+
+```{r}
+#| echo: true
+#| warning: false
+MuMIn::r.squaredGLMM(mod_collapse_sat)
+```
+ 
+
+The summary of the model indicates significant positive effects of time and future scenarios in the proportion of model predicting collapse, as expected. For the method variable, the indirect indicator have negative effects when compared with the direct indicator, but this is only significant for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of the collapse threshold for this indicator. In general, variability between unit is much larger than variability between methods, thus we can expect all three methods to reflect patterns between units equally well.
+
+```{r}
+#| echo: true
+summary(mod_collapse_sat)
+```
+
+The random effects of the model give us a ranking of the proportion of models predicting collapse for each assessment unit, regardless of the method used:
+
+```{r}
+rr <- ranef(mod_collapse_sat)
+rr$cond$unit %>% arrange(desc(`(Intercept)`))
+```
+
+### Magnitude of degradation
+
+For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $RS$. Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+
+We fit the full model, and alternative versions with dispersion model and reduced fixed effects as:
+
+```{r}
+#| echo: true
+mod_degradation_sat <- 
+  glmmTMB(RS ~ time + method + scenario + (1|unit/method), 
+          data = subset(model_data, RS<1), 
+          family=beta_family,
+          REML=FALSE)
+
+mod_degradation_disp <- 
+  update(mod_degradation_sat, 
+         dispformula=~method)
+
+mod_degradation_rand <- 
+  glmmTMB(RS ~ time + scenario + (1|unit/method), 
+       data = subset(model_data, RS<1), 
+       family=beta_family,
+       REML=FALSE)
+```
+
+
+The AIC criterion favours the initial specification with all variables and without dispersion model:
+
+```{r}
+#| echo: true
+bbmle::AICtab(mod_degradation_sat,
+              mod_degradation_disp,
+              mod_degradation_rand)
+```
+
+Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
+
+```{r}
+#| echo: true
+mod_degradation_simres<-simulateResiduals(mod_degradation_sat)
+plot(mod_degradation_simres)
+```
+ 
+When we examine the outliers, these are mostly unexpected low values in the T.G.E. Kilimanjaro, but these are probably related to underlying anomalies in climatic conditions in this region. [In fact, when using the original formulafor the time series of the dynamic ice mass balance model there were some spurious effect of negative RS in this unit. We are using now the conditional formula of RS but there is still some unexpected structure in the residuals.]{.aside}
+
+```{r}
+mod_degradation_simres$fittedModel$frame %>% slice(outliers(mod_degradation_simres))
+```
+
+The summary of the model indicates significant positive effects of time and future scenarios in the magnitude of RS, as expected. For the method variable, the indirect indicator have significant negative effects when compared with the direct indicator, but the effect is larger for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of RS for this indicator. In general, variability between units is considerably larger than variability between methods, thus we can expect all three methods to reflect general patterns, but will require closer inspection to rule out interaction with the random effects of assessment units.
+
+```{r}
+#| echo: true
+summary(mod_degradation_sat)
+```
+
+The random effects of the model give us a ranking of the general magnitude of RS for each assessment unit, regardless of the method used:
+
+```{r}
+rr <- ranef(mod_degradation_sat)
+rr$cond$unit %>% arrange(desc(`(Intercept)`))
+```
+
+We see that there are a few large differences in the ranking compared with the model of collapse, most notably in the T.G.E. of Kilimanjaro, but this is likely a result of anomalies in the underlying data.
