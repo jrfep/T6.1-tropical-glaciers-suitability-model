@@ -27,30 +27,35 @@ trop_glaciers_classified <- readRDS(
 
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
-
+# create a grid of arguments to avoid for loops within the `ex` code
 jjs <- grp_table %>% filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
+scs <-  c("ssp126","ssp370","ssp585")
+rgs <- c("R16", "R17") # low latitudes and southern andes, just in case
 
+argrid <- expand.grid(jjs,scs,rgs)
 
 cl <- makeCluster(round(detectCores()*.8))
 registerDoParallel(cl)
 
 all_massbalance_results <- 
   foreach (
-    jj = jjs,
+    jj = argrid$jjs,
+    scn = argrid$scs,
+    rgn = argrid$rgs,
     .packages=c("ncdf4", "dplyr", "tidyr"),
     .combine=bind_rows
   ) %dopar% {
     slc <- trop_glaciers_classified %>% filter(grp %in% jj, !is.na(RGIId)) %>% pull(RGIId)
+    mass_nc_file <- sprintf("%s/PyGEM-OGGM/%s_glac_mass_annual_50sets_2000_2100-%s.nc", input.dir,rgn,scn)
+    mad_nc_file <- sprintf("%s/PyGEM-OGGM/%s_glac_mass_annual_mad_50sets_2000_2100-%s.nc", input.dir,rgn,scn)
     massbalance_results <- tibble()
     
-    if(length(slc)>0) {
-      for (scn in c("ssp126","ssp370","ssp585")) {
-        
-        model_results <- nc_open(sprintf("%s/PyGEM-OGGM/R16_glac_mass_annual_50sets_2000_2100-%s.nc", input.dir,scn))
+    if(length(slc)>0) {        
+        model_results <- nc_open(mass_nc_file)
         RGIIds  <- ncvar_get(model_results, "RGIId")
         if (sum(RGIIds %in% slc)>0) {
           slc_fixed <- RGIIds[RGIIds %in% slc]
-          mad_results <- nc_open(sprintf("%s/PyGEM-OGGM/R16_glac_mass_annual_mad_50sets_2000_2100-%s.nc", input.dir,scn))
+          mad_results <- nc_open(mad_nc_file)
           mass  <- ncvar_get(model_results, "glac_mass_annual")
           mass_mad  <- ncvar_get(mad_results, "glac_mass_annual_mad")
           
