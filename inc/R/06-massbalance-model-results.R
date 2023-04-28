@@ -24,7 +24,11 @@ trop_glaciers_classified <- readRDS(
                output.dir)
 )
 
-jjs <- grp_table %>% filter(!unit_name %in% "Temperate Glacier Ecosystems") %>% pull(id) %>% as.numeric()
+
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+
+
+jjs <- grp_table %>% filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
 
 
 cl <- makeCluster(round(detectCores()*.8))

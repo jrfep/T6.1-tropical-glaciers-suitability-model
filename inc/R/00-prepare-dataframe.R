@@ -46,7 +46,9 @@ all_units <- unique(grp_table$unit_name)
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
 ## take the ids directly from the table
-jjs <- grp_table %>% filter(!unit_name %in% "Temperate Glacier Ecosystems") %>% pull(id) %>% as.numeric()
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+jjs <- grp_table %>% 
+    filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
 
 ## jjs <- unique(trop_glaciers_classified$grp)
 ## jjs <- jjs[jjs %in% 3:36]

@@ -104,9 +104,9 @@ We propose to use a conditional formula to avoid artifacts:
 $$
 \mathrm{RS}_{cor}=
     \begin{cases}
-      0, & \text{if}\ V_{0} ≤ V_{F} \\
+      0, & \text{if}\ V_{0} ≤ V_{F} \text{ and}\ V_{F} > V_{C}\\
       \mathrm{OD}/\mathrm{MD}, & \text{otherwise} \\
-      1, & \text{if}\ V_{0} ≤ V_{C} \\
+      1, & \text{if}\ V_{F} ≤ V_{C} \\
     \end{cases}
 $$
 
@@ -115,13 +115,13 @@ This formula focuses on measuring degradation, and we suggest the use of alterna
 
 ## Examples
 
-We illustrate the differences between both formulas with some illustrative examples.
+We illustrate the differences between both formulas with some examples.
 
 ### Ruwenzori
 
-We focus initially in the case of the tropical glacier ecosystems of Rwenzori mountains in Africa. 
+We focus initially in the case of the Tropical Glacier Ecosystems of the Ruwenzori mountains in Africa. This is a small region and we have calculated bioclimatic suitability for 11 raster cells overlaping with glacier outlines.
 
-When we consider future projections from one model and scenario (mri-esm2-0, ssp126) for the timeframe 2041-2070, and use a collapse threshold of 0.056 (equal sensitivity and specificity threshold), we find that for one cells the initial value is equal to the collapse threshold, thus maximum decline is zero and the RS formula is undefined. For another cell the final value is much lower than the collapse threshold and the observed decline is more than twice as large as the maximum decline. With the conditional formula, these extreme cases would be considered $RS=1$, i.e. collapsed.
+We use the predictions of the bioclimatic suitability model for current conditions as the initial values ($V_0$). We then calculate a threshold of equal sensitivity and specificity based on the confusion matrix of the testing subsample of occurrences and use this as a colapse threshold ($V_{C}=0.169$). We then predict the suitability values for future climatic conditions based on one combination of global circulation model and scenario (mri-esm2-0, ssp126) for the period 2041-2070. Values are shown in table [@tbl-ruwenzori].
 
 
 ```{r}
@@ -129,28 +129,6 @@ When we consider future projections from one model and scenario (mri-esm2-0, ssp
 #| tbl-cap: "Calculation of RS using the original and the conditional formula for the T.G.E. of Ruwenzori."
 #| tbl-subcap: "The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) for the period 2041-2070 and using an equal sensitivity and specificity threshold."
 
-RS_results %>% 
-  filter(
-    unit %in% "Ruwenzori",
-    pathway %in% "ssp126",
-    modelname %in% "mri-esm2-0",
-    timeframe %in% "2041-2070",
-    threshold %in% "ess",
-    )  %>% 
-  select(cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
-  DT::datatable(
-    options = list(dom = 't')
-    )
-
-```
-
-
-In this interactive plot, we can visualise these problems 
-
-```{r}
-#| label: fig-ruwenzori
-#| fig-cap: "Plot of initial ($V_{0}$) vs. final values ($V_{F}$) for the T.G.E. of Ruwenzori."
-#| warning: false
 d <- RS_results %>% 
   filter(
     unit %in% "Ruwenzori",
@@ -158,7 +136,26 @@ d <- RS_results %>%
     modelname %in% "mri-esm2-0",
     timeframe %in% "2041-2070",
     threshold %in% "ess"
-    ) %>%
+    )
+ d  %>% 
+  transmute(IV, FV, OD, MD, RS, RS_cor) %>%
+  datatable(
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(5, 'asc'))),
+    colnames = c("V_{0}", "V_{F}", "OD", "MD", "RS", "RS_{cor}")
+    ) %>% formatRound(c("IV", "FV", "OD", "MD", "RS", "RS_cor"),digits=3)  
+```
+
+
+For one cell the initial value is below the collapse threshold and thus the value of $MD$ and $RS$ are negative. For other  four cells the value of $V_{F}$ is below $V_{C}$ and we get values of $RS>1$ with two extreme cases where the $V_{F}$ is virtually the same, but the corresponding $V_{C}$ values are so close to the collapse threshold that $OD$ is multiple times larger than $MD$. With the conditional formula, all these extreme cases would be considered $RS=1$, i.e. collapsed. We can visualise these data points in an interactive plot (@fig-ruwenzori).
+
+```{r}
+#| label: fig-ruwenzori
+#| fig-cap: "Plot of initial ($V_{0}$) vs. final values ($V_{F}$) for the T.G.E. of Ruwenzori."
+#| warning: false
+d <- d %>%
   mutate(cat = case_when(
     IV == CV ~"Collapsed<br>(MD == 0)",
     IV < CV ~"Collapsed<br>(IV < CV)",
@@ -168,15 +165,14 @@ d <- RS_results %>%
     TRUE ~ "Degradation\n(0 < RS < 1)"
   ))
 
-
 colline.fmt = list(dash="dash", width = 0.5, color='red')
 ncline.fmt = list(dash="dot", width = 0.5, color='brown')
 
 fig <- plot_ly(
   d, x = ~IV, y = ~FV,
   # Hover text:
-  text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>%s", 
-                  OD, MD,RS_cor,cat)
+  text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>Rel. sev. (cond): %0.3f<br>%s", 
+                  OD, MD,RS,RS_cor,cat)
 )
 fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
             symbol = ~cat, symbols = c('o','x','circle')) 
@@ -186,7 +182,7 @@ fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.
 
 
 layout(fig,
-       title = "Example Relative Severity calculation  (Rwenzori)",
+       #title = "Example Relative Severity calculation  (Rwenzori)",
        xaxis = list(title="Initial value"),
        yaxis = list(title="Final value")
        )
