@@ -3,6 +3,8 @@ require(tidyr)
 library(ncdf4)
 require(doParallel)
 library(sf)
+library(stringr)
+library(units)
 
 here::i_am("inc/R/06-massbalance-model-results.R")
 
@@ -10,7 +12,7 @@ here::i_am("inc/R/06-massbalance-model-results.R")
 source(here::here("env","project-env.R"))
 input.dir <- sprintf("%s/%s/INPUT", gis.out, "T6.1-tropical-glaciers-data")
 output.dir <- sprintf("%s/%s/OUTPUT", gis.out, "T6.1-tropical-glaciers-data")
-target.dir <- sprintf("%s/%s/OUTPUT", gis.out, projectname)
+target.dir <- sprintf("%s/%s/", gis.out, projectname)
 
 dir(sprintf("%s/PyGEM-OGGM/", input.dir))
 
@@ -39,9 +41,9 @@ registerDoParallel(cl)
 
 all_massbalance_results <- 
   foreach (
-    jj = argrid$jjs,
-    scn = argrid$scs,
-    rgn = argrid$rgs,
+    jj = argrid$Var1,
+    scn = argrid$Var2,
+    rgn = argrid$Var3,
     .packages=c("ncdf4", "dplyr", "tidyr"),
     .combine=bind_rows
   ) %dopar% {
@@ -68,7 +70,7 @@ all_massbalance_results <-
           mts$year=yy
           dts$scn <- scn
           
-          this_result <- dts %>%
+          massbalance_results <- dts %>%
             pivot_longer(cols=starts_with("RG"),names_sep="_",names_to=c("RGIId","model_nr")) %>%
             inner_join(
               {mts %>%
@@ -77,11 +79,8 @@ all_massbalance_results <-
             rename(c(mass="value.x",mad="value.y")) %>% 
             mutate(grp=jj, unit_name={grp_table %>% filter(id==jj) %>% pull(unit_name)})
           
-          massbalance_results <- massbalance_results %>%
-            bind_rows(this_result)
         }
       }
-    } 
     return(massbalance_results)
 }
 
@@ -91,10 +90,47 @@ all_massbalance_results <-
 stopCluster(cl)
 gc()
 
+## reorganise data:
+
+year_of_collapse_data <- all_massbalance_results %>% 
+  mutate(
+    ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+    non_collapsed=if_else(mass>0,year,2000),
+    max_non_collapsed=if_else(mass+mad>0,year,2000),
+    min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
+  group_by(unit_name,ssp,model_nr) %>% 
+  summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
+            max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+            min_collapse_year=max(min_non_collapsed,na.rm=T)+1,
+            .groups="keep")
+
+totalmass_year_data <- {
+  all_massbalance_results %>% 
+    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+           mass=set_units(mass,'kg') %>% 
+             set_units("Mt"),
+           mad=set_units(mad,'kg') %>% 
+             set_units("Mt")) %>% 
+    drop_units() %>% 
+    group_by(unit_name,year,scn,model_nr) %>% 
+    summarise(total_mass=sum(mass,na.rm=T),
+              max_mass=sum(mass+mad,na.rm=T),
+              min_mass=sum(mass-mad,na.rm=T),
+              .groups="keep")
+}
+
 
 
 ## Output: save data to Rdata file ----
 
-rds.file <- sprintf("%s/massbalance-model-data-all-groups.rds",target.dir)
-
+rds.file <- sprintf("%s/massbalance-model-data-all-groups.rds", target.dir)
 saveRDS(file=rds.file, all_massbalance_results)
+
+rds.file <- sprintf("%s/massbalance-year-collapse-all-groups.rds", target.dir)
+saveRDS(file=rds.file, year_of_collapse_data)
+
+rds.file <- sprintf("%s/massbalance-totalmass-all-groups.rds", target.dir)
+saveRDS(file=rds.file, totalmass_year_data)
+
+
+

@@ -46,9 +46,12 @@ data_file  <- osf_upload(global_data_comp,
 
 ## Now upload the result table in env model component
 
-file_names <- c("OUTPUT/massbalance-model-data-all-groups.rds",
+file_names <- c("massbalance-model-data-all-groups.rds",
+                "massbalance-totalmass-all-groups.rds",
+                "massbalance-year-collapse-all-groups.rds",
                 "relative-severity-degradation-suitability-all-tropical-glaciers.rds",
-                "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+                "relative-severity-degradation-suitability-all-tropical-glaciers.csv",
+                "totalmass-suitability-glmm-data.rds")
 
 files_to_upload <- sprintf("%s/%s", output.dir,file_names)
 
