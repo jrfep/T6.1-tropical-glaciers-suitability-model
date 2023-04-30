@@ -46,7 +46,8 @@ all_units <- unique(grp_table$unit_name)
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
 ## take the ids directly from the table
-exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+exclude <- c("Temperate Glacier Ecosystems", "Famatina")
+# Include in GBM model but exclude from assessment: "Norte de Argentina", "Zona Volcanica Central"
 jjs <- grp_table %>% 
     filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
 
