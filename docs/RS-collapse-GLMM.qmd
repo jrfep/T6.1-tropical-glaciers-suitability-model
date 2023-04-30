@@ -50,10 +50,14 @@ model_data <- readRDS(rds.file)
 To compare both indicators we used the $RS_{bcs}^{CT=acc}$, $RS_{bcs}^{CT=ppv}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
 
 ```{r}
-model_data %>% group_by(unit,method) %>% summarise(collapse=sum(RS>.99)) %>% pivot_wider(values_from=collapse,names_from=method)
+model_data %>% group_by(unit,method) %>% summarise(collapse=sum(RS==1,na.rm=T)) %>% pivot_wider(values_from=collapse,names_from=method)
 valid_methods <- c("ice","ess","ppv")
-model_data <- model_data %>% filter(method %in% valid_methods) %>% mutate(method=droplevels(method))
+model_data <- model_data %>% 
+  filter(method %in% valid_methods,!is.na(RS), RS>0) %>% 
+  mutate(method=droplevels(method))
 ```
+
+We could use collapse=RS>0.99?
 
 ### Prediction of collapse
 

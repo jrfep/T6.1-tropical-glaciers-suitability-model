@@ -1,0 +1,158 @@
+---
+title: "T.G.E. Ecuador"
+subtitle: "Tropical Glacier Ecosystem of Ecuador"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: load libraries and functions
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+#library(purrr)
+library(readr)
+#require(glmmTMB)
+#require(lme4)
+here::i_am("docs/A1/Ecuador.qmd")
+#sessionInfo()
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+#| label: read input data 
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds.file)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
+  mutate(unit_name=str_replace_all(unit," ","-"))
+rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds.file)
+rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
+year_of_collapse_data <- readRDS(rds.file)
+```
+
+```{r}
+#| label: ggplot theme
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+```
+
+
+```{r}
+slc_unit <- "Ecuador"
+
+```
+
+
+## Compare overall RS 
+
+Now we can calculate the relative severity per year estimated from the mass balance model and compare this value with the relative severity estimated from the suitability model.
+
+
+```{r}
+#| label: fig-Ecuador-ice-ts
+#| fig-cap: "Time series of relative severity of ice mass loss. Original RS formula."
+dat1 <- RS_results %>% 
+  filter(unit %in% slc_unit, threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2025,
+    timeframe %in% "2041-2070"~2055,
+    timeframe %in% "2071-2100"~2085
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor), .groups="keep")
+
+dat2 <- totalmass_year_data %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$total_mass, formula = "original")) 
+
+ggplot(dat2) +
+  annotate("rect",
+           xmin=c(2011,2041,2071),
+           ymin=0,
+           xmax=c(2040,2070,2100),
+           ymax=1,
+           fill="pink4",alpha=.15) +
+  geom_point(aes(x=year,y=RS),alpha=.50,cex=.5) +
+  geom_boxplot(data=dat1,
+               aes(y = RSmean, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,timeframe))) + 
+  facet_grid(scn~.) 
+```
+
+```{r}
+
+dat1 <- RS_results %>% 
+  filter(unit %in% str_replace_all(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
+  mutate(year=case_when(
+    timeframe %in% "2011-2040"~2040,
+    timeframe %in% "2041-2070"~2070,
+    timeframe %in% "2071-2100"~2100
+    ),
+    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(scn,threshold,timeframe,year,modelname) %>%
+  summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
+  ungroup %>%
+  select(scn,threshold,year,RS)
+
+dat2 <- totalmass_year_data %>% 
+  filter(year %in% c(2000,2040,2070,2100)) %>% 
+  filter(unit_name %in% c(slc_unit)) %>%
+  group_by(model_nr,scn) %>% 
+  group_modify(~RSts(.x$year,.x$total_mass)) %>%
+  ungroup %>% 
+  transmute(scn,threshold="MBM",year,RS)
+
+dats <- dat1 %>% bind_rows(dat2)
+ggplot(dats) +
+  geom_boxplot(data=dats,
+               aes(y = RS, 
+                   x = year, 
+                   colour=threshold, 
+                   group=interaction(threshold,year))) + 
+  facet_grid(scn~.) 
+```
+
+## RS bioclimatic
+
+```{r}
+#| label: fig-bcs-Ecuador
+#| fig-cap: "Box and whisker plots of the $RS_{bcs}^{acc}$ values for the Tropical Glacier Ecosystem of Ecuador. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean is marked with an X symbol."
+dat1 <- RS_results %>% 
+  filter(
+    unit %in% slc_unit, 
+    threshold == "acc",)
+dat2 <- dat1 %>% 
+  group_by(timeframe,pathway,modelname) %>% 
+  summarise(mean_RS=mean(RS_cor), .groups="keep")
+
+ggplot(dat1 ) +
+  geom_boxplot(aes(y = RS_cor, x = timeframe, colour = timeframe)) +
+  geom_point(data=dat2, aes(y = mean_RS, x = timeframe, colour = timeframe),pch=4,cex=2) +
+  facet_grid(pathway~modelname) +
+  scale_colour_discrete("Future period") +
+  theme(legend.position = "bottom",
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank())
+```
+
+## Collapse year: complete loss of ice
+
+Massbalance model does not predict collapse of the ecosystem
+

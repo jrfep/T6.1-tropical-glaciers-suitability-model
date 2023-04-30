@@ -13,8 +13,8 @@ book:
         - TGE-units.qmd
     - part: "Indicators of collapse"
       chapters:
-        - IND-mass-balance-model.qmd
-        - IND-suitability-model.qmd
+        - IND/mass-balance-model.qmd
+        - IND/suitability-model.qmd
     - part: "Relative Severity"
       chapters:
         - RS-formula.qmd
@@ -24,7 +24,13 @@ book:
         - RS-collapse-GLMM.qmd
     - references.qmd
   appendices:
-    - A1-general-workflow.qmd
+    - part: "Results per assessment unit"
+      chapters:
+        - A1/Ecuador.qmd
+        - A1/Mexico.qmd
+    - part: "Code reproducibility"
+      chapters:
+        - A2/general-workflow.qmd
   page-footer:
     left: "Created by: JR Ferrer-Paris"
     right:

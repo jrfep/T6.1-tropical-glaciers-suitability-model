@@ -21,7 +21,7 @@ library(purrr)
 library(readr)
 library(tidyr)
 library(DT)
-here::i_am("docs/IND-mass-balance-model.qmd")
+here::i_am("docs/IND/mass-balance-model.qmd")
 # sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 # Suppress summarise info

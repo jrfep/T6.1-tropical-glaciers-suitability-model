@@ -1,12 +1,21 @@
 ---
+title: "General description of workflow"
+subtitle: "Steps from data preparation to analysis"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
-# General description of workflow
+All steps required to reproduce this analysis are available in the GitHub repository [T6.1-tropical-glaciers-suitability-model](https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/tree/dont-panic) and the OSF component page [Environmental suitability model for Tropical Glacier Ecosystems](https://osf.io/hp8bs/)
+
+These repositories are part of a larger project. Please refer to the following project and component pages for an overview:
+
+- [Global RLE assessment of Tropical Glacier Ecosystems](https://osf.io/792qb/)
+- [Data for the global RLE assessment of Tropical Glacier Ecosystems](https://osf.io/432sb/)
 
 ## Steps
+
+### Consolidate input data
 
 ### Consolidate input data
 
