@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+
+#PBS -l select=4:ncpus=8:mem=120gb
+#PBS -l walltime=12:00:00
+#PBS -N WorkflowRS
+#PBS -k eod
+#PBS -j oe
+
+## set up bash environment variables
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
+mkdir -p $GISOUT/$PROJECTNAME/GBMmodel
+
+## load modules for gdal functions
+#module purge
+module load gdal/3.5.3-szip  r/4.2.2
+
+if [ ! -e $GISOUT/$PROJECTNAME/GBMmodel/current-bioclim-data-all-groups.rda ]
+then
+    Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
+fi
+
+for ARRAY_INDEX in $(seq 1 16)
+do 
+  Rscript --vanilla $SCRIPTDIR/inc/R/01-gbm-model-fit-and-predict.R ${ARRAY_INDEX} 
+  Rscript --vanilla $SCRIPTDIR/inc/R/02-gbm-model-predict-future.R ${ARRAY_INDEX} 
+done
+
+cd $SCRIPTDIR
+
+
+### Calculate Relative Severity
+
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/03-create-output-table-for-data-upload.R
+
+### Read mass balance model results
+
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/06-massbalance-model-results.R
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/07-glmm-data-summarised.R
+
+### Upload data to cloud repository
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/10-upload-files-to-OSF.R overwrite
+Rscript --no-restore --no-save $SCRIPTDIR/inc/R/11-download-files-from-OSF.R overwrite

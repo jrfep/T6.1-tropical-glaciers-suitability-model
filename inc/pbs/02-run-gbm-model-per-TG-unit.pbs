@@ -9,13 +9,13 @@
 
 ## set up bash environment variables
 source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
-mkdir -p $GISOUT/$PROJECTNAME/OUTPUT
+mkdir -p $GISOUT/$PROJECTNAME/GBMmodel
 
 ## load modules for gdal functions
 #module purge
 module load gdal/3.5.3-szip  r/4.2.2
 
-if [ ! -e $GISOUT/$PROJECTNAME/OUTPUT/current-bioclim-data-all-groups.rda ]
+if [ ! -e $GISOUT/$PROJECTNAME/GBMmodel/current-bioclim-data-all-groups.rda ]
 then
     Rscript --vanilla $SCRIPTDIR/inc/R/00-prepare-dataframe.R
 fi

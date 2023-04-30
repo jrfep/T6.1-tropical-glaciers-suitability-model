@@ -63,3 +63,13 @@ Rscript --no-restore --no-save $SCRIPTDIR/inc/R/10-upload-files-to-OSF.R overwri
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/11-download-files-from-OSF.R overwrite
 ```
 
+## Alternative with PBS
+
+Run all steps in a single PBS job file
+
+```bash
+#| eval: false
+source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/env/project-env.sh
+cd $WORKDIR
+qsub $SCRIPTDIR/inc/pbs/01-run-complete-workflow.pbs
+```

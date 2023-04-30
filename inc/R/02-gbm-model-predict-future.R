@@ -32,7 +32,7 @@ source(
     )
 )
 input.dir <- sprintf("%s%s/OUTPUT",gis.out,"T6.1-tropical-glaciers-data")
-output.dir <- sprintf("%s%s/OUTPUT",gis.out,projectname)
+output.dir <- sprintf("%s%s/GBMmodel",gis.out,projectname)
 
 ## Read command line arguments
 args = commandArgs(trailingOnly=TRUE)

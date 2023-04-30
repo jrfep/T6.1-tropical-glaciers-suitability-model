@@ -8,7 +8,7 @@ here::i_am("inc/R/03-create-output-table-for-data-upload.R")
 source(here::here("env","project-env.R"))
 source(here::here("inc","R","RS-functions.R"))
 
-input.dir <- sprintf("%s%s/OUTPUT/",gis.out,projectname)
+input.dir <- sprintf("%s%s/GBMmodel/",gis.out,projectname)
 
 groups <- dir(sprintf("%s/",input.dir))
 

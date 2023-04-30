@@ -36,7 +36,7 @@ env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
 ## First upload to data component
 
-file_to_upload <- sprintf("%s/OUTPUT/current-bioclim-data-all-groups.rda", output.dir)
+file_to_upload <- sprintf("%s/GBMmodel/current-bioclim-data-all-groups.rda", output.dir)
 
 data_file  <- osf_upload(global_data_comp, 
                          path = file_to_upload,

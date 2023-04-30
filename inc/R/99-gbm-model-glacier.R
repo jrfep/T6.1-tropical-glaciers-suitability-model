@@ -31,7 +31,7 @@ source(
         env_file_path
     )
 )
-output.dir <- sprintf("%s/%s/OUTPUT",gis.out,projectname)
+output.dir <- sprintf("%s/%s/GBMmodel",gis.out,projectname)
 
 ## Read command line arguments
 args = commandArgs(trailingOnly=TRUE)
