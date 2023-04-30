@@ -29,7 +29,7 @@ source $HOME/proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-mode
 cd $WORKDIR
 ## fool qsub to send only one job
 qsub -J 1-3:4 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs 
-qsub -J 2-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
+qsub -J 1-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
 ```
 
 

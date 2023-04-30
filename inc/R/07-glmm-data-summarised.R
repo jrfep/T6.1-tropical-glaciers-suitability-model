@@ -14,8 +14,9 @@ totalmass_year_data <- readRDS(rds.file)
 
 results_file <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", target.dir)
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
-  mutate(unit_name=str_replace_all(unit," ","-"))
+  mutate(unit_name=str_replace_all(unit,"-"," "))
 
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
 #slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
 dat1 <- RS_results %>% 
@@ -49,7 +50,8 @@ dat2 <- totalmass_year_data %>%
 
 model_data <- dat1 %>% 
   bind_rows(dat2) %>% 
-  mutate(method=factor(method,levels=c("ice","acc","ess","ppv")))
+  mutate(method=factor(method,levels=c("ice","acc","ess","ppv"))) %>%
+  filter(!unit %in% exclude)
 
 rds.file <- sprintf("%s/totalmass-suitability-glmm-data.rds", target.dir)
 saveRDS(file=rds.file, model_data)
