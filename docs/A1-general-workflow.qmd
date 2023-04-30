@@ -34,7 +34,7 @@ qsub -J 1-16 $SCRIPTDIR/inc/pbs/02-run-gbm-model-per-TG-unit.pbs
 
 
 ```bash
-tree $GISOUT/$PROJECTNAME
+tree $GISOUT/$PROJECTNAME -L 2
 ```
 
 ### Calculate Relative Severity

@@ -70,7 +70,7 @@ if (file.exists(rda.file)) {
 
 # Exclude low elevations
 # table(input_raster_data$glacier,input_raster_data$elevation_1KMmd>3500)
-data <- input_raster_data %>%
+input_data <- input_raster_data %>%
    tibble %>%
    mutate(id = factor(id)) %>%
    left_join(grp_table, by = "id") %>%
@@ -80,12 +80,12 @@ data <- input_raster_data %>%
       elevation_1KMmd > 3500
       )
 
-tt <- table(data$id)
+tt <- table(input_data$id)
 
-training <- data %>% 
+training <- input_data %>% 
    mutate(prob=if_else(glacier,5,.5)*(sum(tt)/tt[id])) %>% 
    slice_sample(n=10000,weight_by = prob) %>%
-   dplyr::select(glacier,bio_01:bio_19) %>%
+   dplyr::select(glacier,starts_with("bio_")) %>%
    mutate(glacier=factor(if_else(glacier,"G","N")))
 
 testing <- input_raster_data %>% 
@@ -102,6 +102,16 @@ ctrl <- trainControl(
    method = "cv",
    number = 10
 )
+# suggestion from https://topepo.github.io/caret/model-training-and-tuning.html#metrics
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 10,
+                           ## Estimate class probabilities
+                           classProbs = TRUE,
+                           ## Evaluate performance using 
+                           ## the following function
+                           summaryFunction = twoClassSummary)
+
 tuneGrid <- expand.grid(
    n.trees = c(50, 75, 100, 125, 150, 200),
    interaction.depth = (1:5),
@@ -115,8 +125,10 @@ model <- caret::train(
    method = 'gbm',
    distribution="bernoulli",
    preProcess = c("center", "scale"),
-   trControl = ctrl,
+   trControl = fitControl,
    tuneGrid = tuneGrid,
+   ## Specify which metric to optimize
+   metric = "ROC",
    verbose = TRUE
 )
 
@@ -125,7 +137,7 @@ model <- caret::train(
 
 ## Step 3: save model, training and testing subsets  -------
 
-test.features = testing %>% dplyr::select(bio_01:bio_19)
+test.features = testing %>% dplyr::select(starts_with("bio_"))
 test.target = testing %>% pull(glacier)
 
 rda.results <- sprintf(
@@ -136,12 +148,15 @@ rda.results <- sprintf(
 
 ## Step 4: save model predictions at test location  -------
 
-predictions = predict(model, newdata = test.features, type='prob')
 
 # we will use another approach using the caret library
 #e1 <- evaluate(predictions$G[test.target=="G"],predictions$G[test.target=="N"])
 
+predictions = predict(model, newdata = test.features, type='prob')
 testing$IV <- predictions[,"G"]
+
+predictions = predict(model,  type='prob')
+training$IV <- predictions[,"G"]
 
 save(file=rda.results,model,training,testing,slc_unit )
 
