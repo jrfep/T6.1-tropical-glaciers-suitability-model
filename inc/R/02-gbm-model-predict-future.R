@@ -48,8 +48,8 @@ trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-g
 all_units <- unique(grp_table$unit_name)
 slc_unit <- all_units[ifelse(is.na(pick),12,pick)]
 
-exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")[1:2]
-# Include in GBM model but exclude from assessment: "Norte de Argentina", "Zona Volcanica Central"
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+# Include in GBM model for training but exclude from prediction/assessment: "Norte de Argentina", "Zona Volcanica Central"
 
 if (slc_unit %in% exclude) {
   stop("Skipping temperate and transitional glacier ecosystems")
