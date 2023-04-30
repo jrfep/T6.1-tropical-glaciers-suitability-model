@@ -49,7 +49,7 @@ dat2 <- totalmass_year_data %>%
 
 model_data <- dat1 %>% 
   bind_rows(dat2) %>% 
-  mutate(method=factor(method,levels=c("ice","acc","ess")))
+  mutate(method=factor(method,levels=c("ice","acc","ess","ppv")))
 
 rds.file <- sprintf("%s/totalmass-suitability-glmm-data.rds", target.dir)
 saveRDS(file=rds.file, model_data)
