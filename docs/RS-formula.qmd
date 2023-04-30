@@ -4,6 +4,7 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
 ## Original RS formula
 
 The original Relative Severity formula is given by:
@@ -28,6 +29,7 @@ library(DT)
 library(purrr)
 library(ggpubr)
 library(plotly)
+library(htmltools)
 here::i_am("docs/RS-formula.qmd")
 # sessionInfo()
 # Suppress summarise info
@@ -113,22 +115,29 @@ $$
 This formula focuses on measuring degradation, and we suggest the use of alternative measures or indices for other purposes. Although values of $RS<0$ could be informative for indicating recovery or improvement, we argue that their magnitude would not be informative for decision making purposes and could be confusing. 
 
 
-## Examples
+## Examples of application of the formulas
 
 We illustrate the differences between both formulas with some examples.
 
-### Ruwenzori
+### Decline in bioclimatic suitability
+
+We first explore the calculation of the RS formulas to the predictions of the bioclimatic suitability model. 
+
+Prediction of the bioclimatic suitability model are available for four consecutive periods of 30 years each. The current conditions are summarised as mean values of the bioclimatic variables for the period 1980 to 2010, and the future conditions are calculated as mean values for the periods of 2011-2040, 2041-2070 and 2071-2100. For the future periods we have a choice of several global circulation model, socio-economic scenarios.
+
+We calculate RS using the predicted suitability for the current conditions as initial value ($V_0$), and data from subsequent periods as final values ($V_F$).
+
+We explore different collapse thresholds ($V_{C}$) based on the confusion matrix of the predictions under current conditions and the observed or known distribution of glacier outlines.  We denote this estimate of relative severity as $RS_{bcs}^{CT=acc}$, when the collapse threshold is calculated as the maximum accuracy cut-off value of the confusion matrix, and $RS_{bcs}^{CT=ess}$, when the collapse threshold is calculated with the cut-off value of equal sensitivity and specificity of the confusion matrix.[We also explored a third cut-off value (Positive predictive value, $ppv$), but this often resulted in high threshold values and extremely high RS values (@fig-RS-periods).]{.aside}
+
+
+#### Ruwenzori
 
 We focus initially in the case of the Tropical Glacier Ecosystems of the Ruwenzori mountains in Africa. This is a small region and we have calculated bioclimatic suitability for 11 raster cells overlaping with glacier outlines.
 
-We use the predictions of the bioclimatic suitability model for current conditions as the initial values ($V_0$). We then calculate a threshold of equal sensitivity and specificity based on the confusion matrix of the testing subsample of occurrences and use this as a colapse threshold ($V_{C}=0.169$). We then predict the suitability values for future climatic conditions based on one combination of global circulation model and scenario (mri-esm2-0, ssp126) for the period 2041-2070. Values are shown in table [@tbl-ruwenzori].
+We show here the calculation using the suitability values for future climatic conditions based on one combination of global circulation model and scenario (mri-esm2-0, ssp126) for the period 2041-2070. 
 
 
 ```{r}
-#| label: tbl-ruwenzori
-#| tbl-cap: "Calculation of RS using the original and the conditional formula for the T.G.E. of Ruwenzori."
-#| tbl-subcap: "The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) for the period 2041-2070 and using an equal sensitivity and specificity threshold."
-
 d <- RS_results %>% 
   filter(
     unit %in% "Ruwenzori",
@@ -137,9 +146,16 @@ d <- RS_results %>%
     timeframe %in% "2041-2070",
     threshold %in% "ess"
     )
+
+tbl_caption <- tags$caption(
+  tags$b("RS calculations for T.G.E. of Ruwenzori mountains."),
+  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp126) for the period 2041-2070 and using an equal sensitivity and specificity threshold of %0.2f",unique(d$CV)))
+)
+
  d  %>% 
   transmute(IV, FV, OD, MD, RS, RS_cor) %>%
   datatable(
+    caption = tbl_caption,
     options = list(
       dom = 't', 
       pageLength = -1,
@@ -149,10 +165,11 @@ d <- RS_results %>%
 ```
 
 
-For one cell the initial value is below the collapse threshold and thus the value of $MD$ and $RS$ are negative. For other  four cells the value of $V_{F}$ is below $V_{C}$ and we get values of $RS>1$ with two extreme cases where the $V_{F}$ is virtually the same, but the corresponding $V_{C}$ values are so close to the collapse threshold that $OD$ is multiple times larger than $MD$. With the conditional formula, all these extreme cases would be considered $RS=1$, i.e. collapsed. We can visualise these data points in an interactive plot (@fig-ruwenzori).
+This example highlights several problems with the original formula when the value of $MD$ and $RS$ are negative, or when $MD$ is very close to zero and how these problems are resolved using the conditional formula. We can visualise these data points in an interactive plot (@fig-rs-example-ruwenzori).
+
 
 ```{r}
-#| label: fig-ruwenzori
+#| label: fig-rs-example-ruwenzori
 #| fig-cap: "Plot of initial ($V_{0}$) vs. final values ($V_{F}$) for the T.G.E. of Ruwenzori."
 #| warning: false
 d <- d %>%
@@ -174,8 +191,8 @@ fig <- plot_ly(
   text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>Rel. sev. (cond): %0.3f<br>%s", 
                   OD, MD,RS,RS_cor,cat)
 )
-fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
-            symbol = ~cat, symbols = c('o','x','circle')) 
+fig <- add_markers(fig, color = ~cat, size = 2)
+  #size = ~RS_cor, symbol = ~cat, symbols = c('o','x','circle')
 fig <- add_lines(fig, x = ~IV, y = ~IV, name="no change", line=ncline.fmt)
 fig <- add_lines(fig, y = unique(d$CV), name="collapse threshold", line=colline.fmt)
 fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.fmt)
@@ -188,67 +205,57 @@ layout(fig,
        )
 ```
 
+#### Kilimanjaro
 
-In this unit, the positive predictive rate threshold if very high (0.698) and we have the problem that most of the initial values are above the threshold and the formula of RS give uninformative results. Using the conditional formula, all these cased would be calculated as $RS=1$ or collapsed.
+We perform the same calculations for the Tropical Glacier Ecosystems of Kilimanjaro in Africa. This is also a small region and we have calculated bioclimatic suitability for 10 raster cells overlaping with glacier outlines.
 
+We use the same combination of model, scenario and future period (mri-esm2-0, ssp126, 2041-2070) with the same criterion for threshold selection. 
 
-```{r}
-#| label: tbl-planets
-#| tbl-cap: Planets
-RS_results %>% 
-  filter(
-    unit %in% "Ruwenzori",
-    pathway %in% "ssp126",
-    modelname %in% "mri-esm2-0",
-    timeframe %in% "2041-2070",
-    threshold %in% "ppv",
-    )  %>% 
-  select(id,cellnr,CV,IV,FV,OD,MD,RS,RS_cor) %>%
-  DT::datatable()
-
-```
-
-Aggregating the original RS values can be problematic. In this table we can compare the mean values for different thresholds and time frames. Using the conditional RS formula we see a clear increasing trend, but the values of the original formula translate to unpredictable and uninformative mean values of RS.
-
-```{r}
-RS_results %>% 
-  filter(
-    unit %in% "Ruwenzori",
-    threshold %in% "ess",
-    modelname %in% "mri-esm2-0"
-    ) %>% 
-  group_by( pathway, timeframe) %>% 
-  summarise(
-    n=n(),
-    mean_RS=mean(RS,na.rm=T),
-    mean_RS_cor=mean(RS_cor,na.rm=T)) %>% 
-  DT::datatable()
-
-```
-
-### Ecuador
-
-Let's consider now the case of the tropical glacier ecosystem of Ecuador. Here we have a larger sample due to the larger extent and number of glaciers. We focus here in the nearest time frame and see that some cells have larger final values than the initial values. With the conditional formula these units will be considered $RS=0$ and this means that the magnitude of the improvement is lost. The consequence of this interpretation for the risk assessment needs to be discussed in more detail, but it is unlikely to be of much consequence in this case study where the trend is overwhelmingly negative. For studied focused on ecosystem recovery, a negative value of $OD$ might be informative, but its relationship with the $MD$ could be explored in alternative ways.
 
 ```{r}
 
 d <- RS_results %>% 
   filter(
-    unit %in% "Ecuador",
-    timeframe %in% "2011-2040",
+    unit %in% "Kilimanjaro",
     pathway %in% "ssp126",
     modelname %in% "mri-esm2-0",
+    timeframe %in% "2041-2070",
     threshold %in% "ess"
-    ) %>%
+    )
+
+tbl_caption <- tags$caption(
+  tags$b("RS calculations for T.G.E. of Kilimanjaro."),
+  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp126) for the period 2041-2070 and using an equal sensitivity and specificity threshold of %0.2f",unique(d$CV)))
+)
+
+ d  %>% 
+  transmute(IV, FV, OD, MD, RS, RS_cor) %>%
+  datatable(
+    caption = tbl_caption,
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(5, 'asc'))),
+    colnames = c("V_{0}", "V_{F}", "OD", "MD", "RS", "RS_{cor}")
+    ) %>% formatRound(c("IV", "FV", "OD", "MD", "RS", "RS_cor"),digits=3)  
+```
+
+
+In this unit, the same criterion for threshold selection results in a much higher collapse threshold, but we also see examples of increases in the suitability index due to anomalies for this time period in the underlying climate data for this region (@fig-rs-example-kili).
+
+
+```{r}
+#| label: fig-rs-example-kili
+#| fig-cap: "Plot of initial ($V_{0}$) vs. final values ($V_{F}$) for the T.G.E. of Kilimanjaro."
+#| warning: false
+d <- d %>%
   mutate(cat = case_when(
+    FV > IV & FV > CV ~ "Improved\n(OD < 0)",
     IV == CV ~"Collapsed<br>(MD == 0)",
-    IV < CV ~"Collapsed<br>(IV>CV)",
-    FV < CV ~"Collapsed<br>(FV>CV)",
-    OD > MD ~ "Collapsed<br>(OD > MD)",
-    OD < 0 ~ "Improved\n(OD < 0)",
+    IV < CV ~"Collapsed<br>(IV < CV)",
+    FV < CV ~"Collapsed<br>(FV < CV)",
     TRUE ~ "Degradation\n(0 < RS < 1)"
   ))
-
 
 colline.fmt = list(dash="dash", width = 0.5, color='red')
 ncline.fmt = list(dash="dot", width = 0.5, color='brown')
@@ -259,41 +266,60 @@ fig <- plot_ly(
   text = ~sprintf("Obs. decline: %0.3f<br>Max. decline: %0.3f<br>Rel. severity: %0.3f<br>Rel. sev. (cond): %0.3f<br>%s", 
                   OD, MD,RS,RS_cor,cat)
 )
-fig <- add_markers(fig, color = ~cat, size = ~RS_cor,
-            symbol = ~cat, symbols = c('o','x','circle','+')) 
+fig <- add_markers(fig, color = ~cat, 
+  size = 2 
+  #size = ~RS_cor, symbol = ~cat, symbols = c('o','x','circle')
+  ) 
 fig <- add_lines(fig, x = ~IV, y = ~IV, name="no change", line=ncline.fmt)
 fig <- add_lines(fig, y = unique(d$CV), name="collapse threshold", line=colline.fmt)
 fig <- add_lines(fig, x = unique(d$CV), name="collapse threshold", line=colline.fmt)
 
 
 layout(fig,
-       title = "Example Relative Severity calculation (Ecuador)",
+       #title = "Example Relative Severity calculation  (Kilimanjaro)",
        xaxis = list(title="Initial value"),
        yaxis = list(title="Final value")
        )
 ```
 
-## Kilimanjaro
+### Relative severity of decline in ice mass
 
-Problems with the time series of ice mass balance in Kilimanjaro, where there is a predicted increase in ice mass at the start of the time series
+The data from the Dynamic Ice Mass Balance model is provided for each glacier outline in one-year intervals, each assessment unit has multiple glacier outlines of different size and therefore different initial ice mass.
+
+We calculate RS using the predicted median ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and use a collapse threshold of $0 kg$ of ice. We use the median absolute deviation to calculate a minimum and a maximum interval for the values of $RS$.  
+
+::: {.column-margin}
+ We denote this estimate of relative severity as $RS_{ice}^{CT=0}$. 
+:::
+
+#### Kilimanjaro
+
+The figure @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$ using the original formula for a selection of units in the T.G.E of Kilimanjaro. 
 
 ```{r}
-
+#| label: fig-rs-ice-example-kili
+#| fig-cap: "Time series of RS values for the ice mass indicator variable for the T.G.E. of Kilimanjaro. We use here data for the first 51 years of the time series calculated from one unnamed model, one scenario (ssp126) and four selected glacier outline units identified by the RGI 6.0 id. The line represent the best estimate of RS based on median ice mass predictions, and the shaded area represent a uncertainty interval based on the median absolute deviation of ice mass predictions."
+#| warning: false
 RSvals <- massbalance_results %>% 
   filter(
     unit_name %in% c("Kilimanjaro"),
-    model_nr %in% c(" 3"," 6"," 9"),
+    model_nr %in% c(" 9"),
+    scn %in% "ssp126",
+    year %in% 2000:2050,
+    RGIId %in% c("RGI60-16.01649", "RGI60-16.01654", "RGI60-16.01650", "RGI60-16.01656")
   ) %>%
 #  filter(unit_name %in% c("Ecuador")) %>%
   mutate(min_mass=mass-mad,max_mass=mass+mad) %>% 
-  group_by(RGIId,model_nr,scn) %>% 
+  group_by(RGIId) %>% 
   group_modify(~RSts(.x$year,.x$mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
 
 ggplot(RSvals) +
-  ## geom error bar is small compared to intermodel variability, keep out of the plot
-    geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
-  facet_grid(scn~model_nr) +
+  #geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_ribbon(aes(x=year,ymin=RS_min,ymax=RS_max), alpha=.25) +
+  geom_line(aes(x=year,y=RS)) +
+  geom_hline(yintercept = 0, colour = "maroon", lty = 2) +
+  facet_wrap(~RGIId) +
   theme(legend.position = "none")
-
 ```
+
+Given that the collapse threshold is also the minimum value of ice possible, the original formula does not produce values higher than one, but some models predict an increases in ice mass at the start of the time series for some glacier outlines, and this will result in negative values (below the dashed line).

@@ -20,6 +20,7 @@ library(ggrepel)
 library(purrr)
 library(readr)
 library(tidyr)
+library(DT)
 here::i_am("docs/IND-mass-balance-model.qmd")
 # sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
@@ -84,7 +85,7 @@ We use these mass projections to estimate the year of collapse (first year when 
 
 
 ```{r}
-#| tbl-cap: "Proportion of models predicting collapse by 2100 for each assessment unit."
+#| tbl-cap: "Proportion of models predicting collapse before 2100 for each assessment unit."
 #| label: tbl-collapse-2100
 
 year_of_collapse_data %>% 
@@ -97,20 +98,31 @@ year_of_collapse_data %>%
     ) %>%
   transmute(
     unit_name,ssp,
-    prob_collapse=case_when(
-      prob_collapse == prob_max & prob_collapse == prob_min ~ sprintf("%0.1f", prob_collapse),
-      TRUE ~ sprintf("%0.1f (%0.1f -- %0.1f)", prob_collapse, prob_max, prob_min)
+    prob_collapse,
+    prob_bounds=case_when(
+      prob_collapse == prob_max & prob_collapse == prob_min ~ "",
+      TRUE ~ sprintf("(%0.1f -- %0.1f)", prob_max, prob_min)
     )
-  ) %>%
-  pivot_wider(names_from=ssp,values_from=prob_collapse) %>%
-  DT::datatable()
+  ) %>% 
+  pivot_wider(names_from=ssp,values_from=c(prob_collapse, prob_bounds)) %>%
+  select(1,2,5,3,6,4,7) %>%
+  datatable(
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(6, 'asc'))),
+    colnames = c("unit_name", "SSP1-2.6", "bounds", "SSP3-7.0", "bounds", "SSP5-8.5", "bounds")) %>% 
+      formatRound(c("prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP5-8.5"),digits=1) %>%
+      formatStyle(
+        columns = c("unit_name","prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP5-8.5", "prob_bounds_SSP1-2.6", "prob_bounds_SSP3-7.0", "prob_bounds_SSP5-8.5"), 
+        fontSize = '80%')
 ```
 
-For nine units the massbalance models predict total loss of ice between 2040 and 2010
+For at least seven asssessment units a proportion of the dynamic ice mass balance models predict total loss of ice between 2040 and 2100.[For one unit the collapse occurs between 2100-2102]{.aside}
 
 ```{r}
 #| label: fig-Histogram-collapse-year
-#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
+#| fig-cap: Histogrom of year of collapse for all assessment units (panels) and for each shared socioeconomic pathways (SSP, fill colour).
 #| warning: false
 
 
@@ -151,8 +163,7 @@ ggplot(data=year_of_collapse_data %>%
   theme(legend.position = "none")
 
 ```
-Focusing on the 50 year time frame between 2020 and 2070 we find that ... of the models end in collapse. Uncertainty in mass estimates (mean absolute deviation) do not have a major effect on the estimated year of collapse. Considering each scenarios separately, the proportion of models that predict collapse by 2070 is higher than 50% (threshold for CR) in all cases, except for scenario SSP1-2.6.
 
-Criterion E is evaluated as **Critically Endangered**.
+
 
 

@@ -18,9 +18,10 @@ book:
     - part: "Relative Severity"
       chapters:
         - RS-formula.qmd
+        - RS-spatial-aggregation.qmd
+        - RS-spatial-variability.qmd
         - RS-time-series.qmd
         - RS-collapse-GLMM.qmd
-        - RS-spatial-variability.qmd
     - references.qmd
   appendices:
     - A1-general-workflow.qmd

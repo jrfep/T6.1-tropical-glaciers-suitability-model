@@ -50,17 +50,23 @@ IUCN Global Ecosystem Typology
   - Level 2: T6 Polar/Alpine (cryogenic) functional biome
     - Level 3: T6.1 Ice sheets, glaciers and perennial snowfields
       - Subgroup: Tropical Glacier Ecosystems
-      - Level 4: 
+      - Level 4: 12 units as follows:
 
 ```{r}
 #| label: name of units
+
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+
 trop_glaz_names <- trop_glaz %>% 
   st_drop_geometry()  %>% 
+  filter(!group_name %in% exclude) %>%
   arrange(group_name) %>%
   pull(group_name) %>%
   unique 
 sprintf("T.G.E. %s", trop_glaz_names)
 ```
+
+We exclude transitional units
 
 ## Spatial distribution
 

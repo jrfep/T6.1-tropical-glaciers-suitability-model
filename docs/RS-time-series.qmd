@@ -89,9 +89,9 @@ ggplot(RSvals) +
 
 ## Degradation of bioclimatic suitability
 
-Prediction of the bioclimatic suitability model are available for four consecutive periods of 30 years each. The current conditions are summarised as mean values of the bioclimatic variables for the period 1980 to 2010, and the future conditions are calculated as mean values for the periods of 2011-2040, 2041-2070 and 2071-2100. 
 
-We calculate RS using the predicted suitability for the current conditions as initial value, and data from subsequent periods as final values. We explore different collapse thresholds based on the confusion matrix of the predictions under current conditions and the observed or known distribution of glacier outlines.  We denote this estimate of relative severity as $RS_{bcs}^{CT=acc}$, when the collapse threshold is calculated as the maximum accuracy threshold of the confusion matrix, and $RS_{bcs}^{CT=ess}$, when the collapse threshold is calculated as the threshold of equal sensitivity and specificity of the confusion matrix.[We also explored a third threshold (Positive predictive value, $ppv$), but this often resulted in high threshold values and extremely high RS values (@fig-RS-periods).]{.aside} Given that both initial and final values of suitability can be below these thresholds, and that future suitability predictions can be well above current values, we use the conditional RS formula for these estimates of RS.
+
+  Given that both initial and final values of suitability can be below these thresholds, and that future suitability predictions can be well above current values, we use the conditional RS formula for these estimates of RS.
 
 
 ```{r}
@@ -115,8 +115,8 @@ ggplot(dat1) +
   geom_point(data=dat1,
                aes(y = RSmean, 
                    colour=threshold, 
-                   x=threshold)) + 
-  facet_grid(scn~timeframe) +
+                   x=timeframe)) + 
+  facet_grid(scn~threshold) +
   ylab("Mean RS") +
   xlab("Collapse thresholds") +
   theme(legend.position="none")

@@ -44,15 +44,26 @@ calcCT <- function(pred_values,obs_values) {
   return(CT)
 }
 
+## methods(Ecdf)
+## getAnywhere(Ecdf.default)
+ED_w <- function(RS,w) {
+  o <- order(RS)
+  ED <- 1-cumsum(w[o])
+  x <- RS[o]
+  res <- tibble(
+    x = c(0,x[-1]),
+    ED = c(1,ED[-length(ED)]))
+  return(res)
+}
 RS_ecdf <- function(RSvals) {
-  f <- ecdf((1-RSvals)*100)
+  f <- ecdf((1-RSvals))
   return(f)
 }
 RSvExt <- function(RSvals) {
   f <- RS_ecdf(RSvals)
-  x <- seq(0,100,length=100)
+  x <- seq(0,1,length=100)
   y <- f(x)
-  z <-tibble(RS=100-x,Extent=y*100)
+  z <-tibble(RS=1-x,Extent=y)
   return(z)
 }
 

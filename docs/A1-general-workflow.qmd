@@ -52,7 +52,7 @@ Rscript --no-restore --no-save $SCRIPTDIR/inc/R/03-create-output-table-for-data-
 
 
 ```bash
-#| eval: false
+cd $SCRIPTDIR
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/06-massbalance-model-results.R
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/07-massbalance-summarised.R
 ```
@@ -60,7 +60,7 @@ Rscript --no-restore --no-save $SCRIPTDIR/inc/R/07-massbalance-summarised.R
 
 ### Upload data to cloud repository
 ```bash
-#| eval: false
+cd $SCRIPTDIR
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/10-upload-files-to-OSF.R overwrite
 Rscript --no-restore --no-save $SCRIPTDIR/inc/R/11-download-files-from-OSF.R overwrite
 ```
