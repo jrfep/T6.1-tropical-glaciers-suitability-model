@@ -20,7 +20,7 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
 #slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
 dat1 <- RS_results %>% 
   # filter(unit_name %in% slc_unit) %>%
-  filter(threshold %in% c("acc","ess")) %>% 
+  # filter(threshold %in% c("acc","ess")) %>% 
   mutate(time=case_when(
     timeframe %in% "2011-2040"~0,
     timeframe %in% "2041-2070"~1,
