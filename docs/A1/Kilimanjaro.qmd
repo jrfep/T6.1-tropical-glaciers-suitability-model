@@ -1,6 +1,6 @@
 ---
-title: "T.G.E. Ecuador"
-subtitle: "Tropical Glacier Ecosystem of Ecuador"
+title: "T.G.E. Kilimanjaro"
+subtitle: "Tropical Glacier Ecosystem of Kilimanjaro"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -19,9 +19,10 @@ library(ggrepel)
 library(caret)
 library(gbm)
 library(readr)
+library(ggpubr)
 #require(glmmTMB)
 #require(lme4)
-here::i_am("docs/A1/Ecuador.qmd")
+here::i_am("docs/A1/Kilimanjaro.qmd")
 #sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 ```
@@ -40,7 +41,7 @@ rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
 model_data <- readRDS(rds.file)
 rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
 year_of_collapse_data <- readRDS(rds.file)
-load(here::here("sandbox","fitted-GBM-models","Ecuador.rda")) # this includes slc_unit
+load(here::here("sandbox","fitted-GBM-models","Kilimanjaro.rda")) # this includes slc_unit
 
 ```
 
@@ -62,7 +63,7 @@ Now we can calculate the relative severity per year estimated from the mass bala
 #| label: fig-Ecuador-ice-ts
 #| fig-cap: "Time series of relative severity of ice mass loss. Original RS formula."
 dat1 <- RS_results %>% 
-  filter(unit %in% slc_unit, threshold %in% c("acc","ess")) %>% 
+  filter(unit %in% str_replace(slc_unit," ","-"), threshold %in% c("acc","ess")) %>% 
   mutate(year=case_when(
     timeframe %in% "2011-2040"~2025,
     timeframe %in% "2041-2070"~2055,
@@ -136,13 +137,24 @@ varImp(model)
 plot(model)
 ```
 
+This is a problem, the cutoff value is very high because the model overfits!
+```{r}
+boxplot(IV~glacier,testing)
+```
+
+```{r}
+plot_a <- ggplot(testing) + geom_point(aes(x=bio_05,y=IV,colour=glacier))
+plot_b <- ggplot(training) + geom_point(aes(x=bio_05,y=IV,colour=glacier))
+ggarrange(plot_a,plot_b)
+```
 
 ```{r}
 #| label: fig-bcs-Ecuador
 #| fig-cap: "Box and whisker plots of the $RS_{bcs}^{acc}$ values for the Tropical Glacier Ecosystem of Ecuador. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean is marked with an X symbol."
+#| eval: false
 dat1 <- RS_results %>% 
   filter(
-    unit %in% slc_unit, 
+    unit %in% str_replace(slc_unit," ","-"), 
     threshold == "acc",)
 dat2 <- dat1 %>% 
   group_by(timeframe,pathway,modelname) %>% 
@@ -159,9 +171,36 @@ ggplot(dat1 ) +
     axis.ticks.x=element_blank())
 ```
 
+
 ## Collapse year: complete loss of ice
 
-Massbalance model does not predict collapse of the ecosystem
+```{r}
+#| label: fig-Kilimanjaro-Ecdf-collapse
+#| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines).
+#| warning: false
+
+
+label_xy <- 
+  year_of_collapse_data %>% 
+  filter(unit_name == slc_unit) %>%
+    group_by(ssp) %>% 
+  summarise(x=median(collapse_year)) %>%
+  mutate(y=0.5)
+
+ggplot(data=year_of_collapse_data %>% 
+  filter(unit_name == slc_unit) ) +
+#  geom_histogram(aes(x=collapse_year,fill=scn)) +
+  stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
+              geom = "step") +
+  stat_ecdf(aes(x=collapse_year), 
+              geom = "step",lwd=1.3) +
+    geom_label_repel(
+    aes(x=x,y=y,label = ssp, color=ssp), data = label_xy,
+    size = 3) +
+  xlab("Year of collapse") + 
+  theme(legend.position = "none")
+
+```
 
 
 ## Data used in the model

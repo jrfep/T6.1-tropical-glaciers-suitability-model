@@ -18,10 +18,7 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
 
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
-#slc_unit <- c("Cordillera de Merida", "Kilimanjaro", "Ruwenzori", "Ecuador", "Cordilleras Norte de Peru")
 dat1 <- RS_results %>% 
-  # filter(unit_name %in% slc_unit) %>%
-  # filter(threshold %in% c("acc","ess")) %>% 
   mutate(time=case_when(
     timeframe %in% "2011-2040"~0,
     timeframe %in% "2041-2070"~1,
@@ -31,21 +28,20 @@ dat1 <- RS_results %>%
   group_by(unit,scenario,method=threshold,timeframe,time,modelname) %>%
   summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor), .groups="keep") %>%
   ungroup %>%
-  transmute(unit=str_replace_all(unit,"-"," "), 
-            scenario, method, time, RS)
+  transmute(unit, scenario, method, time, RS)
 
 dat2 <- totalmass_year_data %>% 
   filter(year %in% c(2000,2040,2070,2100)) %>% 
-  # filter(unit_name %in% slc_unit) %>%
-  group_by(unit_name,model_nr,scn) %>% 
+  group_by(unit_name, model_nr, scn) %>% 
   group_modify(~RSts(.x$year,.x$total_mass,
                      formula = "conditional")) %>%
   ungroup %>% 
-    transmute(unit=unit_name,
-    scenario=scn,
-    method="ice",
-    time=(year-2040)/30,
-    RS)
+    transmute(
+      unit=unit_name,
+      scenario = scn,
+      method = "ice",
+      time = (year-2040)/30,
+      RS)
 
 
 model_data <- dat1 %>% 

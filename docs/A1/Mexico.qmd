@@ -18,6 +18,8 @@ library(stringr)
 library(ggrepel)
 #library(purrr)
 library(readr)
+library(gbm)
+library(caret)
 #require(glmmTMB)
 #require(lme4)
 here::i_am("docs/A1/Mexico.qmd")
@@ -39,6 +41,8 @@ rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
 model_data <- readRDS(rds.file)
 rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
 year_of_collapse_data <- readRDS(rds.file)
+load(here::here("sandbox","fitted-GBM-models","Mexico.rda")) # this includes slc_unit
+
 ```
 
 ```{r}
@@ -46,11 +50,6 @@ year_of_collapse_data <- readRDS(rds.file)
 old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
-```
-
-```{r}
-slc_unit <- "Mexico"
-
 ```
 
 ## Compare overall RS 
@@ -117,4 +116,27 @@ ggplot(data=year_of_collapse_data %>%
   xlab("Year of collapse") + 
   theme(legend.position = "none")
 
+```
+
+## Bioclimatic suitability model
+
+```{r}
+model$finalModel
+
+varImp(model)
+
+plot(model)
+```
+
+
+## Data used in the model
+
+
+```{r}
+rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds.file) %>% filter(unit %in% slc_unit)
+
+ggplot(model_data) +
+ geom_boxplot(aes(x=time,y=RS,col=method,group=time)) +
+ facet_grid(scenario~method)
 ```

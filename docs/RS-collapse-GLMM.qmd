@@ -51,13 +51,21 @@ To compare both indicators we used the $RS_{bcs}^{CT=acc}$, $RS_{bcs}^{CT=ppv}$ 
 
 ```{r}
 model_data %>% group_by(unit,method) %>% summarise(collapse=sum(RS==1,na.rm=T)) %>% pivot_wider(values_from=collapse,names_from=method)
-valid_methods <- c("ice","ess","ppv")
+valid_methods <- c("ice","ess","acc")
 model_data <- model_data %>% 
-  filter(method %in% valid_methods,!is.na(RS), RS>0) %>% 
-  mutate(method=droplevels(method))
+  filter(method %in% valid_methods) %>% 
+  mutate(
+    method=droplevels(method),
+    collapsed=case_when(
+      method %in% "ice" & RS == 1 ~ 1L,
+      !(method %in% "ice") & RS >0.99 ~ 1L,
+      TRUE ~ 0L
+    )
+    )
 ```
 
 We could use collapse=RS>0.99?
+
 
 ### Prediction of collapse
 
@@ -68,7 +76,7 @@ Full model specification in `R` using the `glmmTMB` package is as follows:
 ```{r}
 #| echo: true
 mod_collapse_sat <- 
-  glmmTMB((RS==1) ~ time + method + scenario + (1|unit/method), 
+  glmmTMB(collapsed ~ time + method + scenario + (1|unit/method), 
        data = model_data, 
        family = binomial,
        REML = FALSE)
@@ -82,7 +90,7 @@ mod_collapse_sat <-
 ## alternative with lme4
 library(lme4)
 mod2 <- glmer(
-    (RS==1) ~ time + method + scenario + (1|unit/method), 
+    collapsed ~ time + method + scenario + (1|unit/method), 
     family = binomial,
     data = model_data) 
 ```
@@ -94,7 +102,7 @@ We test alternative specifications removing the fixed effect on $\mathrm{method}
 #| echo: true
 
 mod_collapse_rand <- 
-  glmmTMB((RS==1) ~ time + scenario + (1|unit/method), 
+  glmmTMB(collapsed ~ time + scenario + (1|unit/method), 
      data = model_data, 
      family=binomial,
      REML=FALSE)
@@ -144,25 +152,53 @@ rr$cond$unit %>% arrange(desc(`(Intercept)`))
 
 For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $RS$. Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
-We fit the full model, and alternative versions with dispersion model and reduced fixed effects as:
+Ok, here are two problems: 
+  1. The bioclimatic suitability model perform better in the Andes than outside
+  2. For some reason Kilimanjaro is just completely different
+
+The first issue is understandable given the uneven sample sizes, and the 
 
 ```{r}
 #| echo: true
-mod_degradation_sat <- 
-  glmmTMB(RS ~ time + method + scenario + (1|unit/method), 
-          data = subset(model_data, RS<1), 
-          family=beta_family,
-          REML=FALSE)
 
-mod_degradation_disp <- 
-  update(mod_degradation_sat, 
-         dispformula=~method)
+
+
+ggplot(model_data) +
+  geom_boxplot(aes(x=RS,y=unit,color=method,group=interaction(unit,method)))
+
+model_data_ss <- model_data %>% 
+  filter(RS < 1, !unit %in% "Kilimanjaro") %>%
+  mutate(
+    period = factor(time),
+    andes = grepl("Peru|Colombia|Ecuador",unit)
+  )
+
+```
+
+We fit the full model, and alternative versions with dispersion model and reduced fixed effects as:
+
+```{r}
+
+mod_degradation_sat <- 
+  glmmTMB(RS ~ period * scenario * method + (1|andes/unit/method), 
+    dispformula=~method, 
+    data = model_data_ss, 
+    family=beta_family,
+    REML=FALSE)
 
 mod_degradation_rand <- 
-  glmmTMB(RS ~ time + scenario + (1|unit/method), 
-       data = subset(model_data, RS<1), 
-       family=beta_family,
-       REML=FALSE)
+  glmmTMB(RS ~ period * scenario + (method*andes) + (1|unit/method), 
+        dispformula=~method, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+mod_degradation_disp <- 
+  glmmTMB(RS ~ period * scenario * method * andes + (1|unit/method), 
+        dispformula=~method, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
 ```
 
 
@@ -179,7 +215,7 @@ Model diagnostics and residual plots look more or less ok, but there is probably
 
 ```{r}
 #| echo: true
-mod_degradation_simres<-simulateResiduals(mod_degradation_sat)
+mod_degradation_simres<-simulateResiduals(mod_degradation_disp)
 plot(mod_degradation_simres)
 ```
  
@@ -193,14 +229,22 @@ The summary of the model indicates significant positive effects of time and futu
 
 ```{r}
 #| echo: true
-summary(mod_degradation_sat)
+summary(mod_degradation_disp)
 ```
 
 The random effects of the model give us a ranking of the general magnitude of RS for each assessment unit, regardless of the method used:
 
 ```{r}
-rr <- ranef(mod_degradation_sat)
+rr <- ranef(mod_degradation_disp)
 rr$cond$unit %>% arrange(desc(`(Intercept)`))
 ```
 
 We see that there are a few large differences in the ranking compared with the model of collapse, most notably in the T.G.E. of Kilimanjaro, but this is likely a result of anomalies in the underlying data.
+
+
+```{r}
+model_data_ss$pred <- predict(mod_degradation_disp,type="response")
+
+ggplot(model_data_ss) +
+  geom_boxplot(aes(x=pred,y=unit,color=method,group=interaction(unit,method)))
+```

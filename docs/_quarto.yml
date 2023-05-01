@@ -26,8 +26,10 @@ book:
   appendices:
     - part: "Results per assessment unit"
       chapters:
-        - A1/Ecuador.qmd
         - A1/Mexico.qmd
+        - A1/Kilimanjaro.qmd
+        - A1/Cordillera-de-Merida.qmd
+        - A1/Ecuador.qmd
     - part: "Code reproducibility"
       chapters:
         - A2/general-workflow.qmd
