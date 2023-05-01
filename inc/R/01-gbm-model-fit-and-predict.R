@@ -19,6 +19,7 @@ require(raster)
 require(stringr)
 require(tidyr)
 library(caret)
+library(doParallel)
 # require(dismo)
 require(readr)
 
@@ -119,6 +120,11 @@ tuneGrid <- expand.grid(
    n.minobsinnode = c(5, 7, 10, 12)
 )
 
+## Register cluster for Parallel # see topepo.github.io/caret/parallel-processing.html
+
+cl <- makeCluster(detectCores()-1)
+registerDoParallel(cl)
+
 model <- caret::train(
    glacier ~ .,
    data = training,
@@ -132,6 +138,8 @@ model <- caret::train(
    verbose = TRUE
 )
 
+## stop parallel cluster
+stopCluster(cl)
 #model
 # plot(model)
 
