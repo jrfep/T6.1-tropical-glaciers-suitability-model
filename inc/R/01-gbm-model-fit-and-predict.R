@@ -42,21 +42,23 @@ pick <- as.numeric(args[1])
 ## Input: Load data in R session ----
 
 ## Load spatial data for the group polygons and glacier points
-grp_table <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",input.dir)) %>%
-   st_drop_geometry %>% transmute(id=factor(id),unit_name=group_name)
-trop_glaciers_classified <- readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
-   input.dir))
+grp_table <- 
+  read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",input.dir)) %>%
+  st_drop_geometry %>% 
+  transmute(id = factor(id), unit_name = group_name)
+trop_glaciers_classified <- 
+  readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
+  input.dir))
 all_units <- unique(grp_table$unit_name)
-slc_unit <- all_units[ifelse(is.na(pick),12,pick)]
+slc_unit <- all_units[ifelse(is.na(pick), 6, pick)]
 
-exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")[1:2]
-# Include in GBM model but exclude from assessment:  "Norte de Argentina", "Zona Volcanica Central"
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
 if (slc_unit %in% exclude) {
   stop("Skipping temperate and transitional glacier ecosystems")
 }
 
-system(sprintf('mkdir -p %s/%s',output.dir,str_replace_all(slc_unit," ","-")))
+system(sprintf('mkdir -p %s/%s', output.dir, str_replace_all(slc_unit, " ", "-")))
 
 # Read the data extracted from the raster files for each polygon, and save into a Rdata file.
 
@@ -79,13 +81,23 @@ input_data <- input_raster_data %>%
       !unit_name %in% slc_unit,
       unit_name %in% all_units,
       elevation_1KMmd > 3500
-      )
+      ) %>% 
+  mutate(andes = grepl("Peru|Colombia|Ecuador",unit_name))
 
 tt <- table(input_data$id)
 
+sample_size <- case_when(
+  slc_unit %in% "Kilimanjaro" ~ 20000L,
+  TRUE ~ 10000L
+)
+if (slc_unit %in% "Kilimanjaro") {
+  prob <- if_else(input_data$glacier,5,.5)*if_else(input_data$andes,1,3)*(sum(tt)/tt[input_data$id])
+} else {
+  prob <- if_else(input_data$glacier,5,.5)*(sum(tt)/tt[input_data$id])
+}
+
 training <- input_data %>% 
-   mutate(prob=if_else(glacier,5,.5)*(sum(tt)/tt[id])) %>% 
-   slice_sample(n=10000,weight_by = prob) %>%
+   slice_sample(n=sample_size, weight_by = prob) %>%
    dplyr::select(glacier,starts_with("bio_")) %>%
    mutate(glacier=factor(if_else(glacier,"G","N")))
 
@@ -93,7 +105,7 @@ testing <- input_raster_data %>%
    tibble %>%
    mutate(id = factor(id)) %>% 
    left_join(grp_table, by = "id") %>%
-   filter(unit_name %in% slc_unit,elevation_1KMmd>3500) %>%
+   filter(unit_name %in% slc_unit, elevation_1KMmd>3500) %>%
    mutate(glacier = factor(if_else(glacier,"G","N")))
 
 
