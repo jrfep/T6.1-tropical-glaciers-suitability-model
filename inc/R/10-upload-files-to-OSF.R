@@ -5,12 +5,9 @@ output.dir <- sprintf("%s/%s/",gis.out,projectname)
 
 library(dplyr)
 library(osfr)
+library(stringr)
 
 here::i_am("inc/R/10-upload-files-to-OSF.R")
-#target.dir <- tempdir()
-target.dir <- "sandbox"
-if (!file.exists(here::here(target.dir)))
-  dir.create(here::here(target.dir))
 
 ## read value for conflicts argument
 args = commandArgs(trailingOnly=TRUE)
@@ -32,6 +29,9 @@ global_data_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 idx <- my_project_components %>% filter(name %in% "Environmental suitability model for Tropical Glacier Ecosystems") %>%
   pull(id) 
 env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
+idx <- my_project_components %>% filter(grepl("Mérida",name)) %>%
+  pull(id) 
+cord_merida_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 
 
 ## First upload to data component
@@ -60,3 +60,30 @@ data_file  <- osf_upload(env_suitability_comp,
                          path = files_to_upload,
                          conflicts = conflict_answer
 )
+
+gbm.dir <- sprintf("%s/%s/GBMmodel",gis.out,projectname)
+target.dir <- sprintf("%s/fitted-GBM-models",tempdir())
+if (!dir.exists(target.dir))
+  dir.create(target.dir)
+
+all_rda_models <- list.files(gbm.dir, recursive = TRUE, pattern="gbm-model-current.rda") %>% 
+ str_split( "/", n=2, simplify=TRUE)
+
+exclude  <- c("Norte-de-Argentina","Zona-Volcanica-Central")
+
+for (j in all_rda_models[,1]) {
+  if (!(j %in% exclude)) {
+   system(sprintf("cp %1$s/%2$s/gbm-model-current.rda %3$s/%2$s.rda", gbm.dir, j, target.dir)) 
+  }
+}
+
+dir(target.dir)
+
+data_file  <- osf_upload(
+  env_suitability_comp, 
+  path = target.dir,
+  conflicts = conflict_answer
+  )
+unlink(target.dir)
+
+# system(sprintf("rm -r %s",target.dir))
