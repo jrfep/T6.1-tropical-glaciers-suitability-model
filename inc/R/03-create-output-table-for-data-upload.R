@@ -15,9 +15,13 @@ groups <- dir(sprintf("%s/",input.dir))
 cl <- makeCluster(round(detectCores()*.8))
 registerDoParallel(cl)
 
+eg <- expand.grid(file_name = grep("rda$", groups, invert=TRUE, value=TRUE),
+            eval_set = c("testing", "training"))
+
 all_RS_results <- 
   foreach (
-    grp = grep("rda$", groups, invert=TRUE, value=TRUE),
+    grp = eg$file_name,
+    eval_set = eg$eval_set,
     .packages=c("ROCR", "dplyr", "stringr"),
     .combine=bind_rows,
     .export="calcCT"
@@ -42,8 +46,11 @@ all_RS_results <-
       dplyr::select(id, cellnr, glacier, IV, FV) %>% 
       mutate(unit=grp, timeframe, modelname, pathway)
     
-  
-  CT <- calcCT(testing$IV, testing$glacier)
+  if (eval_set %in% "training") {
+    CT <- calcCT(training$IV, training$glacier)
+  } else {
+    CT <- calcCT(testing$IV, testing$glacier)
+  }
   
 
     for (threshold in names(CT)) {
@@ -52,6 +59,7 @@ all_RS_results <-
         RS_results %>% bind_rows(
           all_results %>% 
             mutate(
+              eval_set=eval_set,
               threshold=threshold,
               CV=CV,
               OD=IV-FV,
@@ -87,12 +95,25 @@ gc()
 ## Output: save data to csv or rds file ----
 
 ## csv file is very big!
-write.csv(all_RS_results %>% select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat),
+
+training_RS_results <- all_RS_results %>%
+  filter(eval_set %in% "training") %>% 
+  select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat)
+
+testing_RS_results <- all_RS_results %>%
+  filter(eval_set %in% "testing") %>% 
+  select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat)
+
+write.csv(testing_RS_results,
           file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv",
                        gis.out,projectname),
           row.names = FALSE)
 
-saveRDS(all_RS_results %>% select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat),
-          file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds",
-                       gis.out,projectname))
+saveRDS(testing_RS_results,
+        file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds",
+                     gis.out,projectname))
+
+saveRDS(training_RS_results,
+        file=sprintf("%s%s/relative-severity-degradation-suitability-all-tropical-glaciers-training-thresholds.rds",
+                     gis.out,projectname))
 

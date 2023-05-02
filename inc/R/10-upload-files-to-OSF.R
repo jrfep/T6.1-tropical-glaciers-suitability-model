@@ -51,6 +51,7 @@ file_names <- c("massbalance-model-data-all-groups.rds",
                 "massbalance-year-collapse-all-groups.rds",
                 "relative-severity-degradation-suitability-all-tropical-glaciers.rds",
                 "relative-severity-degradation-suitability-all-tropical-glaciers.csv",
+                "relative-severity-degradation-suitability-all-tropical-glaciers-training-thresholds.rds",
                 "totalmass-suitability-glmm-data.rds")
 
 files_to_upload <- sprintf("%s/%s", output.dir,file_names)

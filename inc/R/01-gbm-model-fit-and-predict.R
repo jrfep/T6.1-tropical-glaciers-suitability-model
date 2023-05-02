@@ -87,10 +87,10 @@ input_data <- input_raster_data %>%
 tt <- table(input_data$id)
 
 sample_size <- case_when(
-  slc_unit %in% "Kilimanjaro" ~ 20000L,
+  slc_unit %in% "Kilimanjaro" ~ 5000L,
   TRUE ~ 10000L
 )
-if (slc_unit %in% "Kilimanjaro") {
+if (!grepl("Peru|Colombia|Ecuador",slc_unit)) {
   prob <- if_else(input_data$glacier,5,.5)*if_else(input_data$andes,1,3)*(sum(tt)/tt[input_data$id])
 } else {
   prob <- if_else(input_data$glacier,5,.5)*(sum(tt)/tt[input_data$id])
