@@ -32,16 +32,23 @@ source(here::here("inc","R","RS-functions.R"))
 #| eval: true
 #| message: false
 target.dir <- "sandbox"
+load(here::here("sandbox","fitted-GBM-models","Kilimanjaro.rda")) # this includes slc_unit
+
 rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
+totalmass_year_data <- readRDS(rds.file) %>%
+ filter(unit_name %in% str_replace(slc_unit," ","-"))
 results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
-  mutate(unit_name=str_replace_all(unit," ","-"))
+ filter(unit %in% str_replace(slc_unit," ","-"))
+rds.file <- here::here(target.dir,"relative-severity-degradation-suitability-all-tropical-glaciers-training-thresholds.rds")
+RS_results_t <- readRDS(rds.file) %>%
+ filter(unit %in% str_replace(slc_unit," ","-"))
+
 rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
-model_data <- readRDS(rds.file)
+model_data <- readRDS(rds.file) %>%
+ filter(unit %in% str_replace(slc_unit," ","-"))
 rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
 year_of_collapse_data <- readRDS(rds.file)
-load(here::here("sandbox","fitted-GBM-models","Kilimanjaro.rda")) # this includes slc_unit
 
 ```
 

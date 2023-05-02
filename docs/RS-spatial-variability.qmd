@@ -145,11 +145,11 @@ The shape of the histogram changes in time, with an initial increase followed by
 
 ```{r}
 #| label: fig-hist-ecuador
-#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
 #| warning: false
 dat1 <- RS_results %>% 
   filter(threshold=="ess", 
-         unit=="Ecuador", 
+         grepl("Colombia",unit), 
          modelname == "mri-esm2-0",
          pathway == "ssp126")
 dat2 <- dat1 %>% group_by(timeframe) %>% 
@@ -181,7 +181,7 @@ Although there is now a large number of cell with very high values of relative s
 
 ```{r}
 #| label: fig-hist-ecdf-ecuador
-#| fig-cap: Comparing the histogram of the $RS_{cor}$ values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
+#| fig-cap: Comparing the histogram of the $RS_{cor}$ values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
 #| warning: false
 tfm <- dat1 %>% distinct(timeframe) %>% pull
 
@@ -236,7 +236,7 @@ We can flip the coordinates and collapse the panels to actually superinpose thes
 
 ```{r}
 #| label: fig-ecdf-ecuador
-#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador . 
+#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia . 
 
 # this does not work in this case, but almost...
 # plot_b + facet_null()

@@ -161,13 +161,11 @@ The first issue is understandable given the uneven sample sizes, and the
 ```{r}
 #| echo: true
 
-
-
 ggplot(model_data) +
   geom_boxplot(aes(x=RS,y=unit,color=method,group=interaction(unit,method)))
 
 model_data_ss <- model_data %>% 
-  filter(RS < 1, !unit %in% "Kilimanjaro") %>%
+  filter(RS < 1 & RS > 0, !unit %in% "Kilimanjaro") %>%
   mutate(
     period = factor(time),
     andes = grepl("Peru|Colombia|Ecuador",unit)
