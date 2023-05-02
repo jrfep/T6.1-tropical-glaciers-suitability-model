@@ -2,6 +2,10 @@
 output: html_document
 editor_options: 
   chunk_output_type: console
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 ---
 
 ```{r}

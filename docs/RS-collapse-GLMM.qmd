@@ -47,6 +47,13 @@ model_data <- readRDS(rds.file)
 
 ```
 
+
+```{r}
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+```
+
 To compare both indicators we used the $RS_{bcs}^{CT=acc}$, $RS_{bcs}^{CT=ppv}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
 
 ```{r}
@@ -161,8 +168,15 @@ The first issue is understandable given the uneven sample sizes, and the
 ```{r}
 #| echo: true
 
-ggplot(model_data) +
-  geom_boxplot(aes(x=RS,y=unit,color=method,group=interaction(unit,method)))
+ggplot(
+  model_data %>%
+  mutate(unit = factor(unit, unit_order))
+) +
+  geom_boxplot(
+    aes(x=RS, y=unit, color=method, group=interaction(unit,method))
+    ) +
+    ylab("") +
+    xlab("Overall RS")
 
 model_data_ss <- model_data %>% 
   filter(RS < 1 & RS > 0, !unit %in% "Kilimanjaro") %>%
@@ -176,23 +190,31 @@ model_data_ss <- model_data %>%
 We fit the full model, and alternative versions with dispersion model and reduced fixed effects as:
 
 ```{r}
+#| echo: true
 
-mod_degradation_sat <- 
-  glmmTMB(RS ~ period * scenario * method + (1|andes/unit/method), 
+mod_degradation_2way_3nest <- 
+  glmmTMB(RS ~ (period * scenario) + (method*andes)  + (1|andes/unit/method), 
     dispformula=~method, 
     data = model_data_ss, 
     family=beta_family,
     REML=FALSE)
 
-mod_degradation_rand <- 
-  glmmTMB(RS ~ period * scenario + (method*andes) + (1|unit/method), 
+mod_degradation_2way_2nest <- 
+  glmmTMB(RS ~ (period * scenario) + (method*andes) + (1|unit/method), 
         dispformula=~method, 
         data = model_data_ss, 
         family=beta_family,
         REML=FALSE)
 
-mod_degradation_disp <- 
+mod_degradation_3way_2nest <- 
   glmmTMB(RS ~ period * scenario * method * andes + (1|unit/method), 
+        dispformula=~method, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+mod_degradation_3way_3nest <- 
+  glmmTMB(RS ~ period * scenario * method * andes + (1|andes/unit/method), 
         dispformula=~method, 
         data = model_data_ss, 
         family=beta_family,
@@ -204,22 +226,25 @@ The AIC criterion favours the initial specification with all variables and witho
 
 ```{r}
 #| echo: true
-bbmle::AICtab(mod_degradation_sat,
-              mod_degradation_disp,
-              mod_degradation_rand)
+bbmle::AICtab(mod_degradation_3way_3nest,
+              mod_degradation_3way_2nest,
+              mod_degradation_2way_3nest,
+              mod_degradation_2way_2nest)
 ```
 
 Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
 
 ```{r}
 #| echo: true
-mod_degradation_simres<-simulateResiduals(mod_degradation_disp)
+mod_degradation_simres<-simulateResiduals(mod_degradation_3way_2nest)
 plot(mod_degradation_simres)
 ```
  
 When we examine the outliers, these are mostly unexpected low values in the T.G.E. Kilimanjaro, but these are probably related to underlying anomalies in climatic conditions in this region. [In fact, when using the original formulafor the time series of the dynamic ice mass balance model there were some spurious effect of negative RS in this unit. We are using now the conditional formula of RS but there is still some unexpected structure in the residuals.]{.aside}
 
 ```{r}
+#| eval: true
+#| echo: true
 mod_degradation_simres$fittedModel$frame %>% slice(outliers(mod_degradation_simres))
 ```
 
@@ -227,13 +252,18 @@ The summary of the model indicates significant positive effects of time and futu
 
 ```{r}
 #| echo: true
-summary(mod_degradation_disp)
+#| eval: true
+#| attr-output: "style='font-size: 0.8em'"
+options(width=120)
+summary(mod_degradation_3way_2nest)
 ```
 
 The random effects of the model give us a ranking of the general magnitude of RS for each assessment unit, regardless of the method used:
 
 ```{r}
-rr <- ranef(mod_degradation_disp)
+#| eval: true
+#| echo: true
+rr <- ranef(mod_degradation_3way_2nest)
 rr$cond$unit %>% arrange(desc(`(Intercept)`))
 ```
 
@@ -241,7 +271,8 @@ We see that there are a few large differences in the ranking compared with the m
 
 
 ```{r}
-model_data_ss$pred <- predict(mod_degradation_disp,type="response")
+#| eval: true
+model_data_ss$pred <- predict(mod_degradation_3way_2nest,type="response")
 
 ggplot(model_data_ss) +
   geom_boxplot(aes(x=pred,y=unit,color=method,group=interaction(unit,method)))

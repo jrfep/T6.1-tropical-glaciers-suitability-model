@@ -221,3 +221,6 @@ ggplot(model_data) +
  geom_boxplot(aes(x=time,y=RS,col=method,group=time)) +
  facet_grid(scenario~method)
 ```
+
+## Initial values vs. final values
+

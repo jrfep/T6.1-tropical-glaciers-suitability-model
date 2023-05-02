@@ -21,6 +21,8 @@ library(ggrepel)
 library(purrr)
 library(readr)
 library(tidyr)
+library(forcats)
+
 here::i_am("docs/RS-time-series.qmd")
 source(here::here("inc","R","RS-functions.R"))
 ```
@@ -49,6 +51,46 @@ panel.grid.major = element_line(colour = "rosybrown3"))
 The data from the Dynamic Ice Mass Balance model is provided in one year intervals, and we have summarise the data to provide the total value of ice mass of each assessment unit for each year.
 
 We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of $0 kg$. We denote this estimate of relative severity as $RS_{ice}^{CT=0}$. Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula.
+
+## RS time series
+
+
+```{r}
+#| eval: true
+RStotal <- totalmass_year_data %>% 
+  filter(
+    scn %in% c("SSP3-7.0")
+  ) %>%
+  group_by(unit_name, model_nr) %>%
+  group_modify(~RSts(
+    .x$year,
+    .x$total_mass,
+    vmin=.x$min_mass,
+    vmax=.x$max_mass,
+    formula = "original"
+    )
+    ) %>% 
+  mutate(
+    andes = 1 + grepl("Peru|Colombia|Ecuador",unit_name),
+    unit_name = factor(unit_name, unit_order),
+    collapsed = (RS==1),
+    min_collapsed = (RS_min==1),
+    max_collapsed = (RS_max==1)
+    )
+okabe <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+ggplot(RStotal) +
+  geom_point(aes(x = year, y = RS, colour=collapsed), alpha=.25,cex=.7) +
+  geom_point(aes(x = year, y = RS_min, colour=min_collapsed), alpha=.25,cex=.7) +
+  geom_point(aes(x = year, y = RS_max, colour=max_collapsed), alpha=.25,cex=.7) +
+  facet_wrap(~ unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
+  scale_colour_discrete(type=okabe[c(2,6)]) +
+  theme(legend.position="none")
+```
+
+
+
 
 ```{r}
 #| label: fig-RS-timeseries

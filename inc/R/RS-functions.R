@@ -124,3 +124,19 @@ RSts <- function(
   }
   return(res)
 }
+
+## from far to near, Andes from north to south
+unit_order <- c(
+  "Puncak Jaya",
+"Kilimanjaro",
+"Mount Kenia",
+"Ruwenzori",
+"Mexico",
+"Sierra Nevada de Santa Marta",
+"Cordillera de Merida",
+"Cordilleras de Colombia",
+"Ecuador",
+"Cordilleras Norte de Peru",
+"Cordilleras Orientales de Peru y Bolivia",
+"Volcanos de Peru y Chile"
+)

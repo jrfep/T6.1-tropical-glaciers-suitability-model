@@ -170,7 +170,6 @@ plot_b <- ggplot(RStotal) +
   theme(legend.position = "none")
 
 ggarrange(plot_a, plot_b, nrow=2) 
-
 ```
 
 
@@ -262,7 +261,7 @@ For larger sampling units we can see more complex distributions of RS values. In
 
 ```{r}
 #| label: fig-hist-ecuador
-#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of the Sierra Nevada de Santa Marta using the maximum accuracy threshold.
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.
 #| warning: false
 dat1 <- RS_results %>% 
   filter(threshold=="acc", 
@@ -278,8 +277,8 @@ dat2 <- dat1 %>% group_by(timeframe) %>%
 
 plot_a <- 
   ggplot(dat1) +
-    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
-    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+    geom_histogram(aes(x=RS_cor*100)) +
+    #scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
     #    scale_fill_manual(values = IUCN_cat_colours) +
     #geom_point(data=dat2,aes(x=mean_RS*100, y=15)) +
     geom_label(data=dat2,aes(x=mean_RS*100, y=100, label=sprintf("mean %0.3f", mean_RS))) +
