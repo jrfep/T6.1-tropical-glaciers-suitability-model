@@ -10,18 +10,20 @@ book:
     - index.qmd
     - part: "Assessment units"
       chapters:
-        - TGE-units.qmd
-    - part: "Indicators of collapse"
+        - TGE/units.qmd
+    - part: "Indicator variables"
       chapters:
         - IND/mass-balance-model.qmd
         - IND/suitability-model.qmd
+    - part: "Relative Severity formulas"
+      chapters:
+        - FORM/RS-formula.qmd
     - part: "Relative Severity"
       chapters:
-        - RS-formula.qmd
-        - RS-spatial-aggregation.qmd
-        - RS-spatial-variability.qmd
-        - RS-time-series.qmd
-        - RS-collapse-GLMM.qmd
+        - RS/spatial-aggregation.qmd
+        - RS/spatial-variability.qmd
+        - RS/time-series.qmd
+        - GLMM/binomial-collapse.qmd
     - references.qmd
   appendices:
     - part: "Results per assessment unit"

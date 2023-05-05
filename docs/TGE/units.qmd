@@ -104,3 +104,9 @@ leaflet() %>%
 Tropical Glacier Ecosystems have five main ecological zones [@Hotaling_2017_glacier_ecosystem]: the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields. 
 
 ## Definition of collapsed states
+
+```{r out.height="400px"}
+#| label: fig-CEM
+#| fig-cap: Simplified Conceptual Ecosystem Model for Tropical Glacier Ecosystems
+DiagrammeR::grViz("../assets/CEM-all-TGE.gv")
+```

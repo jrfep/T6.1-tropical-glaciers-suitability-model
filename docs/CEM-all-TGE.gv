@@ -1,0 +1,63 @@
+digraph G {
+    compound=true; 
+    rankdir=TB;
+    { node [ shape=parallelogram fontsize=8 fixedsize=true fillcolor=lightgrey style=filled]
+        IN1 [label="Bioclimatic\nvariables"]
+      #  IN2 [label="Snowline\nand other\nindicators"]
+        IN3 [label="Mass\nbalance"]
+    }
+  {
+    node [margin=0 fillcolor= lightblue3 fontcolor=black fontsize=12 width=0.5 shape= hexagon style=filled fixedsize=false]
+    AE1 [label="Snow fall"]
+    AE2 [label="Temperature"]
+    AE3 [label="Radiation"]
+    ICE [label="Ice substrate"]
+  }
+  {
+    node [ shape=ellipse fillcolor=lightblue fontsize=12 style=filled]
+    AP1 [label=" Ice \n accum. "]
+    AP2 [label=" Ice \nablation"]
+  }
+  {
+    node [shape=rectangle fillcolor=pink style=filled ]
+    TR3 [label="Climate change"]
+  }
+  {
+    node [margin=0 fillcolor="green" fontcolor=black fontsize=12 width=0.5 shape=hexagon style=filled fixedsize=false]
+    CB1 [label="Glacial micro-biota"]
+  }
+  subgraph clusterBio {
+      label=""
+      style="invis"
+      rank="same";
+
+    subgraph clusterIce {
+          style = "dashed" pos="topright"
+        #subgraph {
+            ICE -> CB1
+        #}
+    }
+    }
+
+  subgraph clusterMB {
+      rank="same";
+      label=""
+      style="invis"
+      {AP1 AP2 IN3}
+  }
+
+   AP2 -> ICE [arrowhead=dot lhead=clusterIce]
+   AP1 -> ICE [lhead=clusterIce]
+  # IN2->IN3 [ arrowhead=none ]
+   IN3->ICE [ arrowhead=none ]
+
+  
+  TR3 -> {AE2 AE3} [ style=dashed ]
+  TR3 -> AE1 [arrowhead=dot style=dashed]
+  AE1 -> AP1
+  AE2 -> AP2
+  AE3 -> AP2
+
+  {AE1 AE2}->IN1->TR3 [ arrowhead=none ]
+  AP1->IN3->AP2 [arrowhead=none]
+}

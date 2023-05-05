@@ -1,3 +1,145 @@
+---
+title: "Temporal change in Relative Severity"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+We calculate temporal change in Relative Severity by applying the RS formula to one fixed initial value and a sequence of final values, the final values can represent the state of the indicator in consecutive years (time series), or in different periods (temporal sequence). 
+
+```{r}
+#| label: load libraries and functions
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+library(purrr)
+library(readr)
+library(tidyr)
+library(forcats)
+
+here::i_am("docs/RS-time-series.qmd")
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+#| label: read input data 
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
+
+rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds.file)
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
+  mutate(unit_name=str_replace_all(unit," ","-"))
+```
+
+```{r}
+#| label: ggplot theme
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+```
+
+
+## Extent of decline for loss of ice mass
+
+Given the nature of ice mass as a prediction of a physical measure, we need to weight the RS values of individual glacier outlines. 
+
+If we look at the example of the T.G.E. Kilimanjaro, the value of $RS$ for one combination of model and scenario and the year 2040, we have following values of RS:
+
+```{r}
+mass_su <- massbalance_results %>% 
+  filter(
+    unit_name %in% c("Kilimanjaro"),
+    model_nr %in% c(" 9"),
+    scn %in% c("ssp126")
+  ) %>%
+  mutate(min_mass = mass-mad, max_mass = mass+mad) 
+
+wgs <- mass_su %>% 
+    filter(year==2000) %>% 
+    transmute(RGIId,initial_mass=mass) 
+ wgs <- wgs   %>% 
+    mutate(w=initial_mass/sum(wgs$initial_mass))
+
+RSvals <- mass_su %>% 
+  select(RGIId,year,mass,min_mass,max_mass) %>% 
+  group_by( RGIId) %>% 
+  group_modify( ~ RSts(
+    .x$year,
+    .x$mass,
+    vmin = .x$min_mass,
+    vmax = .x$max_mass,
+    formula = "conditional"
+    )
+    ) %>% 
+    left_join(wgs, by = c( "RGIId")) 
+
+d <- RSvals %>% 
+    filter(year %in% 2040)
+d %>% select(RS, initial_mass, w) 
+ #%>%
+ #   arrange(RS) %>%
+ #   ungroup %>% select(w) %>%
+ #   map(~cumsum(.x))
+```
+
+We can use these values to calculate $ED_{RS≥x}$ as a weighed empirical distribution function:
+
+```{r}
+##library(Hmisc)
+##ED <- Ecdf(d$RS, what="1-f", weights=d$w, normwt = TRUE, pl=FALSE)
+#library(spatstat.geom)
+#plot(e <- ewcdf(d$RS, d$w, normalise=TRUE))
+ 
+ED <- ED_w(RS=d$RS,w=d$w)
+f <- cED_w(RS=d$RS,w=d$w)
+xvals <- seq(0,1,length=20)
+ED2 <- tibble(x=xvals,cED=f(xvals)) 
+
+AUC_ED <- integrate(cED_w(RS=d$RS,w=d$w), 0, 1)
+
+ggplot() + 
+  #geom_step(data=data.frame(ED),
+  #  aes(x,y,col="Hmisc")) +
+  geom_step(data=ED, aes(x=x,y=ED)) +
+  geom_step(data=ED2, aes(x=x,y=cED),col=2) +
+  ylab(expression(ED[RS>=x])) +
+  ylim(0,1)+
+  xlab("x")
+```
+
+We then calculate $ED_{RS≥x}$ for multiple years.
+
+```{r}
+d <- RSvals %>% 
+    filter(year %in% c(2040,2070,2100))
+
+EDs <- d %>% 
+  group_by(year) %>% 
+  group_modify( ~ ED_w(
+    RS=.x$RS,
+    w=.x$w))
+ggplot(EDs) + 
+  geom_step(aes(x=x, y=ED, group=year,colour=factor(year))) +
+  ylab(expression(ED[RS>=x])) +
+  ylim(0,1)+
+  xlab("x")
+
+```
+
+This figure shows a large increase in values of $RS≥0.5$ between 2040 and 2070 and then an increase of values of $RS≥0.75$ between 2070 and 2100.
+
+
  Example from Ecuador:
  We see from the mean RS values that there is an expected increase from 0.487 (VU) to 0.746 (EN).
 

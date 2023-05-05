@@ -2,6 +2,22 @@
 ## relative severity
 
 
+## from far to near, Andes from north to south
+unit_order <- c(
+  "Puncak Jaya",
+  "Kilimanjaro",
+  "Mount Kenia",
+  "Ruwenzori",
+  "Mexico",
+  "Sierra Nevada de Santa Marta",
+  "Cordillera de Merida",
+  "Cordilleras de Colombia",
+  "Ecuador",
+  "Cordilleras Norte de Peru",
+  "Cordilleras Orientales de Peru y Bolivia",
+  "Volcanos de Peru y Chile"
+)
+
 IUCN_cat_colours <- c("LC"="darkgreen","VU"="yellow","EN"="orange","CR"="red")
 
 
@@ -12,12 +28,12 @@ RS_extent_combs <- tibble(
   extent_max=c(100,100,100,80,80,50),
   category=c("CR","EN","VU","EN","VU","VU"))
 
+
 meanRS <- function(IV,FV,CT) {
    pres <- IV>CT
-   MD=(CT-IV)[pres]
-   #OD=ifelse(FV>IV,0,ifelse(FV<CT,CT-IV,FV-IV))[pres]
-   OD=ifelse(FV>IV,0,FV-IV)[pres]
-   RS <- ifelse(abs(OD)>abs(MD),MD,OD)/MD
+   MD <- (CT-IV)[pres]
+   OD <- ifelse(FV>IV, 0, FV-IV)[pres]
+   RS <- ifelse(abs(OD)>abs(MD), MD, OD) / MD
    return(mean(RS))
 }
 
@@ -125,18 +141,29 @@ RSts <- function(
   return(res)
 }
 
-## from far to near, Andes from north to south
-unit_order <- c(
-  "Puncak Jaya",
-"Kilimanjaro",
-"Mount Kenia",
-"Ruwenzori",
-"Mexico",
-"Sierra Nevada de Santa Marta",
-"Cordillera de Merida",
-"Cordilleras de Colombia",
-"Ecuador",
-"Cordilleras Norte de Peru",
-"Cordilleras Orientales de Peru y Bolivia",
-"Volcanos de Peru y Chile"
-)
+
+## Create our own?
+
+cED_w <- function (RS, weights=NULL, x=seq(0, 1, length=100)) 
+{
+  n <- length(RS)
+  if (is.null(weights)) {
+    w <- rep(1/n,n)
+  } else {
+    w <- weights/sum(weights)
+  }
+
+  y <- sapply(x, FUN=function(z) sum(w[RS >= z]))
+  rval <- approxfun(x, y, 
+        method = "constant", yleft = 0, yright = 1, f = 0, ties = "ordered")
+  class(rval) <- c("cED","ecdf", "stepfun", class(rval))
+  assign("nobs", n, envir = environment(rval))
+  attr(rval, "call") <- sys.call()
+    rval
+}
+
+## this could be a function with one method for raw RS vvalues and another for cED function
+AUC_cED <- function(x) {
+  res <- integrate(x,0,1)
+  return(res)
+}
