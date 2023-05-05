@@ -1,0 +1,28 @@
+---
+title: "Aggregating RS values"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Overall RS
+
+$$
+\overline{RS}=\sum_{i=1}^{n}\mathrm{RS}_{i} w_{i}
+$$
+
+Where $\sum_{i=1}^n w_{i}=1$
+
+## Cumulative Extent of Decline
+$$
+\mathrm{cED}(x) = \sum \begin{cases}
+      w_{i}, & \text{if}\ \mathrm{RS}_{i} ≥ x\\
+      0, & \text{if}\ \mathrm{RS}_{i} < x \\
+    \end{cases}
+$$
+
+## Area under the cED curve
+
+$$
+\mathrm{AUC}_{\mathit{cED}}=\int_{0}^{1} \mathrm{cED}(x)\,dx
+$$

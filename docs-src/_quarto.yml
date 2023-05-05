@@ -18,6 +18,7 @@ book:
     - part: "Relative Severity formulas"
       chapters:
         - FORM/RS-formula.qmd
+        - FORM/cED-formula.qmd
     - part: "Relative Severity"
       chapters:
         - RS/spatial-aggregation.qmd

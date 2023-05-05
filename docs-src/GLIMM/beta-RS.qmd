@@ -4,11 +4,12 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Relative Severity and collapse
+## Magnitude of degradation
 
-Over the time frame of 100 years most of the assessment units are predicted to reach collapse by complete loss of ice mass. Since we are using a direct indicator of an ecosystem property (icy substrate) and we are predicting total ice mass for each unit, complete loss of ice is equivalent to a value of $RS_{ice}^{CT=0} = 1$. In the case of an indirect indicator such as bioclimatic suitability, we have more uncertainty in the real value of collapse, and thus use alternative collapse threshold to capture plausible ranges. 
 
 We expect that both direct and indirect indicators will have similar performance in describing the magnitude of degradation and predicting collapse. We will use two generalised linear mixed models (GLMM) to test if there are significant differences in inferences based on these estimates of relative severity.
+
+For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $\overline{\mathrm{RS}}$, $cED(0.25)$, $cED(0.25)$, $cED(0.25)$ and $AUC_{cED}$.
 
 
 ```{r}
@@ -71,12 +72,11 @@ model_data <- model_data %>%
     )
 ```
 
-We could use collapse=RS>0.99?
 
 
-### Magnitude of degradation
+### Overall RS
 
-For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $RS$. Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
 Ok, here are two problems: 
   1. The bioclimatic suitability model perform better in the Andes than outside
