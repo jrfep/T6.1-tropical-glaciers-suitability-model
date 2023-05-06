@@ -11,6 +11,9 @@ target.dir <- sprintf("%s/%s/", gis.out, projectname)
 rds.file <- sprintf("%s/massbalance-totalmass-all-groups.rds", target.dir)
 totalmass_year_data <- readRDS(rds.file)
 
+rds.file <- sprintf("%s/massbalance-model-data-all-groups.rds", target.dir)
+massbalance_results <- readRDS(rds.file)
+
 
 results_file <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", target.dir)
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
@@ -30,24 +33,65 @@ dat1 <- RS_results %>%
   ungroup %>%
   transmute(unit, scenario, method, time, RS)
 
+
 dat2 <- totalmass_year_data %>% 
-  filter(year %in% c(2000,2040,2070,2100)) %>% 
-  group_by(unit_name, model_nr, scn) %>% 
+  filter(
+    year %in% c(2000,2040,2070,2100),
+    ssp %in% c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")
+    ) %>% 
+  group_by(unit_name, model_nr, ssp) %>% 
   group_modify(~RSts(.x$year,.x$total_mass,
                      formula = "conditional")) %>%
   ungroup %>% 
     transmute(
       unit=unit_name,
-      scenario = scn,
+      scenario = ssp,
       method = "ice",
       time = (year-2040)/30,
       RS)
 
-
+## average RS
 model_data <- dat1 %>% 
   bind_rows(dat2) %>% 
   mutate(method=factor(method,levels=c("ice","acc","ess","ppv"))) %>%
   filter(!unit %in% exclude)
 
 rds.file <- sprintf("%s/totalmass-suitability-glmm-data.rds", target.dir)
+saveRDS(file=rds.file, model_data)
+
+
+## cED
+wgs <- massbalance_results %>% 
+    filter(year == 2000) %>% 
+    group_by(unit_name, RGIId, model_nr, ssp) %>% 
+    summarise(initial_mass=sum(mass), .groups="keep") 
+
+dat3 <- massbalance_results %>% # filter(unit_name=="Ecuador") %>% 
+    filter(
+      year %in% c(2000,2040,2070,2100),
+      ssp %in% c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")
+    ) %>% 
+  group_by(unit_name, RGIId, model_nr, ssp) %>% 
+  group_modify(~RSts(.x$year,.x$mass,
+                     formula = "conditional")) %>%
+  ungroup %>% 
+  left_join(wgs, by = c("unit_name", "RGIId", "model_nr", "ssp"))
+  
+cED_ice <- dat3 %>%
+  group_by(unit_name, year, model_nr, ssp) %>% 
+  #group_map(~cED_w(.x$RS,.x$initial_mass))
+  group_modify(~summary_cED_w(.x$RS,.x$initial_mass)) %>%
+  ungroup %>%
+    transmute(
+      unit=unit_name,
+      scenario = ssp,
+      method = "ice",
+      time = (year-2040)/30,
+      cED_30,
+      cED_50,
+      cED_80, 
+      AUC_cED)
+
+
+rds.file <- sprintf("%s/totalmass-suitability-cED-data.rds", target.dir)
 saveRDS(file=rds.file, model_data)

@@ -183,12 +183,20 @@ We can use these values to calculate $ED_{RS≥x}$ as a weighed empirical distri
 #plot(e <- ewcdf(d$RS, d$w, normalise=TRUE))
  
 ED <- ED_w(RS=d$RS,w=d$w)
+f <- cED_w(RS=d$RS,w=d$w)
+xvals <- seq(0,1,length=20)
+ED2 <- tibble(x=xvals,cED=f(xvals)) 
+
+ED2
+#AUC_ED <- integrate(cED_w(RS=d$RS,w=d$w), 0, 1)
+
 ggplot() + 
   #geom_step(data=data.frame(ED),
   #  aes(x,y,col="Hmisc")) +
-  geom_step(data=ED, aes(x=x,y=ED)) +
-  ylab(expression(ED[RS>=x])) +
-  ylim(0,1)+
+  #geom_step(data=ED, aes(x=x,y=ED)) +
+  geom_step(data=ED2, aes(x=x,y=cED),col=2,na.rm = FALSE) +
+  ylab(expression(cED(x))) +
+  coord_cartesian(ylim=c(0, 1)) +
   xlab("x")
 ```
 
@@ -217,9 +225,9 @@ dat2 <- dat1 %>% group_by(timeframe) %>%
 
 plot_a <- 
   ggplot(dat1) +
-    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
+    geom_histogram(aes(x=RS_cor*100)) +
     facet_grid(timeframe~.) +
-    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+    #scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
     #    scale_fill_manual(values = IUCN_cat_colours) +
     #geom_point(data=dat2,aes(x=mean_RS*100, y=15)) +
     geom_label(data=dat2,aes(x=mean_RS*100, y=15, label=sprintf("mean %0.3f", mean_RS))) +

@@ -15,7 +15,7 @@ book:
       chapters:
         - IND/mass-balance-model.qmd
         - IND/suitability-model.qmd
-    - part: "Relative Severity and extent of decline"
+    - part: "Relative Severity and Extent of Decline"
       chapters:
         - FORM/RS-formula.qmd
         - FORM/mean-RS-formula.qmd

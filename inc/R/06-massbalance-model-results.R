@@ -91,10 +91,13 @@ stopCluster(cl)
 gc()
 
 ## reorganise data:
-
+all_massbalance_results <- 
+  all_massbalance_results %>% 
+  mutate(
+    ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3")
+  )
 year_of_collapse_data <- all_massbalance_results %>% 
   mutate(
-    ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
     non_collapsed=if_else(mass>0,year,2000),
     max_non_collapsed=if_else(mass+mad>0,year,2000),
     min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
@@ -106,13 +109,13 @@ year_of_collapse_data <- all_massbalance_results %>%
 
 totalmass_year_data <- {
   all_massbalance_results %>% 
-    mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-           mass=set_units(mass,'kg') %>% 
+    mutate(
+      mass=set_units(mass,'kg') %>% 
              set_units("Mt"),
            mad=set_units(mad,'kg') %>% 
              set_units("Mt")) %>% 
     drop_units() %>% 
-    group_by(unit_name,year,scn,model_nr) %>% 
+    group_by(unit_name,year,ssp,model_nr) %>% 
     summarise(total_mass=sum(mass,na.rm=T),
               max_mass=sum(mass+mad,na.rm=T),
               min_mass=sum(mass-mad,na.rm=T),

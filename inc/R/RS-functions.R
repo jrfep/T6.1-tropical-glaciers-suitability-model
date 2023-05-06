@@ -167,3 +167,10 @@ AUC_cED <- function(x) {
   res <- integrate(x,0,1)
   return(res)
 }
+
+summary_cED_w <- function(RS, ...) {
+  f <- cED_w(RS, ...)
+  auc <- integrate(f,0,1,rel.tol=.Machine$double.eps^.05)
+  res <- tibble(cED_30=f(0.3), cED_50=f(0.5), cED_80=f(0.8), AUC_cED=auc$value)
+  return(res)
+}
