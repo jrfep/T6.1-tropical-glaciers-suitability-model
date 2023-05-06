@@ -23,7 +23,7 @@ library(readr)
 library(tidyr)
 library(forcats)
 
-here::i_am("docs/RS-time-series.qmd")
+here::i_am("docs-src/RS/time-series.qmd")
 source(here::here("inc","R","RS-functions.R"))
 ```
 

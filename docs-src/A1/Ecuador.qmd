@@ -21,7 +21,7 @@ library(gbm)
 library(readr)
 #require(glmmTMB)
 #require(lme4)
-here::i_am("docs/A1/Ecuador.qmd")
+here::i_am("docs-src/A1/Ecuador.qmd")
 #sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 ```

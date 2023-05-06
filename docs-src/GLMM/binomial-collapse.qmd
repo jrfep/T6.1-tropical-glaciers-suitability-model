@@ -28,7 +28,7 @@ library(tidyr)
 library(glmmTMB)
 library(lme4)
 library(DHARMa)
-here::i_am("docs/RS-collapse-GLMM.qmd")
+here::i_am("docs-src/GLMM/binomial-collapse.qmd")
 source(here::here("inc","R","RS-functions.R"))
 ```
 

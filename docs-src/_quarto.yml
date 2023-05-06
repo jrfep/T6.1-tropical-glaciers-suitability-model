@@ -1,6 +1,5 @@
 project:
   type: book
-
 book:
   author: "José R. Ferrer-Paris"
   title: "Environmental degradation and collapse of Tropical Glacier Ecosystems"
@@ -24,7 +23,10 @@ book:
         - RS/spatial-aggregation.qmd
         - RS/spatial-variability.qmd
         - RS/time-series.qmd
+    - part: "Compare results from different indicators"
+      chapters:
         - GLMM/binomial-collapse.qmd
+        - GLMM/beta-RS.qmd
     - references.qmd
   appendices:
     - part: "Results per assessment unit"

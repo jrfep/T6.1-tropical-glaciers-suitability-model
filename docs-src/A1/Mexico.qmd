@@ -22,7 +22,7 @@ library(gbm)
 library(caret)
 #require(glmmTMB)
 #require(lme4)
-here::i_am("docs/A1/Mexico.qmd")
+here::i_am("docs-src/A1/Mexico.qmd")
 #sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 ```

@@ -17,7 +17,7 @@ require(leaflet)
 library(dplyr)
 library(ggplot2)
 
-here::i_am("docs/TGE-units.qmd")
+here::i_am("docs-src/TGE/units.qmd")
 target.dir <- "sandbox"
 trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
 load(here::here(target.dir,"current-bioclim-data-all-groups.rda"))
@@ -108,5 +108,5 @@ Tropical Glacier Ecosystems have five main ecological zones [@Hotaling_2017_glac
 ```{r out.height="400px"}
 #| label: fig-CEM
 #| fig-cap: Simplified Conceptual Ecosystem Model for Tropical Glacier Ecosystems
-DiagrammeR::grViz("../assets/CEM-all-TGE.gv")
+DiagrammeR::grViz("CEM-all-TGE.gv")
 ```

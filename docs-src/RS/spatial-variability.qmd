@@ -27,7 +27,7 @@ library(ggpubr)
 library(stringr)
 #library(Hmisc)
 
-here::i_am("docs/RS-spatial-variability.qmd")
+here::i_am("docs-src/RS/spatial-variability.qmd")
 # sessionInfo()
 # Suppress summarise info
 options(dplyr.summarise.inform = FALSE)

@@ -30,7 +30,7 @@ library(purrr)
 library(ggpubr)
 library(plotly)
 library(htmltools)
-here::i_am("docs/RS-formula.qmd")
+here::i_am("docs-src/FORM/RS-formula.qmd")
 # sessionInfo()
 # Suppress summarise info
 options(dplyr.summarise.inform = FALSE)

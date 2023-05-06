@@ -5,13 +5,226 @@ editor_options:
   chunk_output_type: console
 ---
 
+So far we have looked at relative severity of single units of observation (raster cells or glacier outlines) but we are interested in describing degradation of abiotic conditions in the whole assessment unit.
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(ggforce)
+library(DT)
+library(htmltools)
+library(purrr)
+library(ggpubr)
+library(stringr)
+here::i_am("docs-src/RS/spatial-variability.qmd")
+# sessionInfo()
+# Suppress summarise info
+options(dplyr.summarise.inform = FALSE)
+```
+
+```{r}
+#| eval: true
+#| message: false
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>% 
+  mutate(unit_name=str_replace_all(unit,"-"," "))
+results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(results_file)
+source(here::here("inc","R","RS-functions.R"))
+```
+
+```{r}
+
+old <- theme_set(theme_linedraw())
+theme_update(panel.grid.minor = element_line(colour = "pink"),
+panel.grid.major = element_line(colour = "rosybrown3"))
+
+```
+
 ## Overall RS
 
+We calculate the overall value of RS as a weighted arithmetic mean of $\mathrm{RS}_i$ values:
+
 $$
-\overline{RS}=\sum_{i=1}^{n}\mathrm{RS}_{i} w_{i}
+\overline{RS}=\frac{\sum_{i=1}^{n}\mathrm{RS}_{i} w_{i}}{\sum_{i=1}^n w_{i}}
 $$
 
-Where $\sum_{i=1}^n w_{i}=1$
+### Choice of formula
+
+Aggregating unbounded  $\mathrm{RS}_i$ values can be problematic. In this table we calculate mean values for different thresholds and time frames for two assessment units considering one model and scenario combination. In both cases we see a clear increasing trend, but the values of the original formula are clearly influenced by the magnitude of the extreme negative or positive values of the underlying units of observation. 
+
+```{r}
+d <- RS_results %>% 
+  filter(
+    unit %in% c("Ruwenzori","Kilimanjaro"),
+    threshold %in% "ess",
+    pathway %in% "ssp370",
+    modelname %in% "mri-esm2-0"
+    ) 
+
+tbl_caption <- tags$caption(
+  tags$b("Mean RS values for two assessment units."),
+  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp370) for three future time periods and using an equal sensitivity and specificity threshold for each unit. Observations with $MD=0$ have been removed before calculation with the original formula"))
+)
+
+tab <- d %>% 
+  group_by( unit,timeframe) %>% 
+  summarise(
+    #n=n(),
+    #n_used=sum(is.finite(RS)),
+    #CV=mean(CV),
+    min_RS=min(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
+    mean_RS=mean(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
+    max_RS=max(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
+    mean_RS_cor=mean(RS_cor,na.rm=T)) 
+
+###Create HTML formatting code for header and overall table HTML container
+#create header style HTML code
+header.style <- "th { font-family: 'Arial'; font-weight: bold; color: white; background-color: rosybrown;}"
+cell.style <- "text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white"
+hcell.style <- "text-align: center; border-width: 1px; border-style: solid; border-color: white; font-size:8px; background-color: rosybrown;"
+
+#pull header names from the table
+header.names <- c("Assessment Unit", "Period", "min(RS[i])", "mean RS", "max(RS[i])", "mean RS")
+# The container parameter allows us to design the header of the table using CSS
+my.container <- withTags(table(
+  style(type = "text/css", header.style),
+    thead(
+      tr(th("",colspan=2),
+        th("Original formula",colspan=3, style = hcell.style),
+        th("Conditional formula", style = hcell.style)),
+      tr(
+      lapply(header.names, th, style = cell.style)
+      )
+    )
+  )
+)
+
+
+  DT::datatable(
+    tab,
+    colnames = ,
+    caption = tbl_caption,
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(1, 'asc'),list(2, 'asc'))),
+    container=my.container,
+    rownames = FALSE,
+    width = '100%', 
+    height = '100%') %>% 
+  formatRound(c("min_RS", "mean_RS", "max_RS", "mean_RS_cor"),digits=3)
+
+
+```
+
+With the original formula, the interpretation of negative values or values above one would be problematic. The conditional formula guarantees that the mean of RS will be between 0 and 1 and thus can be clearly interpreted in terms of the overall magnitude of the degradation.
+
+
+### Total loss for the assessment unit
+
+For the indicator variable of ice mass we have a physical quantity and the total ice mass of the assessment unit is the sum of the ice mass of each observation unit (glacier outlines). 
+
+Thus it is possible to calculate RS for the whole unit is by calculating the sum of the indicator variable first and then applying the RS formula. This is equivalent to calculating the weighted arithmetic mean as above.
+
+
+```{r}
+#| warning: false
+mass_su <- massbalance_results %>% 
+  filter(
+    unit_name %in% c("Kilimanjaro"),
+    model_nr %in% c(" 9"),
+    scn %in% c("ssp126")
+  ) %>%
+  mutate(min_mass = mass-mad, max_mass = mass+mad) 
+
+plot_a <- ggplot(mass_su) +
+    geom_area(aes(x=year, y=mass, group=RGIId), 
+    colour="slateblue", fill=rgb(.1,.1,.1,0.1)) +
+  theme(legend.position = "right") +
+  ylab("Ice mass")
+
+RStotal <- mass_su %>% 
+  group_by(year) %>%
+  summarise(total_mass=sum(mass),min_mass=sum(min_mass), max_mass = sum(max_mass)) %>%
+  ungroup %>%
+  group_modify(~RSts(
+    .x$year,
+    .x$total_mass,
+    vmin=.x$min_mass,
+    vmax=.x$max_mass,
+    formula = "conditional"
+    )
+    ) 
+
+
+plot_b <- ggplot(RStotal) +
+  geom_ribbon(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_line(aes(x=year,y=RS),alpha=.50,cex=.5) +
+  theme(legend.position = "none")
+
+ggarrange(plot_a, plot_b, nrow=2) 
+```
+
+### Variability within assessment unit
+
+Calculating relative severity for each outline might be misleading because the units differ in initial ice mass and contribute unequally to the total.
+
+We can clearly see how different glaciers contribute to the total, and that for some periods of time the total amount is influence by several small glaciers, and in other periods it is influence by one large unit contributing most of the mass.
+
+In this case, the calculation of RS for each outline is not informative unless we combine them with a weight related to their initial mass contribution.
+
+```{r}
+
+wgs <- mass_su %>% 
+    filter(year==2000) %>% 
+    transmute(RGIId,initial_mass=mass) 
+ wgs <- wgs   %>% 
+    mutate(w=initial_mass/sum(wgs$initial_mass))
+
+RSvals <- mass_su %>% 
+  select(RGIId,year,mass,min_mass,max_mass) %>% 
+  group_by( RGIId) %>% 
+  group_modify( ~ RSts(
+    .x$year,
+    .x$mass,
+    vmin = .x$min_mass,
+    vmax = .x$max_mass,
+    formula = "conditional"
+    )
+    ) %>% 
+    left_join(wgs, by = c( "RGIId")) 
+
+# A weighted sum would be the same as the RS of the total
+
+RSws <- RSvals %>% 
+    rowwise %>%
+    mutate(RSw=RS*w) %>%
+    ungroup %>% 
+    group_by(year) %>%
+    summarise(w_tot=sum(w),RS=mean(RS),RS_weighted=sum(RSw))
+
+ggplot(RSvals %>% filter(year %in% 2025:2050)) +
+  geom_point(aes(x = year, y = RS, size=initial_mass), alpha = .25) +
+   geom_line(data=RStotal %>% filter(year %in% 2025:2050), 
+    aes(x = year, y = RS, colour="total mass"), linewidth=2) +
+ 
+  geom_line(data=RSws %>% filter(year %in% 2025:2050), 
+    aes(x = year, y = RS, colour="unweighted mean"), linewidth=.8) +
+  geom_line(data=RSws %>% filter(year %in% 2025:2050), 
+    aes(x = year, y = RS_weighted, colour="weighted mean"), linewidth=.8) +
+  scale_size_continuous("Initial mass") +
+  scale_colour_discrete("Overall RS")
+
+```
+
+Indeed the weighted mean of the RS values of individual glacier outlines is equal to the RS of the total ice mass for the whole assessment unit.
+
 
 ## Cumulative Extent of Decline
 $$

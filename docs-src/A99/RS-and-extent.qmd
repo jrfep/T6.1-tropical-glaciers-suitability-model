@@ -17,7 +17,7 @@ library(stringr)
 library(ggrepel)
 library(purrr)
 library(readr)
-here::i_am("docs/Mass-balance-model.qmd")
+here::i_am("docs-src/Mass-balance-model.qmd")
 # sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
 ```
