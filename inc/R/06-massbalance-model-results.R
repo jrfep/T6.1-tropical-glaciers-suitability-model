@@ -31,7 +31,7 @@ exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "
 
 # create a grid of arguments to avoid for loops within the `ex` code
 jjs <- grp_table %>% filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
-scs <-  c("ssp126","ssp370","ssp585")
+scs <-  c("ssp119", "ssp126", "ssp245", "ssp370", "ssp585")
 rgs <- c("R16", "R17") # low latitudes and southern andes, just in case
 
 argrid <- expand.grid(jjs,scs,rgs)
