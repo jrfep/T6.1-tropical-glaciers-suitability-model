@@ -1,5 +1,5 @@
 ---
-title: "Spatial aggregation of Relative Severity values"
+title: "Uncertainty of models and scenarios"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -55,6 +55,8 @@ Our two indicator variable differ fundamentally in units and interpretation and 
 For our two indicator variables we have different sample sizes per assessment unit. In the case of the dynamic ice mass balance model the units of observation are glacier outlines from the Randolph Glacier Inventory, while in the bioclimatic suitability model the units of observation are cell in a spatial grid that overlap with glacier outlines from multiple sources. 
 
 ```{r}
+rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds.file) 
 
 massbalance_results %>% 
   group_by(unit_name) %>% 
@@ -90,64 +92,39 @@ For the indicator variable of bioclimatic suitability we are using a probability
 
 
 
-## RS for decline in bioclimatic suitability
-
-In the case of the bioclimatic suitability model we are using spatial units with the same area and the index of suitability is not a direct measure of physical properties of the ecosystem. 
-
-We can use the simple mean of the individual RS values per cell to summarise relative severity per assessment unit. But there are other complementary summary statistics to represent the spatial variability in values of RS in an assessment unit. 
-
-For small assessment units the spatial sample size for the calculation of RS is small and values tend to be relatively similar. Differences can be visualised conveniently with boxplots. 
 
 ```{r}
-#| label: fig-ruwenzori
-#| fig-cap: "Box and whisker plots of the $RS_{bcs}^{acc}$ values for the Tropical Glacier Ecosystem of Ruwenzori. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean is marked with an X symbol."
-dat1 <- RS_results %>% 
-  filter(
-    unit %in% "Ruwenzori", 
-    threshold == "acc",
-    pathway == "ssp370",
-    modelname == "mri-esm2-0")
-dat2 <- dat1 %>% 
-  group_by(timeframe,pathway,modelname) %>% 
-  summarise(mean_RS=mean(RS_cor))
+#| label: fig-RS-timeseries
+#| fig-cap: "Time series of relative severity (RS) of decline in total ice mass for different assessment units (columns) and three future scenarios (rows) based on a collapse threshold of $0 kg$ of ice. The points represents values calculated for 12 different global circulation models."
+#| 
+# alternative with purrr:
+#RSvals <- totalmass_year_data %>% 
+#  filter(unit_name %in% "Cordillera de Merida") %>%
+#  group_by(model_nr,scn) %>% 
+#  group_split() %>%
+#  map(~RSts(.x$year,.x$total_mass)) %>% 
+#  bind_rows()
 
-ggplot(dat1 ) +
-  geom_boxplot(aes(y = RS_cor, x = timeframe, colour = timeframe)) +
-  geom_point(data=dat2, aes(y = mean_RS, x = timeframe, colour = timeframe),pch=4,cex=2) +
-  facet_grid(pathway~modelname) +
-  theme(legend.position = "none") +
-  xlab("Future period")
-```
+RSvals <- totalmass_year_data %>% 
+  filter(unit_name %in% c("Ruwenzori",
+                          "Kilimanjaro", 
+                          "Mount Kenia")) %>%
+#  filter(unit_name %in% c("Ecuador")) %>%
+  group_by(unit_name,model_nr,scn) %>% 
+  group_modify(~RSts(
+    .x$year,
+    .x$total_mass,
+    vmin=.x$min_mass,
+    vmax=.x$max_mass,
+    formula = "conditional"
+    )
+    ) 
 
-For larger sampling units we can see more complex distributions of RS values. In the case of the Cordilleras Norte de Peru we have more than thousand raster cells with values of relative severity. Histograms of the relative severity values show a wide spread of value in one selected future period, with most cell in the 75 - 100 % interval, but still many cell in the lowest quartile. This is reflected in the difference between mean and median RS values.
+ggplot(RSvals) +
+  ## geom error bar is small compared to intermodel variability, keep out of the plot
+  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
+  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
+  facet_grid(scn~unit_name) +
+  theme(legend.position = "none")
 
-
-```{r}
-#| label: fig-hist-ecuador
-#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.
-#| warning: false
-dat1 <- RS_results %>% 
-  filter(threshold=="acc", 
-         unit_name == "Cordilleras Norte de Peru", 
-         modelname == "mri-esm2-0",
-         pathway == "ssp126",
-         timeframe == "2041-2070")
-dat2 <- dat1 %>% group_by(timeframe) %>% 
-  summarise(
-    n=n(),
-    mean_RS=mean(RS_cor,na.rm=T),
-    median_RS=median(RS_cor,na.rm=T))
-
-plot_a <- 
-  ggplot(dat1) +
-    geom_histogram(aes(x=RS_cor*100)) +
-    #scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
-    #    scale_fill_manual(values = IUCN_cat_colours) +
-    #geom_point(data=dat2,aes(x=mean_RS*100, y=15)) +
-    geom_label(data=dat2,aes(x=mean_RS*100, y=100, label=sprintf("mean %0.3f", mean_RS))) +
-    geom_label(data=dat2,aes(x=median_RS*100, y=150, label=sprintf("median %0.3f", median_RS))) +
-    theme(legend.position = "none") +
-    xlab("Relative severity") +
-    ylab("Nr. of cells") 
-plot_a 
 ```

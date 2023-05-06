@@ -224,3 +224,12 @@ ggplot(model_data) +
 
 ## Initial values vs. final values
 
+
+----
+
+<details><summary>R session info for this chapter </summary>
+
+```{r}
+sessionInfo()
+```
+</details>

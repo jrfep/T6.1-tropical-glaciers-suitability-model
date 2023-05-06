@@ -1,11 +1,18 @@
 ---
-title: "Aggregating RS values"
+title: "The cED formula"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
-So far we have looked at relative severity of single units of observation (raster cells or glacier outlines) but we are interested in describing degradation of abiotic conditions in the whole assessment unit.
+We can use the average RS to describe the overall magnitude of decline, but the values of relative severity vary across any sample of sites or locations. 
+
+Degradation can be considered a threat to an ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.
+
+For the purpose of describing these patterns of degradation, we calculate extent of decline, or more precisely, the cumulative extent of decline ($\mathrm{cED}$), as the proportion of the distribution of an assessment unit that has values of relative severity higher than a threshold $x$.
+
+We will look at the calculation of ($\mathrm{cED}$) for the two indicator variables and the relationship between RS and extent of decline through time.
+
 
 ```{r}
 #| eval: true
@@ -46,95 +53,15 @@ panel.grid.major = element_line(colour = "rosybrown3"))
 
 ```
 
-## Overall RS
+## Motivation: Variability in $\mathrm{RS}_{i}$ values
 
-We calculate the overall value of RS as a weighted arithmetic mean of $\mathrm{RS}_i$ values:
+### Loss of ice mass in Kilimanjaro
 
-$$
-\overline{RS}=\frac{\sum_{i=1}^{n}\mathrm{RS}_{i} w_{i}}{\sum_{i=1}^n w_{i}}
-$$
+Given the nature of ice mass as a prediction of a physical measure, we need to weight the RS values of individual glacier outlines. 
 
-### Choice of formula
-
-Aggregating unbounded  $\mathrm{RS}_i$ values can be problematic. In this table we calculate mean values for different thresholds and time frames for two assessment units considering one model and scenario combination. In both cases we see a clear increasing trend, but the values of the original formula are clearly influenced by the magnitude of the extreme negative or positive values of the underlying units of observation. 
+If we look at the example of the T.G.E. Kilimanjaro, for one combination of model and scenario and the year 2040, we have following values of $\mathrm{RS}_{i}$:
 
 ```{r}
-d <- RS_results %>% 
-  filter(
-    unit %in% c("Ruwenzori","Kilimanjaro"),
-    threshold %in% "ess",
-    pathway %in% "ssp370",
-    modelname %in% "mri-esm2-0"
-    ) 
-
-tbl_caption <- tags$caption(
-  tags$b("Mean RS values for two assessment units."),
-  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp370) for three future time periods and using an equal sensitivity and specificity threshold for each unit. Observations with $MD=0$ have been removed before calculation with the original formula"))
-)
-
-tab <- d %>% 
-  group_by( unit,timeframe) %>% 
-  summarise(
-    #n=n(),
-    #n_used=sum(is.finite(RS)),
-    #CV=mean(CV),
-    min_RS=min(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
-    mean_RS=mean(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
-    max_RS=max(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
-    mean_RS_cor=mean(RS_cor,na.rm=T)) 
-
-###Create HTML formatting code for header and overall table HTML container
-#create header style HTML code
-header.style <- "th { font-family: 'Arial'; font-weight: bold; color: white; background-color: rosybrown;}"
-cell.style <- "text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white"
-hcell.style <- "text-align: center; border-width: 1px; border-style: solid; border-color: white; font-size:8px; background-color: rosybrown;"
-
-#pull header names from the table
-header.names <- c("Assessment Unit", "Period", "min(RS[i])", "mean RS", "max(RS[i])", "mean RS")
-# The container parameter allows us to design the header of the table using CSS
-my.container <- withTags(table(
-  style(type = "text/css", header.style),
-    thead(
-      tr(th("",colspan=2),
-        th("Original formula",colspan=3, style = hcell.style),
-        th("Conditional formula", style = hcell.style)),
-      tr(
-      lapply(header.names, th, style = cell.style)
-      )
-    )
-  )
-)
-
-
-  DT::datatable(
-    tab,
-    colnames = ,
-    caption = tbl_caption,
-    options = list(
-      dom = 't', 
-      pageLength = -1,
-      order = list(list(1, 'asc'),list(2, 'asc'))),
-    container=my.container,
-    rownames = FALSE,
-    width = '100%', 
-    height = '100%') %>% 
-  formatRound(c("min_RS", "mean_RS", "max_RS", "mean_RS_cor"),digits=3)
-
-
-```
-
-With the original formula, the interpretation of negative values or values above one would be problematic. The conditional formula guarantees that the mean of RS will be between 0 and 1 and thus can be clearly interpreted in terms of the overall magnitude of the degradation.
-
-
-### Total loss for the assessment unit
-
-For the indicator variable of ice mass we have a physical quantity and the total ice mass of the assessment unit is the sum of the ice mass of each observation unit (glacier outlines). 
-
-Thus it is possible to calculate RS for the whole unit is by calculating the sum of the indicator variable first and then applying the RS formula. This is equivalent to calculating the weighted arithmetic mean as above.
-
-
-```{r}
-#| warning: false
 mass_su <- massbalance_results %>% 
   filter(
     unit_name %in% c("Kilimanjaro"),
@@ -142,44 +69,6 @@ mass_su <- massbalance_results %>%
     scn %in% c("ssp126")
   ) %>%
   mutate(min_mass = mass-mad, max_mass = mass+mad) 
-
-plot_a <- ggplot(mass_su) +
-    geom_area(aes(x=year, y=mass, group=RGIId), 
-    colour="slateblue", fill=rgb(.1,.1,.1,0.1)) +
-  theme(legend.position = "right") +
-  ylab("Ice mass")
-
-RStotal <- mass_su %>% 
-  group_by(year) %>%
-  summarise(total_mass=sum(mass),min_mass=sum(min_mass), max_mass = sum(max_mass)) %>%
-  ungroup %>%
-  group_modify(~RSts(
-    .x$year,
-    .x$total_mass,
-    vmin=.x$min_mass,
-    vmax=.x$max_mass,
-    formula = "conditional"
-    )
-    ) 
-
-
-plot_b <- ggplot(RStotal) +
-  geom_ribbon(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_line(aes(x=year,y=RS),alpha=.50,cex=.5) +
-  theme(legend.position = "none")
-
-ggarrange(plot_a, plot_b, nrow=2) 
-```
-
-### Variability within assessment unit
-
-Calculating relative severity for each outline might be misleading because the units differ in initial ice mass and contribute unequally to the total.
-
-We can clearly see how different glaciers contribute to the total, and that for some periods of time the total amount is influence by several small glaciers, and in other periods it is influence by one large unit contributing most of the mass.
-
-In this case, the calculation of RS for each outline is not informative unless we combine them with a weight related to their initial mass contribution.
-
-```{r}
 
 wgs <- mass_su %>% 
     filter(year==2000) %>% 
@@ -200,42 +89,261 @@ RSvals <- mass_su %>%
     ) %>% 
     left_join(wgs, by = c( "RGIId")) 
 
-# A weighted sum would be the same as the RS of the total
+d <- RSvals %>% 
+    filter(year %in% 2040)
+d %>% select(RS, initial_mass, w) 
+ #%>%
+ #   arrange(RS) %>%
+ #   ungroup %>% select(w) %>%
+ #   map(~cumsum(.x))
+```
 
-RSws <- RSvals %>% 
-    rowwise %>%
-    mutate(RSw=RS*w) %>%
-    ungroup %>% 
-    group_by(year) %>%
-    summarise(w_tot=sum(w),RS=mean(RS),RS_weighted=sum(RSw))
+Sites with high RS but low initial ice mass will contribute less to the average RS, but nonetheless indicate localised high rates of degradation. 
 
-ggplot(RSvals %>% filter(year %in% 2025:2050)) +
-  geom_point(aes(x = year, y = RS, size=initial_mass), alpha = .25) +
-   geom_line(data=RStotal %>% filter(year %in% 2025:2050), 
-    aes(x = year, y = RS, colour="total mass"), linewidth=2) +
+### Decline in bioclimatic suitability
+
+In the case of the bioclimatic suitability model we are using spatial units with the same area and the index of suitability is not a direct measure of physical properties of the ecosystem. Thus we use the same weights for all sites. We can calculate complementary summary statistics (e.g. median and quantiles) to represent the spatial variability in values of $\mathrm{RS}_{i}$ in an assessment unit. 
+
+For small assessment units the spatial sample size for the calculation of $\mathrm{RS}_{i}$ is small and values tend to be relatively similar. Differences can be visualised conveniently with boxplots. 
+
+```{r}
+#| label: fig-ruwenzori
+#| fig-cap: "Box and whisker plots of the $RS_{bcs}^{acc}$ values for the Tropical Glacier Ecosystem of Ruwenzori. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean (equal to $\\overline{\\mathrm{RS}}$) is marked with an X symbol."
+dat1 <- RS_results %>% 
+  filter(
+    unit %in% "Ruwenzori", 
+    threshold == "acc",
+    pathway == "ssp370",
+    modelname == "mri-esm2-0")
+dat2 <- dat1 %>% 
+  group_by(timeframe,pathway,modelname) %>% 
+  summarise(mean_RS=mean(RS_cor))
+
+ggplot(dat1 ) +
+  geom_boxplot(aes(y = RS_cor, x = timeframe, colour = timeframe)) +
+  geom_point(data=dat2, aes(y = mean_RS, x = timeframe, colour = timeframe),pch=4,cex=2) +
+  facet_grid(pathway~modelname) +
+  theme(legend.position = "none") +
+  ylab(expression(RS[i])) +
+  xlab("Future period")
+```
+
+For larger sampling units we can see more complex distributions of $\mathrm{RS}_{i}$ values. In the case of the Cordilleras Norte de Peru we have more than thousand raster cells with values of relative severity. Histograms of the relative severity values show a wide spread of value in one selected future period, with most cell in the 75 - 100 % interval, but still many cell in the lowest quartile. This is reflected in the difference between mean and median RS values.
+
+```{r}
+#| label: fig-hist-ecuador
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.
+#| warning: false
+dat1 <- RS_results %>% 
+  filter(threshold=="acc", 
+         unit_name == "Cordilleras Norte de Peru", 
+         modelname == "mri-esm2-0",
+         pathway == "ssp126",
+         timeframe == "2041-2070")
+dat2 <- dat1 %>% group_by(timeframe) %>% 
+  summarise(
+    n=n(),
+    mean_RS=mean(RS_cor,na.rm=T),
+    median_RS=median(RS_cor,na.rm=T))
+
+plot_a <- 
+  ggplot(dat1) +
+    geom_histogram(aes(x=RS_cor*100)) +
+    #scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+    #    scale_fill_manual(values = IUCN_cat_colours) +
+    #geom_point(data=dat2,aes(x=mean_RS*100, y=15)) +
+    geom_label(data=dat2,aes(x=mean_RS*100, y=100, label=sprintf("mean %0.3f", mean_RS))) +
+    geom_label(data=dat2,aes(x=median_RS*100, y=150, label=sprintf("median %0.3f", median_RS))) +
+    theme(legend.position = "none") +
+    xlab(expression(RS[i])) +
+    ylab("Nr. of cells") 
+plot_a 
+```
+
+## The Cumulative Extent of Decline
+
+The cumulative extent of Decline can be calculated as follows:
+$$
+\mathrm{cED}(x) = \frac{\sum \begin{cases}
+      w_{i}, & \text{if}\ \mathrm{RS}_{i} ≥ x\\
+      0, & \text{if}\ \mathrm{RS}_{i} < x \\
+    \end{cases}}{\sum_{i=1}^{n} w_{i}}
+$$
+
+using the values of $\mathrm{RS}_{i}$ and $w_i$ defined before.
+
+### cED for decline in ice mass
+
+We can use these values to calculate $ED_{RS≥x}$ as a weighed empirical distribution function:
+
+```{r}
+##library(Hmisc)
+##ED <- Ecdf(d$RS, what="1-f", weights=d$w, normwt = TRUE, pl=FALSE)
+#library(spatstat.geom)
+#plot(e <- ewcdf(d$RS, d$w, normalise=TRUE))
  
-  geom_line(data=RSws %>% filter(year %in% 2025:2050), 
-    aes(x = year, y = RS, colour="unweighted mean"), linewidth=.8) +
-  geom_line(data=RSws %>% filter(year %in% 2025:2050), 
-    aes(x = year, y = RS_weighted, colour="weighted mean"), linewidth=.8) +
-  scale_size_continuous("Initial mass") +
-  scale_colour_discrete("Overall RS")
+ED <- ED_w(RS=d$RS,w=d$w)
+ggplot() + 
+  #geom_step(data=data.frame(ED),
+  #  aes(x,y,col="Hmisc")) +
+  geom_step(data=ED, aes(x=x,y=ED)) +
+  ylab(expression(ED[RS>=x])) +
+  ylim(0,1)+
+  xlab("x")
+```
+
+### cED for bioclimatic suitability
+
+We can use a similar approach to calculate the value of $cED$ for the decline in bioclimatic suitability. 
+
+We use the data from T.G.E. of Ecuador for one combination of model and scenario and compare three future periods. 
+
+The shape of the histogram changes in time, with an initial increase followed by a slight decrease in mean and median values.
+
+```{r}
+#| label: fig-hist-colombia
+#| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
+#| warning: false
+dat1 <- RS_results %>% 
+  filter(threshold=="ess", 
+         grepl("Colombia",unit), 
+         modelname == "mri-esm2-0",
+         pathway == "ssp126")
+dat2 <- dat1 %>% group_by(timeframe) %>% 
+  summarise(
+    n=n(),
+    mean_RS=mean(RS_cor,na.rm=T),
+    median_RS=median(RS_cor,na.rm=T))
+
+plot_a <- 
+  ggplot(dat1) +
+    geom_histogram(aes(x=RS_cor*100,fill=IUCN_cat)) +
+    facet_grid(timeframe~.) +
+    scale_fill_brewer(palette = "Oranges",type="seq", direction=-1) +
+    #    scale_fill_manual(values = IUCN_cat_colours) +
+    #geom_point(data=dat2,aes(x=mean_RS*100, y=15)) +
+    geom_label(data=dat2,aes(x=mean_RS*100, y=15, label=sprintf("mean %0.3f", mean_RS))) +
+    geom_label(data=dat2,aes(x=median_RS*100, y=10, label=sprintf("median %0.3f", median_RS))) +
+    theme(legend.position = "none") +
+    xlab("Relative severity") +
+    ylab("Nr. of cells") 
+plot_a 
+```
+
+Although there is now a large number of cell with very high values of relative severity, this still does not represent a majority of the extent of the ecosystem. We can use an alternative visualisation to make this more explicit:
+
+- we will first flip the coordinates of the histogram,
+- then count the cummulative number of cells starting with the highest relative severity values,[In this version we have flipped the coordinates of the plot used above for the ice mass of Kilimanjaro]{.aside}
+- we express this value as a propotion of the total extent of the assessment unit.
+
+```{r}
+#| label: fig-hist-ecdf-colombia
+#| fig-cap: Comparing the histogram of the $RS_{cor}$ values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
+#| warning: false
+tfm <- dat1 %>% distinct(timeframe) %>% pull
+
+RS_ecdf_f <- dat1 %>% 
+  split(.$timeframe) %>%   # splits the dataset by timeframe 
+  map(~RS_ecdf(.x$RS_cor))
+
+rss_thr <- c(80,50,30) # IUCN RLE thresholds
+rss_thr <- c(.75,.50,.25) # first second and third quartile
+
+RS_ext_pts <- 
+  bind_rows(
+    {tibble(rss = rss_thr,timeframe="2011-2040") %>%
+      mutate(exts=RS_ecdf_f[[1]](1-rss))},
+    {tibble(rss = rss_thr,timeframe="2041-2070") %>%
+      mutate(exts=RS_ecdf_f[[2]](1-rss))},
+    {tibble(rss = rss_thr,timeframe="2071-2100") %>%
+      mutate(exts=RS_ecdf_f[[3]](1-rss))},
+    )
+
+
+RS_ecdf_ext <- dat1 %>% 
+  split(.$timeframe) %>%   # splits the dataset by timeframe 
+  map(~RSvExt(.x$RS_cor)) %>%
+  bind_rows  %>%
+  mutate(timeframe=rep(tfm,c(100,100,100)))
+
+plot_b <- 
+  ggplot(RS_ecdf_ext) +
+    geom_line(aes(x=Extent,y=RS)) +
+    facet_col(~timeframe) +
+    scale_fill_manual(values = IUCN_cat_colours) +
+    xlab(expression(ED[RS>=x])) +
+    ylab("x") 
+
+
+ggarrange(plot_a + coord_flip(), 
+          plot_b +  
+            geom_hline(yintercept = rss_thr, col = "maroon", lty=3) +
+            geom_point(data=RS_ext_pts, aes(x=exts,y=rss), col = "maroon") +
+            geom_label(data=RS_ext_pts, 
+                      aes(x=exts, y=rss, 
+                          label=sprintf("%0.3f",exts)),
+                      col = "maroon",
+                      cex=3)) 
 
 ```
 
-Indeed the weighted mean of the RS values of individual glacier outlines is equal to the RS of the total ice mass for the whole assessment unit.
+This arrangement allows to read the cummulative extent by different thresholds of relative severity. For example, there ecosystem extent with $RS ≥ 0.75$ increases from less than 40% in the first period to more than 50 %, and the extent with $RS ≥ 0.25$ increases from nearly 65% to almost 75%. 
 
-
-## Cumulative Extent of Decline
-$$
-\mathrm{cED}(x) = \sum \begin{cases}
-      w_{i}, & \text{if}\ \mathrm{RS}_{i} ≥ x\\
-      0, & \text{if}\ \mathrm{RS}_{i} < x \\
-    \end{cases}
-$$
 
 ## Area under the cED curve
 
 $$
 \mathrm{AUC}_{\mathit{cED}}=\int_{0}^{1} \mathrm{cED}(x)\,dx
 $$
+
+### $\mathrm{AUC}_{\mathit{cED}}$ for loss of ice mass
+
+When we calculate $cED_{x}$ for multiple years we can see a change in the shape of the curve.
+
+```{r}
+d <- RSvals %>% 
+    filter(year %in% c(2040,2070,2100))
+
+EDs <- d %>% 
+  group_by(year) %>% 
+  group_modify( ~ ED_w(
+    RS=.x$RS,
+    w=.x$w))
+ggplot(EDs) + 
+  geom_step(aes(x=x, y=ED, group=year,colour=factor(year))) +
+  ylab(expression(ED[RS>=x])) +
+  ylim(0,1)+
+  xlab("x")
+
+```
+
+This figure shows a large increase in values of $RS≥0.5$ between 2040 and 2070 and then an increase of values of $RS≥0.75$ between 2070 and 2100.
+
+### $\mathrm{AUC}_{\mathit{cED}}$ for decline in suitability
+We can flip the coordinates and collapse the panels to actually superinpose these curves for a quick overview of the increase in extent for each value of relative severity :
+
+```{r}
+#| label: fig-ecdf-ecuador
+#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia . 
+
+# this does not work in this case, but almost...
+# plot_b + facet_null()
+
+ggplot(RS_ecdf_ext) +
+    geom_line(aes(y=Extent,x=RS, colour=timeframe)) +
+    ylab(expression(ED[RS>=x])) +
+    xlab("x") +
+    scale_colour_discrete("Future period")
+```
+
+We see that for this combination of model, scenario and threshold, there is an increase in the extent of high severity values between the first and second period, but the distribution does not change much between the second and third period.
+
+
+----
+
+<details><summary>R session info for this chapter </summary>
+
+```{r}
+sessionInfo()
+```
+</details>

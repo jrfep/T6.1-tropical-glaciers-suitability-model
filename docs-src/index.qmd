@@ -3,14 +3,13 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-# Preface {.unnumbered}
+# Abstract {.unnumbered}
 
 Tropical Glacier Ecosystems are facing extreme pressure due to climate change and face imminent collapse in this century.
 
 We explore here future projections of one direct and one indirect indicator of key ecosystem properties and use these to explore the probable trajectories toward collapse of the ecosystem. We evaluate the usefulness of relative severity and extent of degradation to anticipate collapse.
 
 We discuss here details of the suggested formula for calculation of relative severity $RS$ and different approaches to summarise and visualise data across the extent of the ecosystem assessment unit.
-
 
 
 We use the tropical glacier ecosystems as a model because:

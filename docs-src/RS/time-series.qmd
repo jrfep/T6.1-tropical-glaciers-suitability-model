@@ -6,7 +6,7 @@ editor_options:
 ---
 
 
-We calculate temporal change in Relative Severity by applying the RS formula to one fixed initial value and a sequence of final values, the final values can represent the state of the indicator in consecutive years (time series), or in different periods (temporal sequence). 
+We calculate temporal change in Relative Severity by applying the $\mathrm{RS}_{i}$ formula to one fixed initial value and a sequence of final values, the final values can represent the state of the indicator in consecutive years (time series), or in different periods (temporal sequence). 
 
 ```{r}
 #| label: load libraries and functions
@@ -44,18 +44,25 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
 old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
+okabe <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 ```
 
 ## Loss of ice mass
 
 The data from the Dynamic Ice Mass Balance model is provided in one year intervals, and we have summarise the data to provide the total value of ice mass of each assessment unit for each year.
 
-We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of $0 kg$. We denote this estimate of relative severity as $RS_{ice}^{CT=0}$. Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula.
+We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of $0 kg$. [We denote this estimate of relative severity as $RS_{ice}^{CT=0}$.]{.aside} Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula.
 
-## RS time series
+An example is given in @fig-rs-ice-example-kili.
 
+### Average RS time series
+
+Using the equation for average RS, we can create time series of $\overline{\mathrm{RS}}$ for each assessment unit.
 
 ```{r}
+#| label: fig-rs-ice-all-units
+#| fig-cap: "Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP3-7.0), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated  min and max values for each year."
 #| eval: true
 RStotal <- totalmass_year_data %>% 
   filter(
@@ -69,65 +76,37 @@ RStotal <- totalmass_year_data %>%
     vmax=.x$max_mass,
     formula = "original"
     )
-    ) %>% 
-  mutate(
-    andes = 1 + grepl("Peru|Colombia|Ecuador",unit_name),
-    unit_name = factor(unit_name, unit_order),
-    collapsed = (RS==1),
-    min_collapsed = (RS_min==1),
-    max_collapsed = (RS_max==1)
-    )
-okabe <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
+    ) 
+RStotal <- RStotal %>%
+ pivot_longer(
+  cols = starts_with("RS"),
+    names_to = "type",
+    values_to = "RS"
+ )  %>% 
+ group_by(unit_name,year) %>%
+ summarise(
+  RSmin = min(RS),
+  RSmax = max(RS),
+  RSmean = mean(RS),
+  .groups="keep"
+  ) %>%
+ mutate(
+  unit_name = factor(unit_name, unit_order),
+  collapsed = RSmin>0.99
+  )
 
 ggplot(RStotal) +
-  geom_point(aes(x = year, y = RS, colour=collapsed), alpha=.25,cex=.7) +
-  geom_point(aes(x = year, y = RS_min, colour=min_collapsed), alpha=.25,cex=.7) +
-  geom_point(aes(x = year, y = RS_max, colour=max_collapsed), alpha=.25,cex=.7) +
+  geom_ribbon(aes(x = year, ymin = RSmin, ymax = RSmax), alpha=.55, fill = okabe[2]) +
+  geom_line(aes(x = year, y = RSmean, colour = collapsed), alpha=.85, linewidth=1.2) +
   facet_wrap(~ unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
-  scale_colour_discrete(type=okabe[c(2,6)]) +
-  theme(legend.position="none")
+  scale_colour_discrete(type=okabe[c(5,6)]) +
+  theme(legend.position="none") +
+  ylab(expression(bar(RS))) +
+  xlab("Year")
+  
 ```
 
 
-
-
-```{r}
-#| label: fig-RS-timeseries
-#| fig-cap: "Time series of relative severity (RS) of decline in total ice mass for different assessment units (columns) and three future scenarios (rows) based on a collapse threshold of $0 kg$ of ice. The points represents values calculated for 12 different global circulation models."
-#| 
-# alternative with purrr:
-#RSvals <- totalmass_year_data %>% 
-#  filter(unit_name %in% "Cordillera de Merida") %>%
-#  group_by(model_nr,scn) %>% 
-#  group_split() %>%
-#  map(~RSts(.x$year,.x$total_mass)) %>% 
-#  bind_rows()
-
-RSvals <- totalmass_year_data %>% 
-  filter(unit_name %in% c("Cordilleras de Colombia",
-                          "Kilimanjaro", 
-                          "Cordilleras Norte de Peru" ,
-                          "Ecuador")) %>%
-#  filter(unit_name %in% c("Ecuador")) %>%
-  group_by(unit_name,model_nr,scn) %>% 
-  group_modify(~RSts(
-    .x$year,
-    .x$total_mass,
-    vmin=.x$min_mass,
-    vmax=.x$max_mass,
-    formula = "conditional"
-    )
-    ) 
-
-ggplot(RSvals) +
-  ## geom error bar is small compared to intermodel variability, keep out of the plot
-  #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
-  facet_grid(scn~unit_name) +
-  theme(legend.position = "none")
-
-```
 
 ## Degradation of bioclimatic suitability
 
@@ -163,3 +142,12 @@ ggplot(dat1) +
   xlab("Collapse thresholds") +
   theme(legend.position="none")
 ```
+
+----
+
+<details><summary>R session info for this chapter </summary>
+
+```{r}
+sessionInfo()
+```
+</details>

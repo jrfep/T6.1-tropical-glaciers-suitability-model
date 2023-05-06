@@ -35,3 +35,6 @@ https://quarto.org/docs/publishing/github-pages.html
 
 And follow the instructions for using the `quarto publish` command to publish content rendered locally.
 
+## Theme
+
+I am using https://bootswatch.com/flatly/ , if I want to use same colours as the theme, check this file: https://bootswatch.com/5/flatly/_variables.scss

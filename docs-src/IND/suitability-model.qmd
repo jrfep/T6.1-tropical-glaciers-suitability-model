@@ -22,10 +22,3 @@ We used the final fitted model to predict the suitability in the present timefra
 
 We summarised the outcomes for each combination of models, pathways and cut-off values and calculated relative severity of each outcome in two ways.
 
-First we counted the number of raster cells classified as glacier using each cut-off value, in this case the initial value was three cells and the collapse threshold is zero cells [@fig-C2a; upper panels]. Both extreme outcomes are equally likely, either all cells remain (**Least Concern**) or all cells disappear (**Critically Endangered**).
-
-Next we estimated relative severity by comparing the predicted suitability to the cut-off value [@fig-C2a; lower panels]. Here we assume that the predicted suitability represent the initial and final value and the cut-off value represents the collapse threshold (transition from Glacier to Non-glacier class). We then calculated the mean relative severity of all cells for each combination:
-
-The best estimate of mean relative severity across all predictions is `r qs[3]` % with a 90% confidence interval of `r qs[5]` to `r qs[1]`%.
-
-The subcriterion C2a is assessed as **Critically Endangered** with a plausible bound of **Endangered** to **Collapsed**: CR (EN-CO)

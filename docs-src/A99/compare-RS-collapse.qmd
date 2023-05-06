@@ -118,3 +118,12 @@ rr <- ranef(mod_collapse_sat)
 y <- rr$cond$unit %>% pull(`(Intercept)`)
 
 ```
+
+----
+
+<details><summary>R session info for this chapter </summary>
+
+```{r}
+sessionInfo()
+```
+</details>

@@ -1,5 +1,5 @@
 ---
-title: "The Relative Severity formula"
+title: "The RS formula"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -294,7 +294,7 @@ We calculate RS using the predicted median ice mass of the year 2000 as initial 
 
 #### Kilimanjaro
 
-The figure @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$ using the original formula for a selection of units in the T.G.E of Kilimanjaro. 
+The @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$ using the original formula for a selection of units in the T.G.E of Kilimanjaro. 
 
 ```{r}
 #| label: fig-rs-ice-example-kili

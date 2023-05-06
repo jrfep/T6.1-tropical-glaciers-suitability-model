@@ -5,6 +5,7 @@ book:
   title: "Environmental degradation and collapse of Tropical Glacier Ecosystems"
   subtitle: "Using relative severity and extent of degradation in collapse risk assessment"
   date: "2023-04-03"
+  repo-url: https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/
   chapters:
     - index.qmd
     - part: "Assessment units"
@@ -14,15 +15,16 @@ book:
       chapters:
         - IND/mass-balance-model.qmd
         - IND/suitability-model.qmd
-    - part: "Relative Severity formulas"
+    - part: "Relative Severity and extent of decline"
       chapters:
         - FORM/RS-formula.qmd
+        - FORM/mean-RS-formula.qmd
         - FORM/cED-formula.qmd
-    - part: "Relative Severity"
+    - part: "Trajectories towards collapse"
       chapters:
+        - RS/time-series.qmd
         - RS/spatial-aggregation.qmd
         - RS/spatial-variability.qmd
-        - RS/time-series.qmd
     - part: "Compare results from different indicators"
       chapters:
         - GLMM/binomial-collapse.qmd
@@ -55,7 +57,7 @@ execute:
 
 format:
   html:
-    theme: cosmo
+    theme: flatly
     number-depth: 2
 
 prefer-html: true
