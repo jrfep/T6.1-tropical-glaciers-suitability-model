@@ -5,8 +5,8 @@ library(readr)
 library(doParallel)
 
 here::i_am("inc/R/07-glmm-data-summarised.R")
-source(here::here("inc","R","RS-functions.R"))
 
+source(here::here("inc","R","RS-functions.R"))
 source(here::here("env","project-env.R"))
 target.dir <- sprintf("%s/%s/", gis.out, projectname)
 
@@ -18,6 +18,9 @@ massbalance_results <- readRDS(rds.file)
 
 
 results_file <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", target.dir)
+
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(
     unit_name=str_replace_all(unit,"-"," "),
@@ -27,9 +30,10 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
       timeframe %in% "2041-2070"~1,
       timeframe %in% "2071-2100"~2
       )
-  )
+  ) %>%
+  filter(!unit_name %in% exclude)
 
-exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+
 
 dat1 <- RS_results %>% 
   group_by(unit,scenario,method=threshold,timeframe,time,modelname) %>%
@@ -57,7 +61,9 @@ dat2 <- totalmass_year_data %>%
 ## average RS
 model_data <- dat1 %>% 
   bind_rows(dat2) %>% 
-  mutate(method=factor(method,levels=c("ice","acc","ess","ppv"))) %>%
+  mutate(
+	unit=str_replace_all(unit,"-"," "),
+	method=factor(method,levels=c("ice","acc","ess","ppv"))) %>%
   filter(!unit %in% exclude)
 
 rds.file <- sprintf("%s/totalmass-suitability-glmm-data.rds", target.dir)
@@ -78,14 +84,13 @@ registerDoParallel(cl)
 cED_ice <- 
   foreach (
     jj = argrid$Var1,
-    scn = argrid$Var2,
+    ss = argrid$Var2,
     .packages=c( "dplyr", "tidyr"),
     .combine=bind_rows
   ) %dopar% {
     mbdata <- massbalance_results %>% 
       filter(
-        unit_name == jj,
-        ssp == scn
+        unit_name %in% jj & ssp %in% ss
         )
     wgs <- mbdata %>% 
         filter(year == 2000) %>% 
@@ -109,7 +114,7 @@ cED_ice <-
       ungroup %>%
         transmute(
           unit=jj,
-          scenario = scn,
+          scenario = ss,
           method = "ice",
           time = (year-2040)/30,
           cED_30,
@@ -128,16 +133,16 @@ argrid <- expand.grid(jjs,scs,thr)
 cED_bcs <- 
   foreach (
     jj = argrid$Var1,
-    scn = argrid$Var2,
-    thr = argrid$Var3,
+    ss = argrid$Var2,
+    tt = argrid$Var3,
     .packages=c( "dplyr", "tidyr"),
     .combine=bind_rows
   ) %dopar% {
     bcsdata <- RS_results %>%  
       filter(
         unit_name == jj,
-        scenario == scn,
-        threshold == thr
+        scenario == ss,
+        threshold == tt
         )
     
     dat3 <- bcsdata %>%
@@ -153,8 +158,8 @@ cED_bcs <-
       ungroup %>%
         transmute(
           unit=jj,
-          scenario = scn,
-          method = thr,
+          scenario = ss,
+          method = tt,
           time,
           cED_30,
           cED_50,
