@@ -2,6 +2,8 @@ library(units)
 library(dplyr)
 library(stringr)
 library(readr)
+library(doParallel)
+
 here::i_am("inc/R/07-glmm-data-summarised.R")
 source(here::here("inc","R","RS-functions.R"))
 
@@ -61,37 +63,68 @@ saveRDS(file=rds.file, model_data)
 
 
 ## cED
-wgs <- massbalance_results %>% 
-    filter(year == 2000) %>% 
-    group_by(unit_name, RGIId, model_nr, ssp) %>% 
-    summarise(initial_mass=sum(mass), .groups="keep") 
 
-dat3 <- massbalance_results %>% # filter(unit_name=="Ecuador") %>% 
-    filter(
-      year %in% c(2000,2040,2070,2100),
-      ssp %in% c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")
-    ) %>% 
-  group_by(unit_name, RGIId, model_nr, ssp) %>% 
-  group_modify(~RSts(.x$year,.x$mass,
-                     formula = "conditional")) %>%
-  ungroup %>% 
-  left_join(wgs, by = c("unit_name", "RGIId", "model_nr", "ssp"))
-  
-cED_ice <- dat3 %>%
-  group_by(unit_name, year, model_nr, ssp) %>% 
-  #group_map(~cED_w(.x$RS,.x$initial_mass))
-  group_modify(~summary_cED_w(.x$RS,.x$initial_mass)) %>%
-  ungroup %>%
-    transmute(
-      unit=unit_name,
-      scenario = ssp,
-      method = "ice",
-      time = (year-2040)/30,
-      cED_30,
-      cED_50,
-      cED_80, 
-      AUC_cED)
+# create a grid of arguments to avoid for loops within the `ex` code
+jjs <- massbalance_results %>% pull(unit_name) %>% unique()
+scs <-  c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")
 
+argrid <- expand.grid(jjs,scs)
+
+cl <- makeCluster(round(detectCores()*.8))
+registerDoParallel(cl)
+
+cED_ice <- 
+  foreach (
+    jj = argrid$Var1,
+    scn = argrid$Var2
+    .packages=c( "dplyr", "tidyr"),
+    .combine=bind_rows
+  ) %dopar% {
+    mbdata <- massbalance_results %>% 
+      filter(
+        unit_name == jj,
+        ssp == scn
+        )
+    wgs <- mbdata %>% 
+        filter(year == 2000) %>% 
+        group_by( RGIId, model_nr) %>% 
+        summarise(initial_mass=sum(mass), .groups="keep") 
+
+    dat3 <- mbdata %>% 
+        filter(
+          year %in% c(2000,2040,2070,2100)
+        ) %>% 
+      group_by(RGIId, model_nr) %>% 
+      group_modify(~RSts(.x$year,.x$mass,
+                        formula = "conditional")) %>%
+      ungroup %>% 
+      left_join(wgs, by = c("RGIId", "model_nr"))
+      
+    res <- dat3 %>%
+      group_by(year, model_nr) %>% 
+      #group_map(~cED_w(.x$RS,.x$initial_mass))
+      group_modify(~summary_cED_w(.x$RS,.x$initial_mass)) %>%
+      ungroup %>%
+        transmute(
+          unit=jj,
+          scenario = scn,
+          method = "ice",
+          time = (year-2040)/30,
+          cED_30,
+          cED_50,
+          cED_80, 
+          AUC_cED)
+
+    return(res)
+  }
+
+
+## Stop cluster: garbage collection ----
+
+stopCluster(cl)
+gc()
+
+## Output: save data to Rdata file ----
 
 rds.file <- sprintf("%s/totalmass-suitability-cED-data.rds", target.dir)
-saveRDS(file=rds.file, model_data)
+saveRDS(file=rds.file, cED_ice)
