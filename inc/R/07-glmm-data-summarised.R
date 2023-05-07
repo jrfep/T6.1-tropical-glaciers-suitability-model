@@ -76,7 +76,7 @@ registerDoParallel(cl)
 cED_ice <- 
   foreach (
     jj = argrid$Var1,
-    scn = argrid$Var2
+    scn = argrid$Var2,
     .packages=c( "dplyr", "tidyr"),
     .combine=bind_rows
   ) %dopar% {
