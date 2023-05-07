@@ -70,16 +70,17 @@ rds.file <- sprintf("%s/totalmass-suitability-glmm-data.rds", target.dir)
 saveRDS(file=rds.file, model_data)
 
 
+
 ## cED
+
+cl <- makeCluster(round(detectCores()*.8))
+registerDoParallel(cl)
 
 # create a grid of arguments to avoid for loops within the `ex` code
 jjs <- massbalance_results %>% pull(unit_name) %>% unique()
 scs <-  c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")
 
 argrid <- expand.grid(jjs,scs)
-
-cl <- makeCluster(round(detectCores()*.8))
-registerDoParallel(cl)
 
 cED_ice <- 
   foreach (
@@ -145,16 +146,9 @@ cED_bcs <-
         threshold == tt
         )
     
-    dat3 <- bcsdata %>%
+    res <- bcsdata %>%
       group_by(time, modelname) %>% 
-      summarise(
-        n=n(),
-        mean_RS=mean(RS_cor,na.rm=T),
-        median_RS=median(RS_cor,na.rm=T), 
-        .groups="keep") 
-
-    res <- dat3 %>%
-      group_modify(~summary_cED_w(.x$RS)) %>%
+      group_modify(~summary_cED_w(.x$RS_cor)) %>%
       ungroup %>%
         transmute(
           unit=jj,
