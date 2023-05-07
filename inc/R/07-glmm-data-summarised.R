@@ -19,17 +19,19 @@ massbalance_results <- readRDS(rds.file)
 
 results_file <- sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.csv", target.dir)
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
-  mutate(unit_name=str_replace_all(unit,"-"," "))
+  mutate(
+    unit_name=str_replace_all(unit,"-"," "),
+    scenario=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
+    time=case_when(
+      timeframe %in% "2011-2040"~0,
+      timeframe %in% "2041-2070"~1,
+      timeframe %in% "2071-2100"~2
+      )
+  )
 
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
 dat1 <- RS_results %>% 
-  mutate(time=case_when(
-    timeframe %in% "2011-2040"~0,
-    timeframe %in% "2041-2070"~1,
-    timeframe %in% "2071-2100"~2
-    ),
-    scenario=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
   group_by(unit,scenario,method=threshold,timeframe,time,modelname) %>%
   summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor), .groups="keep") %>%
   ungroup %>%
@@ -119,6 +121,49 @@ cED_ice <-
   }
 
 
+thr <-  c("ess", "acc", "ppv")
+
+argrid <- expand.grid(jjs,scs,thr)
+
+cED_bcs <- 
+  foreach (
+    jj = argrid$Var1,
+    scn = argrid$Var2,
+    thr = argrid$Var3,
+    .packages=c( "dplyr", "tidyr"),
+    .combine=bind_rows
+  ) %dopar% {
+    bcsdata <- RS_results %>%  
+      filter(
+        unit_name == jj,
+        scenario == scn,
+        threshold == thr
+        )
+    
+    dat3 <- bcsdata %>%
+      group_by(time, modelname) %>% 
+      summarise(
+        n=n(),
+        mean_RS=mean(RS_cor,na.rm=T),
+        median_RS=median(RS_cor,na.rm=T), 
+        .groups="keep") 
+
+    res <- dat3 %>%
+      group_modify(~summary_cED_w(.x$RS)) %>%
+      ungroup %>%
+        transmute(
+          unit=jj,
+          scenario = scn,
+          method = thr,
+          time,
+          cED_30,
+          cED_50,
+          cED_80, 
+          AUC_cED)
+
+    return(res)
+  }
+
 ## Stop cluster: garbage collection ----
 
 stopCluster(cl)
@@ -127,4 +172,4 @@ gc()
 ## Output: save data to Rdata file ----
 
 rds.file <- sprintf("%s/totalmass-suitability-cED-data.rds", target.dir)
-saveRDS(file=rds.file, cED_ice)
+saveRDS(file=rds.file, bind_rows(cED_bcs,cED_ice))
