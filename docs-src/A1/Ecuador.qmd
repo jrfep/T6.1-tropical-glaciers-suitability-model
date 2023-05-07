@@ -175,3 +175,17 @@ ggplot(model_data) +
  geom_boxplot(aes(x=time,y=RS,col=method,group=time)) +
  facet_grid(scenario~method)
 ```
+
+# cED bioclimatic suitability
+
+```{r}
+dat1 <- RS_results %>% 
+  filter(
+    unit %in% slc_unit, 
+    threshold == "acc"
+    ) %>%
+  group_by(timeframe) %>% 
+  group_modify(~summary_cED_w(.x$RS)) 
+
+dat1
+```

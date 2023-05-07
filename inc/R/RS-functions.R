@@ -71,17 +71,7 @@ ED_w <- function(RS,w) {
     ED = c(1,ED[-length(ED)]))
   return(res)
 }
-RS_ecdf <- function(RSvals) {
-  f <- ecdf((1-RSvals))
-  return(f)
-}
-RSvExt <- function(RSvals) {
-  f <- RS_ecdf(RSvals)
-  x <- seq(0,1,length=100)
-  y <- f(x)
-  z <-tibble(RS=1-x,Extent=y)
-  return(z)
-}
+
 
 RSts <- function(
   years, 

@@ -250,45 +250,47 @@ Although there is now a large number of cell with very high values of relative s
 #| warning: false
 tfm <- dat1 %>% distinct(timeframe) %>% pull
 
-RS_ecdf_f <- dat1 %>% 
-  split(.$timeframe) %>%   # splits the dataset by timeframe 
-  map(~RS_ecdf(.x$RS_cor))
+fs <- dat1 %>%
+  group_by(timeframe) %>% 
+  group_map(~cED_w(.x$RS)) 
 
-rss_thr <- c(80,50,30) # IUCN RLE thresholds
+xs <- seq(0,1,length=100)
+
+cEDdata <- bind_rows(
+  tibble(timeframe=tfm[1],xs,cED=fs[[1]](xs)),
+  tibble(timeframe=tfm[2],xs,cED=fs[[2]](xs)),
+  tibble(timeframe=tfm[3],xs,cED=fs[[3]](xs))
+)
+
+rss_thr <- c(.80,.50,.30) # IUCN RLE thresholds
 rss_thr <- c(.75,.50,.25) # first second and third quartile
 
 RS_ext_pts <- 
   bind_rows(
     {tibble(rss = rss_thr,timeframe="2011-2040") %>%
-      mutate(exts=RS_ecdf_f[[1]](1-rss))},
+      mutate(exts=fs[[1]](rss))},
     {tibble(rss = rss_thr,timeframe="2041-2070") %>%
-      mutate(exts=RS_ecdf_f[[2]](1-rss))},
+      mutate(exts=fs[[2]](rss))},
     {tibble(rss = rss_thr,timeframe="2071-2100") %>%
-      mutate(exts=RS_ecdf_f[[3]](1-rss))},
+      mutate(exts=fs[[3]](rss))},
     )
 
-
-RS_ecdf_ext <- dat1 %>% 
-  split(.$timeframe) %>%   # splits the dataset by timeframe 
-  map(~RSvExt(.x$RS_cor)) %>%
-  bind_rows  %>%
-  mutate(timeframe=rep(tfm,c(100,100,100)))
-
 plot_b <- 
-  ggplot(RS_ecdf_ext) +
-    geom_line(aes(x=Extent,y=RS)) +
+  ggplot(cEDdata) +
+    geom_step(aes(x=xs,y=cED)) +
     facet_col(~timeframe) +
-    scale_fill_manual(values = IUCN_cat_colours) +
-    xlab(expression(ED[RS>=x])) +
-    ylab("x") 
+    ylab(expression(ED[RS>=x])) +
+    xlab("x") +
+    coord_flip(xlim=c(0,1),ylim=c(0,1)) 
+
 
 
 ggarrange(plot_a + coord_flip(), 
           plot_b +  
-            geom_hline(yintercept = rss_thr, col = "maroon", lty=3) +
-            geom_point(data=RS_ext_pts, aes(x=exts,y=rss), col = "maroon") +
+            geom_vline(xintercept = rss_thr, col = "maroon", lty=3) +
+            geom_point(data=RS_ext_pts, aes(y=exts,x=rss), col = "maroon") +
             geom_label(data=RS_ext_pts, 
-                      aes(x=exts, y=rss, 
+                      aes(y=exts, x=rss, 
                           label=sprintf("%0.3f",exts)),
                       col = "maroon",
                       cex=3)) 
@@ -337,11 +339,12 @@ We can flip the coordinates and collapse the panels to actually superinpose thes
 # this does not work in this case, but almost...
 # plot_b + facet_null()
 
-ggplot(RS_ecdf_ext) +
-    geom_line(aes(y=Extent,x=RS, colour=timeframe)) +
+ggplot( cEDdata ) +
+  geom_step(aes(x=xs,y=cED,group=timeframe,colour=timeframe)) +
     ylab(expression(ED[RS>=x])) +
     xlab("x") +
     scale_colour_discrete("Future period")
+
 ```
 
 We see that for this combination of model, scenario and threshold, there is an increase in the extent of high severity values between the first and second period, but the distribution does not change much between the second and third period.

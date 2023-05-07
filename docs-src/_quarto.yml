@@ -36,6 +36,7 @@ book:
         - A1/Mexico.qmd
         - A1/Kilimanjaro.qmd
         - A1/Cordillera-de-Merida.qmd
+        - A1/Colombia.qmd
         - A1/Ecuador.qmd
     - part: "Code reproducibility"
       chapters:
