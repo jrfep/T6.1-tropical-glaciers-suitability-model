@@ -121,3 +121,35 @@ ggplot(RSvals) +
   theme(legend.position = "none")
 
 ```
+
+```{r}
+jj <- "Cordilleras Norte de Peru"
+ss <- "SSP2-4.5"
+mm <- " 9"
+mbdata <- massbalance_results %>% 
+    filter(
+        unit_name %in% jj,
+        ssp %in% ss,
+        model_nr %in% mm,
+        year %in% c(2000,2050)
+        ) 
+
+    wgs <- mbdata %>% 
+        filter(year == 2000) %>% 
+        group_by( RGIId) %>% 
+        summarise(initial_mass=sum(mass), .groups="keep") 
+
+    RSi_data <- mbdata %>% 
+    group_by(RGIId) %>% 
+    group_modify(~RSts(.x$year,.x$mass,
+                        formula = "conditional")) %>%
+    ungroup %>% 
+    left_join(wgs, by = c("RGIId"))
+
+ggplot(RSi_data) + 
+  geom_point(aes(x=IV,y=RS,colour=RS,size=FV)) + 
+  scale_x_continuous(trans="log") + 
+  scale_colour_continuous(trans="reverse") + 
+  theme(legend.position = "none")
+
+```

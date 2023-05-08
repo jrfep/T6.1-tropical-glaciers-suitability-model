@@ -19,6 +19,8 @@ library(DT)
 library(purrr)
 library(ggpubr)
 library(stringr)
+#markovchain::markovchainFit(mtz)
+library('igraph')
 #library(Hmisc)
 
 here::i_am("docs-src/RS/spatial-variability.qmd")
@@ -30,24 +32,61 @@ options(dplyr.summarise.inform = FALSE)
 ```{r}
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE) %>% 
-  mutate(unit_name=str_replace_all(unit,"-"," "))
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
-massbalance_results <- readRDS(results_file)
+
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
+target.dir <- "sandbox"
+results_file <- here::here(target.dir, "collapse-trajectory-data.rds")
+collapse_trajectories <- readRDS(results_file) %>% 
+  mutate(state=factor(state, state_order))
 ```
 
 ```{r}
+pl_data <- collapse_trajectories %>% 
+  filter(
+    countdown>=0, 
+    unit_name %in% c("Ruwenzori","Kilimanjaro","Mount Kenia","Puncak Jaya","Sierra Nevada de Santa Marta", "Cordillera de Merida"),
+    scenario %in% "SSP2-4.5")
 
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
+ggplot(pl_data) +
+  geom_point(aes(x=countdown,y=RS, colour=state), size=.65) +
+  scale_colour_manual(values=state_cat_okabe) +
+#  geom_hline(yintercept=c(0.3,0.5,0.8), lty=3, colour="maroon") +
+  scale_x_continuous(trans="reverse") +
+  xlab("Years before collapse") +
+  ylab(expression(bar(RS))) +
+  facet_wrap(~unit_name) +
+  theme(legend.position="none")
 
 ```
 
+```{r}
+#| eval: false
+from_state <- collapse_trajectories %>% transmute(unit_name,scenario,model_nr,bind_year=year+1,from_state=state)
+to_state <- collapse_trajectories %>% transmute(unit_name,scenario,model_nr,bind_year=year,to_state=state)
 
+trans_df <- inner_join(from_state,to_state,by=c("unit_name", "scenario", "model_nr","bind_year"))
+
+adjm1 <- with(trans_df,table(from_state,to_state))
+g1<-graph.adjacency(adjm1,weighted=TRUE, mode="undirected",diag = FALSE)
+layout <- layout_as_tree(g1, root = 1)
+V(g1)$color <- state_cat_okabe[V(g1)$name]
+V(g1)$size <- 40 # 3.5*(rowSums(adjm1)/1000)
+plot(
+  g1, 
+  layout = layout, 
+  edge.width=(E(g1)$weight / 20),
+  vertex.label.color=if_else(V(g1)$name %in% "very local", "black", "white"))
+
+adjm1/rowSums(adjm1)
+
+```
+
+```{mermaid}
+%%| label: fig-goal-one
+%%| fig-cap: "Main trajectories towards collapse."
+%%| file: states-collapse.mmd
+```
 
 ----
 

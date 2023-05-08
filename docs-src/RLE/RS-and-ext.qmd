@@ -25,6 +25,7 @@ library(forcats)
 
 here::i_am("docs-src/RS/time-series.qmd")
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 ```
 
 ```{r}
@@ -42,12 +43,6 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 ```
 
-```{r}
-#| label: ggplot theme
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-```
 
 
 ## Extent of decline for loss of ice mass
