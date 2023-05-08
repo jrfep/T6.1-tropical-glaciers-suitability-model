@@ -36,14 +36,7 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
 results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
-```
-
-```{r}
-
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-
+source(here::here("inc","R","RS-shared.R"))
 ```
 
 ## Considerations before aggregation
@@ -110,7 +103,7 @@ RSvals <- totalmass_year_data %>%
                           "Kilimanjaro", 
                           "Mount Kenia")) %>%
 #  filter(unit_name %in% c("Ecuador")) %>%
-  group_by(unit_name,model_nr,scn) %>% 
+  group_by(unit_name,model_nr,ssp) %>% 
   group_modify(~RSts(
     .x$year,
     .x$total_mass,
@@ -123,8 +116,8 @@ RSvals <- totalmass_year_data %>%
 ggplot(RSvals) +
   ## geom error bar is small compared to intermodel variability, keep out of the plot
   #  geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +
-  geom_point(aes(x=year,y=RS,colour=scn),alpha=.50,cex=.5) +
-  facet_grid(scn~unit_name) +
+  geom_point(aes(x=year,y=RS,colour=ssp),alpha=.50,cex=.5) +
+  facet_grid(ssp~unit_name) +
   theme(legend.position = "none")
 
 ```

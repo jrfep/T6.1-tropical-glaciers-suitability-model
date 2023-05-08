@@ -22,8 +22,8 @@ library(readr)
 library(tidyr)
 library(DT)
 here::i_am("docs-src/IND/mass-balance-model.qmd")
-# sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 # Suppress summarise info
 #options(dplyr.summarise.inform = FALSE)
 # or use the .groups argument as suggested
@@ -40,14 +40,6 @@ rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
 year_of_collapse_data <- readRDS(rds.file)
 rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
 totalmass_year_data <- readRDS(rds.file)
-```
-
-
-```{r}
-#| label: ggplot theme
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
 ```
 
 We use ice mass balance projections for the glacier of the Cordillera de Mérida based on a glacier evolution model [@Rounce_2023_MassBalance_Global]. This hybrid model combines a mass balance module and a glacier dynamics module to model glaciers independently from 2000-2100 for various ensembles of Global Circulation Models and scenarios. 
@@ -68,13 +60,15 @@ The values used here are the output values (ice mass \pm median absolute deviati
 # "Kilimanjaro", "Ecuador", "Mexico"
 
 totalmass_year_data %>% 
-  filter(unit_name == "Cordillera de Merida") %>%
+  filter(
+    unit_name == "Cordillera de Merida",
+    ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")) %>%
   ggplot(aes(x=year,y=total_mass)) +
     geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
                   position=position_dodge(.9),
                 alpha=.5,col="gray") +
-    geom_point(aes(colour=scn),cex=.5) +
-    facet_wrap(.~scn) +
+    geom_point(aes(colour=ssp),cex=.5) +
+    facet_wrap(.~ssp) +
     ylab("Projected annual mass of ice [Mt]") +
     xlab("Year") + 
     theme(legend.position = "none") 
@@ -106,16 +100,17 @@ year_of_collapse_data %>%
     )
   ) %>% 
   pivot_wider(names_from=ssp,values_from=c(prob_collapse, prob_bounds)) %>%
-  select(1,2,5,3,6,4,7) %>%
+  select(1,3,8,4,9,5,10) %>%
   datatable(
+    rownames = FALSE,
     options = list(
       dom = 't', 
       pageLength = -1,
-      order = list(list(6, 'asc'))),
-    colnames = c("unit_name", "SSP1-2.6", "bounds", "SSP3-7.0", "bounds", "SSP5-8.5", "bounds")) %>% 
-      formatRound(c("prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP5-8.5"),digits=1) %>%
+      order = list(list(5, 'asc'))),
+    colnames = c("Assessment unit", "SSP1-2.6", "bounds", "SSP2-4.5", "bounds", "SSP3-7.0", "bounds")) %>% 
+      formatRound(c("prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP2-4.5"),digits=1) %>%
       formatStyle(
-        columns = c("unit_name","prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP5-8.5", "prob_bounds_SSP1-2.6", "prob_bounds_SSP3-7.0", "prob_bounds_SSP5-8.5"), 
+        columns = c("unit_name","prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP2-4.5", "prob_bounds_SSP1-2.6", "prob_bounds_SSP3-7.0", "prob_bounds_SSP2-4.5"), 
         fontSize = '80%')
 ```
 
@@ -127,7 +122,12 @@ For at least seven asssessment units a proportion of the dynamic ice mass balanc
 #| warning: false
 
 
-ggplot(data=year_of_collapse_data %>% filter(collapse_year < 2100)) +
+ggplot(data=
+  year_of_collapse_data %>% 
+    filter(
+      collapse_year < 2100, 
+      ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")
+      )) +
   geom_histogram(aes(x=collapse_year,fill=ssp)) +
   xlab("Year of collapse") + 
   facet_wrap(~unit_name) +
@@ -141,17 +141,18 @@ ggplot(data=year_of_collapse_data %>% filter(collapse_year < 2100)) +
 #| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines) for the assessment unit of the T.G.E. of Mexico.
 #| warning: false
 
-
-label_xy <- 
-  year_of_collapse_data %>% 
-  filter(unit_name=="Mexico") %>%
+data_ss <- year_of_collapse_data %>% 
+  filter(
+    unit_name=="Mexico",
+    ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")
+    ) 
+label_xy <- data_ss %>%
     group_by(ssp) %>% 
   summarise(x=median(collapse_year),
               .groups="keep") %>%
   mutate(y=0.5)
 
-ggplot(data=year_of_collapse_data %>% 
-  filter(unit_name=="Mexico") ) +
+ggplot(data=data_ss ) +
 #  geom_histogram(aes(x=collapse_year,fill=scn)) +
   stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
               geom = "step") +

@@ -24,6 +24,7 @@ library(readr)
 here::i_am("docs-src/A1/Cordillera-de-Merida.qmd")
 #sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 ```
 
 ```{r}
@@ -44,14 +45,6 @@ load(here::here("sandbox","fitted-GBM-models","Cordillera-de-Merida.rda")) # thi
 
 ```
 
-```{r}
-#| label: ggplot theme
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-```
-
-
 
 ## Compare overall RS 
 
@@ -68,13 +61,13 @@ dat1 <- RS_results %>%
     timeframe %in% "2041-2070"~2055,
     timeframe %in% "2071-2100"~2085
     ),
-    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
-  group_by(scn,threshold,timeframe,year,modelname) %>%
+    ssp=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(ssp,threshold,timeframe,year,modelname) %>%
   summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor), .groups="keep")
 
 dat2 <- totalmass_year_data %>% 
   filter(unit_name %in% c(slc_unit)) %>%
-  group_by(unit_name,model_nr,scn) %>% 
+  group_by(unit_name,model_nr,ssp) %>% 
   group_modify(~RSts(.x$year,.x$total_mass, formula = "original")) 
 
 ggplot(dat2) +
@@ -90,7 +83,7 @@ ggplot(dat2) +
                    x = year, 
                    colour=threshold, 
                    group=interaction(threshold,timeframe))) + 
-  facet_grid(scn~.) 
+  facet_grid(ssp~.) 
 ```
 
 ```{r}
@@ -102,19 +95,19 @@ dat1 <- RS_results %>%
     timeframe %in% "2041-2070"~2070,
     timeframe %in% "2071-2100"~2100
     ),
-    scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
-  group_by(scn,threshold,timeframe,year,modelname) %>%
+    ssp=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
+  group_by(ssp,threshold,timeframe,year,modelname) %>%
   summarise(n=n(),RS=mean(RS_cor),RSmed=median(RS_cor)) %>%
   ungroup %>%
-  select(scn,threshold,year,RS)
+  select(ssp,threshold,year,RS)
 
 dat2 <- totalmass_year_data %>% 
   filter(year %in% c(2000,2040,2070,2100)) %>% 
   filter(unit_name %in% c(slc_unit)) %>%
-  group_by(model_nr,scn) %>% 
+  group_by(model_nr,ssp) %>% 
   group_modify(~RSts(.x$year,.x$total_mass)) %>%
   ungroup %>% 
-  transmute(scn,threshold="MBM",year,RS)
+  transmute(ssp,threshold="MBM",year,RS)
 
 dats <- dat1 %>% bind_rows(dat2)
 ggplot(dats) +
@@ -123,7 +116,7 @@ ggplot(dats) +
                    x = year, 
                    colour=threshold, 
                    group=interaction(threshold,year))) + 
-  facet_grid(scn~.) 
+  facet_grid(ssp~.) 
 ```
 
 ## Bioclimatic suitability model
@@ -180,7 +173,7 @@ label_xy <-
 
 ggplot(data=year_of_collapse_data %>% 
   filter(unit_name == slc_unit) ) +
-#  geom_histogram(aes(x=collapse_year,fill=scn)) +
+#  geom_histogram(aes(x=collapse_year,fill=ssp)) +
   stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
               geom = "step") +
   stat_ecdf(aes(x=collapse_year), 

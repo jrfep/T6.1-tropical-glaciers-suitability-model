@@ -46,15 +46,9 @@ results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 ```
 
-```{r}
-
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-
-```
 
 ### Visualisation of initial and final values
 

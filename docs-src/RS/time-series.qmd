@@ -25,6 +25,7 @@ library(forcats)
 
 here::i_am("docs-src/RS/time-series.qmd")
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 ```
 
 ```{r}
@@ -39,14 +40,6 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 ```
 
-```{r}
-#| label: ggplot theme
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
-okabe <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-```
 
 ## Loss of ice mass
 
@@ -62,11 +55,11 @@ Using the equation for average RS, we can create time series of $\overline{\math
 
 ```{r}
 #| label: fig-rs-ice-all-units
-#| fig-cap: "Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP3-7.0), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated  min and max values for each year."
+#| fig-cap: "Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP2-4.5), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated  min and max values for each year."
 #| eval: true
 RStotal <- totalmass_year_data %>% 
   filter(
-    scn %in% c("SSP3-7.0")
+    ssp %in% c("SSP2-4.5")
   ) %>%
   group_by(unit_name, model_nr) %>%
   group_modify(~RSts(
@@ -106,6 +99,57 @@ ggplot(RStotal) +
   
 ```
 
+```{r}
+RStotal <- totalmass_year_data %>% 
+  filter(
+    ssp %in% c("SSP2-4.5")
+  ) %>%
+  group_by(unit_name, model_nr) %>%
+  group_modify(~RSts(
+    .x$year,
+    .x$total_mass,
+    vmin=.x$min_mass,
+    vmax=.x$max_mass,
+    formula = "original"
+    )) 
+RSyears <- RStotal %>% 
+  mutate(
+    unit_name = factor(unit_name, unit_order),
+    non_collapsed=if_else(RS<0.99,year,2000),
+    max_non_collapsed=if_else(RS_min<0.99,year,2000),
+    min_non_collapsed=if_else(RS_max<0.99,year,2000),
+    non_severe=if_else(RS<0.80,year,2000),
+    max_non_severe=if_else(RS_min<0.80,year,2000),
+    min_non_severe=if_else(RS_max<0.80,year,2000)
+    ) %>% 
+  group_by(unit_name,model_nr) %>% 
+  summarise(
+    med_collapse_year=max(non_collapsed,na.rm=T)+1,
+    max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+    min_collapse_year=max(min_non_collapsed,na.rm=T)+1,
+    med_severe_year=max(non_severe,na.rm=T)+1,
+    max_severe_year=max(max_non_severe,na.rm=T)+1,
+    min_severe_year=max(min_non_severe,na.rm=T)+1,
+            .groups="keep")
+
+severity_years <- RSyears %>% pivot_longer(ends_with("year"), values_to = "year",names_to=c("bound","variable"), names_pattern="(.*)_(.*)_year") %>% filter(year<2101)
+
+clrs <- c("severe"=okabe[4],"collapse"=okabe[1])
+
+ggplot(severity_years) +
+  geom_histogram(aes(x=year,fill=variable, weight=50/3),binwidth=5) +
+  facet_wrap(~ unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
+  scale_fill_manual(values=clrs,labels=c(expression(bar(RS)>0.99),expression(bar(RS)>=0.80))) +
+  theme(legend.position="top") +
+  xlab("Year") + ylab("Nr. of replicates")
+```
+
+```{r}
+RSyears %>% 
+  filter(med_collapse_year<2101) %>%
+  group_by(unit_name) %>% 
+  summarise(n = n(), preaviso = median(med_collapse_year-med_severe_year))
+```
 
 
 ## Degradation of bioclimatic suitability
@@ -143,6 +187,19 @@ ggplot(dat1) +
   theme(legend.position="none")
 ```
 
+
+```{r}
+cED_data <- readRDS(here::here("sandbox","totalmass-suitability-cED-data.rds"))
+
+ggplot(cED_data) +
+geom_boxplot(aes(y=cED_80,x=time,group=time)) +
+facet_grid(scenario~method)
+
+ggplot(cED_data) +
+geom_boxplot(aes(y=AUC_cED,x=time,group=time)) +
+facet_grid(scenario~method)
+
+```
 ----
 
 <details><summary>R session info for this chapter </summary>

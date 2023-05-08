@@ -2,24 +2,6 @@
 ## relative severity
 
 
-## from far to near, Andes from north to south
-unit_order <- c(
-  "Puncak Jaya",
-  "Kilimanjaro",
-  "Mount Kenia",
-  "Ruwenzori",
-  "Mexico",
-  "Sierra Nevada de Santa Marta",
-  "Cordillera de Merida",
-  "Cordilleras de Colombia",
-  "Ecuador",
-  "Cordilleras Norte de Peru",
-  "Cordilleras Orientales de Peru y Bolivia",
-  "Volcanos de Peru y Chile"
-)
-
-IUCN_cat_colours <- c("LC"="darkgreen","VU"="yellow","EN"="orange","CR"="red")
-
 
 RS_extent_combs <- tibble(
   RS_min=c(80,50,30,80,50,80),

@@ -27,6 +27,7 @@ library(ggpubr)
 here::i_am("docs-src/A1/Colombia.qmd")
 #sessionInfo()
 source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
 ```
 
 ```{r}
@@ -46,13 +47,6 @@ rds.file <- here::here(target.dir,"relative-severity-degradation-suitability-all
 RS_results_t <- readRDS(rds.file) %>%
  filter(unit %in% str_replace_all(slc_unit," ","-"))
 
-```
-
-```{r}
-#| label: ggplot theme
-old <- theme_set(theme_linedraw())
-theme_update(panel.grid.minor = element_line(colour = "pink"),
-panel.grid.major = element_line(colour = "rosybrown3"))
 ```
 
 
