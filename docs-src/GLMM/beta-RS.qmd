@@ -213,6 +213,7 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 model_data_ss <- cED_model_data %>% 
   filter(
     method %in% valid_methods,
+    !unit %in% "Kilimanjaro",
     cED_30>0 & cED_30<1
     ) %>% 
   mutate(
@@ -292,6 +293,7 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 model_data_ss <- cED_model_data %>% 
   filter(
     method %in% valid_methods,
+    !unit %in% "Kilimanjaro",
     cED_50>0 & cED_50<1
     ) %>% 
   mutate(
@@ -312,6 +314,7 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 model_data_ss <- cED_model_data %>% 
   filter(
     method %in% valid_methods,
+    !unit %in% "Kilimanjaro",
     cED_80>0 & cED_80<1
     ) %>% 
   mutate(

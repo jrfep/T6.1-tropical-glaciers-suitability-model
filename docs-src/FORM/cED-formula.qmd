@@ -297,8 +297,10 @@ This arrangement allows to read the cummulative extent by different thresholds o
 ## Area under the cED curve
 
 $$
-\mathrm{AUC}_{\mathit{cED}}=\int_{0}^{1} \mathrm{cED}(x)\,dx
+\mathrm{AUC}_{\mathit{cED}}=\int_{0}^{1} \mathrm{cED}(x)\,dx \approxeq \overline{\mathrm{RS}}
 $$
+
+[Which is probably related to the [LOTUS](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician)?]{.aside}
 
 ### $\mathrm{AUC}_{\mathit{cED}}$ for loss of ice mass
 
