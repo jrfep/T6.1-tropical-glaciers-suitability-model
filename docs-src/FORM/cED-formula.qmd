@@ -176,7 +176,7 @@ We can use these values to calculate $ED_{RS≥x}$ as a weighed empirical distri
 #library(spatstat.geom)
 #plot(e <- ewcdf(d$RS, d$w, normalise=TRUE))
  
-ED <- ED_w(RS=d$RS,w=d$w)
+#ED <- ED_w(RS=d$RS,w=d$w)
 f <- cED_w(RS=d$RS,w=d$w)
 xvals <- seq(0,1,length=20)
 ED2 <- tibble(x=xvals,cED=f(xvals)) 
@@ -307,14 +307,16 @@ $$
 When we calculate $cED_{x}$ for multiple years we can see a change in the shape of the curve.
 
 ```{r}
+#| echo: true
+#| eval: false
 d <- RSvals %>% 
     filter(year %in% c(2040,2070,2100))
 
 EDs <- d %>% 
   group_by(year) %>% 
-  group_modify( ~ ED_w(
+  group_modify( ~ cED_w(
     RS=.x$RS,
-    w=.x$w))
+    weights=.x$w))
 ggplot(EDs) + 
   geom_step(aes(x=x, y=ED, group=year,colour=factor(year))) +
   ylab(expression(ED[RS>=x])) +
@@ -335,16 +337,28 @@ We can flip the coordinates and collapse the panels to actually superinpose thes
 # this does not work in this case, but almost...
 # plot_b + facet_null()
 
-ggplot( cEDdata ) +
+plot_c <- ggplot( cEDdata ) +
   geom_step(aes(x=xs,y=cED,group=timeframe,colour=timeframe)) +
     ylab(expression(ED[RS>=x])) +
     xlab("x") +
     scale_colour_discrete("Future period")
-
+plot_c
 ```
 
 We see that for this combination of model, scenario and threshold, there is an increase in the extent of high severity values between the first and second period, but the distribution does not change much between the second and third period.
 
+```{r}
+#| label: fig-states-ecuador
+#| fig-cap: Comparison of the modified empirical cumulative distribution function of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia . 
+
+plot_c +
+geom_rect(data=RS_extent_combs, 
+            aes(fill = state, 
+                xmin = RS_min, xmax = RS_max,
+                ymin = extent_min, ymax = extent_max),
+            alpha=0.44) +
+            scale_fill_manual(values=state_cat_okabe)
+```
 
 ----
 

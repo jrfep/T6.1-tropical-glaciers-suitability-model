@@ -35,3 +35,19 @@ state_order <- names(state_cat_okabe)
 old <- theme_set(theme_linedraw())
 theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
+
+
+RS_extent_combs <- tibble(
+  RS_min=c(80,50,30,80,50,80)/100,
+  RS_max=c(100,80,50,100,80,100)/100,
+  extent_min=c(80,80,80,50,50,30)/100,
+  extent_max=c(100,100,100,80,80,50)/100,
+  category=c("CR","EN","VU","EN","VU","VU"),
+  extent=rep(c("widespread","intermediate","localised"),c(3,2,1)),
+  degradation=c("very high","high","moderate")[c(1,2,3,1,2,1)],
+  state=c(
+    "very wide", "high wide", "mod wide",
+    "very inter", "high inter",
+    "very local"
+  )
+  )

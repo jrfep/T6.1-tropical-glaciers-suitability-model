@@ -1,16 +1,6 @@
 ## Utility functions
 ## relative severity
 
-
-
-RS_extent_combs <- tibble(
-  RS_min=c(80,50,30,80,50,80),
-  RS_max=c(100,80,50,100,80,100),
-  extent_min=c(80,80,80,50,50,30),
-  extent_max=c(100,100,100,80,80,50),
-  category=c("CR","EN","VU","EN","VU","VU"))
-
-
 meanRS <- function(IV,FV,CT) {
    pres <- IV>CT
    MD <- (CT-IV)[pres]
@@ -19,6 +9,13 @@ meanRS <- function(IV,FV,CT) {
    return(mean(RS))
 }
 
+
+RSi <- function(IV,FV,CT) {
+  MD <- (CT-IV)
+  OD <- ifelse(FV>IV, 0, FV-IV)
+  RS <- ifelse(abs(OD)>abs(MD), MD, OD) / MD
+  return(RS)
+}
 calcCT <- function(pred_values,obs_values) {
   require(ROCR)
   pred <- prediction( pred_values, obs_values)
@@ -44,15 +41,15 @@ calcCT <- function(pred_values,obs_values) {
 
 ## methods(Ecdf)
 ## getAnywhere(Ecdf.default)
-ED_w <- function(RS,w) {
-  o <- order(RS)
-  ED <- 1-cumsum(w[o])
-  x <- RS[o]
-  res <- tibble(
-    x = c(0,x[-1]),
-    ED = c(1,ED[-length(ED)]))
-  return(res)
-}
+#ED_w <- function(RS,w) {
+#  o <- order(RS)
+#  ED <- 1-cumsum(w[o])
+#  x <- RS[o]
+#  res <- tibble(
+#    x = c(0,x[-1]),
+#    ED = c(1,ED[-length(ED)]))
+#  return(res)
+#}
 
 
 RSts <- function(

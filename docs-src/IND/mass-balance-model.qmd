@@ -50,7 +50,13 @@ According to the published methods [@Rounce_2023_MassBalance_Global]:
 
 The values used here are the output values (ice mass \pm median absolute deviation) of the model for the four glacier outlines of the Randolph Glacier Inventory for the cordillera de Mérida downloaded from @Rounce_2022_MassBalance_Global_Data and presented in @fig-Ea. These values clearly overestimate the existing ice mass but we focus the analysis on the point of collapse and not on the mass value _per se_.
 
+```{r}
 
+totalmass_year_data %>% 
+  filter(year==2000, !ssp %in% "SSP1-1.9") %>% 
+  group_by(unit_name) %>% 
+  summarise(median(total_mass), min(min_mass), max(max_mass))
+```
 
 ```{r}
 #| label: fig-Ea
