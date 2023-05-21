@@ -109,6 +109,19 @@ data_file  <- osf_upload(
   path = sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target.dir) ,
   conflicts = conflict_answer
 )
+
+
+rsdata <- readRDS(sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds", output.dir)) %>% 
+  filter(unit %in% "Cordillera-de-Merida")
+
+saveRDS(rsdata, file=sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target.dir))
+
+data_file  <- osf_upload(
+  cord_merida_subcomponents, 
+  path = sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target.dir) ,
+  conflicts = conflict_answer
+)
+
 ## remove temp dir
 # system(sprintf("rm -r %s",target.dir))
 unlink(target.dir)
