@@ -32,7 +32,7 @@ env_suitability_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
 idx <- my_project_components %>% filter(grepl("Mérida",name)) %>%
   pull(id) 
 cord_merida_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))
-
+cord_merida_subcomponents <- osf_ls_nodes(cord_merida_comp)
 
 ## First upload to data component
 
@@ -86,6 +86,29 @@ data_file  <- osf_upload(
   path = target.dir,
   conflicts = conflict_answer
   )
-unlink(target.dir)
 
+
+
+## Now upload data for Cordillera de Merida assessment
+file.rename(sprintf("%s/Cordillera-de-Merida.rda",target.dir),
+            sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target.dir) )
+
+data_file  <- osf_upload(
+  cord_merida_subcomponents, 
+  path = sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target.dir) ,
+  conflicts = conflict_answer
+)
+
+mbdata <- readRDS(sprintf("%s/massbalance-year-collapse-all-groups.rds", output.dir)) %>% 
+  filter(unit_name %in% "Cordillera de Merida")
+
+saveRDS(mbdata, file=sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target.dir))
+
+data_file  <- osf_upload(
+  cord_merida_subcomponents, 
+  path = sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target.dir) ,
+  conflicts = conflict_answer
+)
+## remove temp dir
 # system(sprintf("rm -r %s",target.dir))
+unlink(target.dir)
