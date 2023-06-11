@@ -35,14 +35,14 @@ options(dplyr.summarise.inform = FALSE)
 
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "collapse-trajectory-data.rds")
-collapse_trajectories <- readRDS(results_file) %>% 
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "collapse-trajectory-data.rds")
+collapse_trajectories <- readRDS(results_file) %>%
   mutate(state=factor(state, state_order))
 ```
 
 ```{r}
-pl_data <- collapse_trajectories %>% 
+pl_data <- collapse_trajectories %>%
   filter(
     countdown>=0, 
     unit_name %in% c("Ruwenzori","Kilimanjaro","Mount Kenia","Puncak Jaya","Sierra Nevada de Santa Marta", "Cordillera de Merida"),
@@ -65,7 +65,7 @@ ggplot(pl_data) +
 from_state <- collapse_trajectories %>% transmute(unit_name,scenario,model_nr,bind_year=year+1,from_state=state)
 to_state <- collapse_trajectories %>% transmute(unit_name,scenario,model_nr,bind_year=year,to_state=state)
 
-trans_df <- inner_join(from_state,to_state,by=c("unit_name", "scenario", "model_nr","bind_year"))
+trans_df <- inner_join(from_state,to_state, by = c("unit_name", "scenario", "model_nr","bind_year"))
 
 adjm1 <- with(trans_df,table(from_state,to_state))
 g1<-graph.adjacency(adjm1,weighted=TRUE, mode="undirected",diag = FALSE)

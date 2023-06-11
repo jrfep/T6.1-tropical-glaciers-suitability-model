@@ -34,17 +34,17 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
+target_dir <- "sandbox"
 load(here::here("sandbox","fitted-GBM-models","Cordilleras-de-Colombia.rda")) # this includes slc_unit
 
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file) %>%
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file) %>%
  filter(unit_name %in% str_replace_all(slc_unit," ","-"))
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
  filter(unit %in% str_replace_all(slc_unit," ","-"))
-rds.file <- here::here(target.dir,"relative-severity-degradation-suitability-all-tropical-glaciers-training-thresholds.rds")
-RS_results_t <- readRDS(rds.file) %>%
+rds_file <- here::here(target_dir,"relative-severity-degradation-suitability-all-tropical-glaciers-training-thresholds.rds")
+RS_results_t <- readRDS(rds_file) %>%
  filter(unit %in% str_replace_all(slc_unit," ","-"))
 
 ```
@@ -56,11 +56,11 @@ RS_results_t <- readRDS(rds.file) %>%
 
 ```{r}
 
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(threshold=="ess",  
          modelname == "mri-esm2-0",
          pathway == "ssp126")
-dat2 <- dat1 %>% group_by(timeframe) %>% 
+dat2 <- dat1 %>% group_by(timeframe) %>%
   summarise(
     n=n(),
     mean_RS=mean(RS_cor,na.rm=T),
@@ -84,7 +84,7 @@ plot_a <-
 tfm <- dat1 %>% distinct(timeframe) %>% pull
 
 fs <- dat1 %>%
-  group_by(timeframe) %>% 
+  group_by(timeframe) %>%
   group_map(~cED_w(.x$RS)) 
 
 xs <- seq(0,1,length=100)
@@ -142,13 +142,13 @@ ggplot( cEDdata ) +
     xlab("x") +
     scale_colour_discrete("Future period")
 
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(
     threshold=="ess",  
          modelname == "mri-esm2-0",
          pathway == "ssp126"
     ) %>%
-  group_by(timeframe) %>% 
+  group_by(timeframe) %>%
   group_modify(~summary_cED_w(.x$RS)) 
 
 dat1

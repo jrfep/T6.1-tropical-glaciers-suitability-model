@@ -65,7 +65,7 @@ osf_find_or_create_component <-
     if (is.null(comp_name))
         stop("Please provide a `comp_name` to search!")
     if (comp_name %in% project_components$name) {
-      idx <- project_components %>% 
+      idx <- project_components %>%
         filter(name %in% comp_name) %>%
         pull(id) 
       target_comp <- osf_retrieve_node(sprintf("https://osf.io/%s", idx))

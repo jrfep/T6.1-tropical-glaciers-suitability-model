@@ -64,64 +64,64 @@ data_file  <- osf_upload(env_suitability_comp,
 )
 
 gbm.dir <- sprintf("%s/%s/GBMmodel",gis.out,projectname)
-target.dir <- sprintf("%s/fitted-GBM-models",tempdir())
-if (!dir.exists(target.dir))
-  dir.create(target.dir)
+target_dir <- sprintf("%s/fitted-GBM-models",tempdir())
+if (!dir.exists(target_dir))
+  dir.create(target_dir)
 
-all_rda_models <- list.files(gbm.dir, recursive = TRUE, pattern="gbm-model-current.rda") %>% 
+all_rda_models <- list.files(gbm.dir, recursive = TRUE, pattern="gbm-model-current.rda") %>%
  str_split( "/", n=2, simplify=TRUE)
 
 exclude  <- c("Norte-de-Argentina","Zona-Volcanica-Central")
 
 for (j in all_rda_models[,1]) {
   if (!(j %in% exclude)) {
-   system(sprintf("cp %1$s/%2$s/gbm-model-current.rda %3$s/%2$s.rda", gbm.dir, j, target.dir)) 
+   system(sprintf("cp %1$s/%2$s/gbm-model-current.rda %3$s/%2$s.rda", gbm.dir, j, target_dir)) 
   }
 }
 
-dir(target.dir)
+dir(target_dir)
 
 data_file  <- osf_upload(
   env_suitability_comp, 
-  path = target.dir,
+  path = target_dir,
   conflicts = conflict_answer
   )
 
 
 
 ## Now upload data for Cordillera de Merida assessment
-file.rename(sprintf("%s/Cordillera-de-Merida.rda",target.dir),
-            sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target.dir) )
+file.rename(sprintf("%s/Cordillera-de-Merida.rda",target_dir),
+            sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target_dir) )
 
 data_file  <- osf_upload(
   cord_merida_subcomponents, 
-  path = sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target.dir) ,
+  path = sprintf("%s/gbm-model-Cordillera-de-Merida.rda",target_dir) ,
   conflicts = conflict_answer
 )
 
-mbdata <- readRDS(sprintf("%s/massbalance-year-collapse-all-groups.rds", output.dir)) %>% 
+mbdata <- readRDS(sprintf("%s/massbalance-year-collapse-all-groups.rds", output.dir)) %>%
   filter(unit_name %in% "Cordillera de Merida")
 
-saveRDS(mbdata, file=sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target.dir))
+saveRDS(mbdata, file=sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target_dir))
 
 data_file  <- osf_upload(
   cord_merida_subcomponents, 
-  path = sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target.dir) ,
+  path = sprintf("%s/mb-year-collapse-Cordillera-de-Merida.rda",target_dir) ,
   conflicts = conflict_answer
 )
 
 
-rsdata <- readRDS(sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds", output.dir)) %>% 
+rsdata <- readRDS(sprintf("%s/relative-severity-degradation-suitability-all-tropical-glaciers.rds", output.dir)) %>%
   filter(unit %in% "Cordillera-de-Merida")
 
-saveRDS(rsdata, file=sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target.dir))
+saveRDS(rsdata, file=sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target_dir))
 
 data_file  <- osf_upload(
   cord_merida_subcomponents, 
-  path = sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target.dir) ,
+  path = sprintf("%s/gbm-RS-Cordillera-de-Merida.rda",target_dir) ,
   conflicts = conflict_answer
 )
 
 ## remove temp dir
-# system(sprintf("rm -r %s",target.dir))
-unlink(target.dir)
+# system(sprintf("rm -r %s",target_dir))
+unlink(target_dir)

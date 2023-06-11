@@ -44,7 +44,7 @@ pick <- as.numeric(args[1])
 ## Load spatial data for the group polygons and glacier points
 grp_table <- 
   read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",input.dir)) %>%
-  st_drop_geometry %>% 
+  st_drop_geometry %>%
   transmute(id = factor(id), unit_name = group_name)
 trop_glaciers_classified <- 
   readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
@@ -81,7 +81,7 @@ input_data <- input_raster_data %>%
       !unit_name %in% slc_unit,
       unit_name %in% all_units,
       elevation_1KMmd > 3500
-      ) %>% 
+      ) %>%
   mutate(andes = grepl("Peru|Colombia|Ecuador",unit_name))
 
 tt <- table(input_data$id)
@@ -96,14 +96,14 @@ if (!grepl("Peru|Colombia|Ecuador",slc_unit)) {
   prob <- if_else(input_data$glacier,5,.5)*(sum(tt)/tt[input_data$id])
 }
 
-training <- input_data %>% 
+training <- input_data %>%
    slice_sample(n=sample_size, weight_by = prob) %>%
    dplyr::select(glacier,starts_with("bio_")) %>%
    mutate(glacier=factor(if_else(glacier,"G","N")))
 
-testing <- input_raster_data %>% 
+testing <- input_raster_data %>%
    tibble %>%
-   mutate(id = factor(id)) %>% 
+   mutate(id = factor(id)) %>%
    left_join(grp_table, by = "id") %>%
    filter(unit_name %in% slc_unit, elevation_1KMmd>3500) %>%
    mutate(glacier = factor(if_else(glacier,"G","N")))

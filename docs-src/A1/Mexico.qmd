@@ -32,21 +32,21 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
+target_dir <- "sandbox"
 
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
-rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
-model_data <- readRDS(rds.file)
-rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
-year_of_collapse_data <- readRDS(rds.file)
+rds_file <- here::here(target_dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds_file)
+rds_file <- here::here(target_dir, "massbalance-year-collapse-all-groups.rds")
+year_of_collapse_data <- readRDS(rds_file)
 load(here::here("sandbox","fitted-GBM-models","Mexico.rda")) # this includes slc_unit
 
-rds.file <- here::here(target.dir,"massbalance-model-data-all-groups.rds")
-massbalance_results <- readRDS(rds.file) %>% filter(unit_name %in% slc_unit)
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)%>% filter(unit_name %in% slc_unit)
+rds_file <- here::here(target_dir,"massbalance-model-data-all-groups.rds")
+massbalance_results <- readRDS(rds_file) %>% filter(unit_name %in% slc_unit)
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)%>% filter(unit_name %in% slc_unit)
 ```
 
 
@@ -54,7 +54,7 @@ totalmass_year_data <- readRDS(rds.file)%>% filter(unit_name %in% slc_unit)
 
 
 ```{r}
-mbtdata <- totalmass_year_data %>% 
+mbtdata <- totalmass_year_data %>%
  filter(
         ssp %in% "SSP5-8.5",
         model_nr %in% " 9"
@@ -65,32 +65,32 @@ RSdata <- RSts(
   mbtdata$total_mass,
   formula = "conditional")
 
-mbdata <- massbalance_results %>% 
+mbdata <- massbalance_results %>%
       filter(
         ssp %in% "SSP5-8.5",
         model_nr %in% " 9"
         )
-wgs <- mbdata %>% 
-    filter(year == 2000) %>% 
-    group_by( RGIId, model_nr) %>% 
-    summarise(initial_mass=sum(mass), .groups="keep") 
+wgs <- mbdata %>%
+    filter(year == 2000) %>%
+    group_by( RGIId, model_nr) %>%
+    summarise(initial_mass = sum(mass), .groups = "keep") 
 
-dat3 <- mbdata %>% 
-  group_by(RGIId, model_nr) %>% 
-  group_modify(~RSts(.x$year,.x$mass,
+dat3 <- mbdata %>%
+  group_by(RGIId, model_nr) %>%
+  group_modify(~RSts(.x$year, .x$mass,
                     formula = "conditional")) %>%
-  ungroup %>% 
+  ungroup %>%
   left_join(wgs, by = c("RGIId", "model_nr"))
   
 res <- dat3 %>%
-      group_by(year) %>% 
-      #group_map(~cED_w(.x$RS,.x$initial_mass))
-      group_modify(~summary_cED_w(.x$RS,.x$initial_mass)) %>%
+      group_by(year) %>%
+      #group_map(~cED_w(.x$RS, .x$initial_mass))
+      group_modify(~summary_cED_w(.x$RS, .x$initial_mass)) %>%
       ungroup 
 
 all_data <- 
-  RSdata %>% 
-  inner_join(res,by="year") %>% 
+  RSdata %>%
+  inner_join(res,by = "year") %>%
   select(year,RS:AUC_cED) 
 all_data_pl <- all_data %>%
   pivot_longer( cols=RS:AUC_cED,names_to="summary", values_to="y")
@@ -103,15 +103,15 @@ ggplot(all_data_pl) +
 ```
 
 ```{r}
-all_data <- all_data %>% 
+all_data <- all_data %>%
   mutate(state=case_when(
     RS == 1 ~ "CO",
-    cED_80>=0.80 ~ "CR",
-    cED_80>=0.50 ~ "EN",
-    cED_50>=0.80 ~ "EN",
-    cED_80>=0.30 ~ "VU",
-    cED_50>=0.50 ~ "VU",
-    cED_30>=0.80 ~ "VU",
+    cED_80 >= 0.80 ~ "CR",
+    cED_80 >= 0.50 ~ "EN",
+    cED_50 >= 0.80 ~ "EN",
+    cED_80 >= 0.30 ~ "VU",
+    cED_50 >= 0.50 ~ "VU",
+    cED_30 >= 0.80 ~ "VU",
     TRUE ~ "LC"
   ))
 
@@ -139,13 +139,13 @@ ggplot(all_data %>% filter(countdown>=0)) +
 
 
 label_xy <- 
-  year_of_collapse_data %>% 
+  year_of_collapse_data %>%
   filter(unit_name == slc_unit) %>%
-    group_by(ssp) %>% 
+    group_by(ssp) %>%
   summarise(x=median(collapse_year)) %>%
   mutate(y=0.5)
 
-ggplot(data=year_of_collapse_data %>% 
+ggplot(data=year_of_collapse_data %>%
   filter(unit_name == slc_unit) ) +
 #  geom_histogram(aes(x=collapse_year,fill=scn)) +
   stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 
@@ -175,8 +175,8 @@ plot(model)
 
 
 ```{r}
-rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
-model_data <- readRDS(rds.file) %>% filter(unit %in% slc_unit)
+rds_file <- here::here(target_dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds_file) %>% filter(unit %in% slc_unit)
 
 ggplot(model_data) +
  geom_boxplot(aes(x=time,y=RS,col=method,group=time)) +

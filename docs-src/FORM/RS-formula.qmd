@@ -39,10 +39,10 @@ options(dplyr.summarise.inform = FALSE)
 ```{r}
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.rds")
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.rds")
 RS_results <- readRDS(results_file)
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 
 source(here::here("inc","R","RS-functions.R"))
@@ -132,7 +132,7 @@ We show here the calculation using the suitability values for future climatic co
 
 
 ```{r}
-d <- RS_results %>% 
+d <- RS_results %>%
   filter(
     unit %in% "Ruwenzori",
     pathway %in% "ssp126",
@@ -146,7 +146,7 @@ tbl_caption <- tags$caption(
   tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp126) for the period 2041-2070 and using an equal sensitivity and specificity threshold of %0.2f",unique(d$CV)))
 )
 
- d  %>% 
+ d  %>%
   transmute(IV, FV, OD, MD, RS, RS_cor) %>%
   datatable(
     caption = tbl_caption,
@@ -208,7 +208,7 @@ We use the same combination of model, scenario and future period (mri-esm2-0, ss
 
 ```{r}
 
-d <- RS_results %>% 
+d <- RS_results %>%
   filter(
     unit %in% "Kilimanjaro",
     pathway %in% "ssp126",
@@ -222,7 +222,7 @@ tbl_caption <- tags$caption(
   tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp126) for the period 2041-2070 and using an equal sensitivity and specificity threshold of %0.2f",unique(d$CV)))
 )
 
- d  %>% 
+ d  %>%
   transmute(IV, FV, OD, MD, RS, RS_cor) %>%
   datatable(
     caption = tbl_caption,
@@ -294,7 +294,7 @@ The @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$
 #| label: fig-rs-ice-example-kili
 #| fig-cap: "Time series of RS values for the ice mass indicator variable for the T.G.E. of Kilimanjaro. We use here data for the first 51 years of the time series calculated from one unnamed model, one scenario (ssp126) and four selected glacier outline units identified by the RGI 6.0 id. The line represent the best estimate of RS based on median ice mass predictions, and the shaded area represent a uncertainty interval based on the median absolute deviation of ice mass predictions."
 #| warning: false
-RSvals <- massbalance_results %>% 
+RSvals <- massbalance_results %>%
   filter(
     unit_name %in% c("Kilimanjaro"),
     model_nr %in% c(" 9"),
@@ -303,9 +303,9 @@ RSvals <- massbalance_results %>%
     RGIId %in% c("RGI60-16.01649", "RGI60-16.01654", "RGI60-16.01650", "RGI60-16.01656")
   ) %>%
 #  filter(unit_name %in% c("Ecuador")) %>%
-  mutate(min_mass=mass-mad,max_mass=mass+mad) %>% 
-  group_by(RGIId) %>% 
-  group_modify(~RSts(.x$year,.x$mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
+  mutate(min_mass=mass-mad,max_mass=mass+mad) %>%
+  group_by(RGIId) %>%
+  group_modify(~RSts(.x$year, .x$mass,vmin=.x$min_mass,vmax=.x$max_mass)) 
 
 ggplot(RSvals) +
   #geom_errorbar(aes(x=year,ymin=RS_min,ymax=RS_max),alpha=.25) +

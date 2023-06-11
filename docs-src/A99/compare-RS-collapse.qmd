@@ -31,10 +31,10 @@ source(here::here("inc","R","RS-functions.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 ```

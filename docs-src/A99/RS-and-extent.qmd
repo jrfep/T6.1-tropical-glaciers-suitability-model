@@ -26,8 +26,8 @@ source(here::here("inc","R","RS-functions.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 ```
 
@@ -41,29 +41,29 @@ panel.grid.major = element_line(colour = "rosybrown3"))
 
 ```{r}
 #| label: year of collapse and total mass from mass balance data
-year_of_collapse_data <- massbalance_results %>% 
+year_of_collapse_data <- massbalance_results %>%
     mutate(
       ssp=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
       non_collapsed=if_else(mass>0,year,2000),
            max_non_collapsed=if_else(mass+mad>0,year,2000),
-           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>% 
-    group_by(unit_name,ssp,model_nr) %>% 
+           min_non_collapsed=if_else(mass-mad>0,year,2000)) %>%
+    group_by(unit_name,ssp,model_nr) %>%
     summarise(collapse_year=max(non_collapsed,na.rm=T)+1,
               max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
               min_collapse_year=max(min_non_collapsed,na.rm=T)+1,)
 
 totalmass_year_data <- {
-  massbalance_results %>% 
+  massbalance_results %>%
     mutate(scn=str_replace(scn,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),
-           mass=set_units(mass,'kg') %>% 
+           mass=set_units(mass,'kg') %>%
              set_units("Mt"),
-           mad=set_units(mad,'kg') %>% 
-             set_units("Mt")) %>% 
-    drop_units() %>% 
-    group_by(unit_name,year,scn,model_nr) %>% 
-    summarise(total_mass=sum(mass,na.rm=T),
-              max_mass=sum(mass+mad,na.rm=T),
-              min_mass=sum(mass-mad,na.rm=T))
+           mad=set_units(mad,'kg') %>%
+             set_units("Mt")) %>%
+    drop_units() %>%
+    group_by(unit_name,year,scn,model_nr) %>%
+    summarise(total_mass = sum(mass,na.rm=T),
+              max_mass = sum(mass+mad,na.rm=T),
+              min_mass = sum(mass-mad,na.rm=T))
   }
 ```
 
@@ -85,7 +85,7 @@ The values used here are the output values (ice mass \pm median absolute deviati
 
 # "Kilimanjaro", "Ecuador", "Mexico"
 
-totalmass_year_data %>% 
+totalmass_year_data %>%
   filter(unit_name == "Cordillera de Merida") %>%
   ggplot(aes(x=year,y=total_mass)) +
     geom_errorbar(aes(ymin=min_mass, ymax=max_mass), width=.2,
@@ -103,8 +103,8 @@ We use these mass projections to estimate the year of collapse (first year when 
 
 
 ```{r}
-year_of_collapse_data %>% 
-  group_by(unit_name,ssp) %>% 
+year_of_collapse_data %>%
+  group_by(unit_name,ssp) %>%
   summarise(
     prob_collapse=mean(collapse_year<2100)*100,
     prob_min=mean(min_collapse_year<2100)*100,
@@ -144,13 +144,13 @@ ggplot(data=year_of_collapse_data %>% filter(collapse_year < 2100)) +
 
 
 label_xy <- 
-  year_of_collapse_data %>% 
+  year_of_collapse_data %>%
   filter(unit_name=="Mexico") %>%
-    group_by(ssp) %>% 
+    group_by(ssp) %>%
   summarise(x=median(collapse_year)) %>%
   mutate(y=0.5)
 
-ggplot(data=year_of_collapse_data %>% 
+ggplot(data=year_of_collapse_data %>%
   filter(unit_name=="Mexico") ) +
 #  geom_histogram(aes(x=collapse_year,fill=scn)) +
   stat_ecdf(aes(x=collapse_year,color = ssp,linetype = ssp), 

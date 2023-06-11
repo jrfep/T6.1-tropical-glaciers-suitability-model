@@ -5,8 +5,8 @@ To render and preview the book
 
 ```{sh}
 conda deactivate ## make sure to use the global R installation
-quarto render docs ## or:
-quarto preview docs
+quarto render docs-src ## or:
+quarto preview docs-src
 ```
 
 

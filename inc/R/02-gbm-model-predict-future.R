@@ -84,9 +84,9 @@ for (timeframe in c("2011-2040","2041-2070","2071-2100")) {
             }
          }
          if (nrow(newdata)>0) {
-            newdata <- newdata %>% 
-               left_join(testing %>% 
-               transmute(id=as.character(id),cellnr,glacier),by=c("id","cellnr")) %>% 
+            newdata <- newdata %>%
+               left_join(testing %>%
+               transmute(id=as.character(id),cellnr,glacier), by = c("id","cellnr")) %>%
                filter(glacier == "G")
             newdata$FV <- predict(model, newdata,type="prob")[,"G"]
 

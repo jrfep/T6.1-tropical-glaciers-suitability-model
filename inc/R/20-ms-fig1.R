@@ -22,8 +22,8 @@ fA <- cED_w(ABC$RSA)
 fB <- cED_w(ABC$RSB)
 fC <- cED_w(ABC$RSC)
 
-xys <- tibble(RS=seq(0,1,length=50)) %>% 
-  mutate(cEDA=fA(RS), cEDB=fB(RS), cEDC=fC(RS)) %>% 
+xys <- tibble(RS=seq(0,1,length=50)) %>%
+  mutate(cEDA=fA(RS), cEDB=fB(RS), cEDC=fC(RS)) %>%
   pivot_longer(cols=cEDA:cEDC)
 
 plot_c <- ggplot( xys ) +

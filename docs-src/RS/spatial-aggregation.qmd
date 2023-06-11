@@ -32,16 +32,16 @@ source(here::here("inc","R","RS-shared.R"))
 ```{r}
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE) %>% 
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit,"-"," ")) %>%
   mutate(unit_name = factor(unit_name, unit_order) )
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 
-rds.file <- here::here(target.dir,"totalmass-suitability-cED-data.rds")
-cED_model_data <- readRDS(rds.file)
+rds_file <- here::here(target_dir,"totalmass-suitability-cED-data.rds")
+cED_model_data <- readRDS(rds_file)
 ```
 
 ## Considerations before aggregation
@@ -53,19 +53,19 @@ Our two indicator variable differ fundamentally in units and interpretation and 
 For our two indicator variables we have different sample sizes per assessment unit. In the case of the dynamic ice mass balance model the units of observation are glacier outlines from the Randolph Glacier Inventory, while in the bioclimatic suitability model the units of observation are cell in a spatial grid that overlap with glacier outlines from multiple sources. 
 
 ```{r}
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file) 
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file) 
 
-massbalance_results %>% 
-  group_by(unit_name) %>% 
+massbalance_results %>%
+  group_by(unit_name) %>%
   summarise(`Sampling size (ice)` = n_distinct(RGIId)) %>%
   full_join({
-    RS_results %>% 
-    group_by(unit_name) %>% 
+    RS_results %>%
+    group_by(unit_name) %>%
     summarise(`Sampling size (bcs)` = n_distinct(id,cellnr))
     },
     by=c("unit_name")
-  )  %>% 
+  )  %>%
   datatable(
     options = list(
         dom = 't', 
@@ -96,19 +96,19 @@ For the indicator variable of bioclimatic suitability we are using a probability
 #| fig-cap: "Time series of relative severity (RS) of decline in total ice mass for different assessment units (columns) and three future scenarios (rows) based on a collapse threshold of $0 kg$ of ice. The points represents values calculated for 12 different global circulation models."
 #| 
 # alternative with purrr:
-#RSvals <- totalmass_year_data %>% 
+#RSvals <- totalmass_year_data %>%
 #  filter(unit_name %in% "Cordillera de Merida") %>%
-#  group_by(model_nr,scn) %>% 
+#  group_by(model_nr,scn) %>%
 #  group_split() %>%
-#  map(~RSts(.x$year,.x$total_mass)) %>% 
+#  map(~RSts(.x$year, .x$total_mass)) %>%
 #  bind_rows()
 
-RSvals <- totalmass_year_data %>% 
+RSvals <- totalmass_year_data %>%
   filter(unit_name %in% c("Ruwenzori",
                           "Kilimanjaro", 
                           "Mount Kenia")) %>%
 #  filter(unit_name %in% c("Ecuador")) %>%
-  group_by(unit_name,model_nr,ssp) %>% 
+  group_by(unit_name,model_nr,ssp) %>%
   group_modify(~RSts(
     .x$year,
     .x$total_mass,
@@ -131,7 +131,7 @@ ggplot(RSvals) +
 jj <- "Cordilleras Norte de Peru"
 ss <- "SSP2-4.5"
 mm <- " 9"
-mbdata <- massbalance_results %>% 
+mbdata <- massbalance_results %>%
     filter(
         unit_name %in% jj,
         ssp %in% ss,
@@ -139,16 +139,16 @@ mbdata <- massbalance_results %>%
         year %in% c(2000,2050)
         ) 
 
-    wgs <- mbdata %>% 
-        filter(year == 2000) %>% 
-        group_by( RGIId) %>% 
-        summarise(initial_mass=sum(mass), .groups="keep") 
+    wgs <- mbdata %>%
+        filter(year == 2000) %>%
+        group_by( RGIId) %>%
+        summarise(initial_mass = sum(mass), .groups = "keep") 
 
-    RSi_data <- mbdata %>% 
-    group_by(RGIId) %>% 
-    group_modify(~RSts(.x$year,.x$mass,
+    RSi_data <- mbdata %>%
+    group_by(RGIId) %>%
+    group_modify(~RSts(.x$year, .x$mass,
                         formula = "conditional")) %>%
-    ungroup %>% 
+    ungroup %>%
     left_join(wgs, by = c("RGIId"))
 
 ggplot(RSi_data) + 
@@ -169,28 +169,28 @@ ggplot(RSi_data) +
 ```
 
 ```{r}
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(
     threshold == "acc",
     pathway == "ssp370",
-    modelname == "mri-esm2-0") %>% 
+    modelname == "mri-esm2-0") %>%
     mutate(timeframe=str_replace(timeframe,"-","\n"))
-dat2 <- dat1 %>% 
-  group_by(timeframe,unit_name) %>% 
+dat2 <- dat1 %>%
+  group_by(timeframe,unit_name) %>%
   summarise(mean_RS=mean(RS_cor))
 
-dat3 <- dat1 %>% 
-  group_by(unit_name,timeframe) %>% 
+dat3 <- dat1 %>%
+  group_by(unit_name,timeframe) %>%
   group_modify(~summary_cED_w(.x$RS_cor)) %>%
   inner_join(dat2, by=c("unit_name","timeframe")) %>%
   mutate(state = case_when(
             mean_RS == 1 ~ "collapsed",
-            cED_80>=0.80 ~ "very wide",
-            cED_80>=0.50 ~ "very inter",
-            cED_50>=0.80 ~ "high wide",
-            cED_80>=0.30 ~ "very local",
-            cED_50>=0.50 ~ "high inter",
-            cED_30>=0.80 ~ "mod wide",
+            cED_80 >= 0.80 ~ "very wide",
+            cED_80 >= 0.50 ~ "very inter",
+            cED_50 >= 0.80 ~ "high wide",
+            cED_80 >= 0.30 ~ "very local",
+            cED_50 >= 0.50 ~ "high inter",
+            cED_30 >= 0.80 ~ "mod wide",
             TRUE ~ "low")
   )
 
@@ -199,7 +199,7 @@ dat3 <- dat1 %>%
 
 ```{r}
 sts <- dat3 %>% select(unit_name,timeframe,state)
-dat1 <- dat1 %>% 
+dat1 <- dat1 %>%
   left_join(sts, by=c("unit_name","timeframe"))
 
   ggplot(dat1 ) +

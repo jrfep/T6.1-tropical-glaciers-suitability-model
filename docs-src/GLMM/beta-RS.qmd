@@ -37,16 +37,16 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+target_dir <- "sandbox"
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
-rds.file <- here::here(target.dir,"totalmass-suitability-glmm-data.rds")
-model_data <- readRDS(rds.file)
-rds.file <- here::here(target.dir,"totalmass-suitability-cED-data.rds")
-cED_model_data <- readRDS(rds.file)
+rds_file <- here::here(target_dir,"totalmass-suitability-glmm-data.rds")
+model_data <- readRDS(rds_file)
+rds_file <- here::here(target_dir,"totalmass-suitability-cED-data.rds")
+cED_model_data <- readRDS(rds_file)
 
 ```
 
@@ -55,8 +55,8 @@ To compare both indicators we used the $RS_{bcs}^{CT=acc}$, $RS_{bcs}^{CT=ppv}$ 
 
 ```{r}
 valid_methods <- c("ice","ess","acc")
-model_data <- model_data %>% 
-  filter(method %in% valid_methods) %>% 
+model_data <- model_data %>%
+  filter(method %in% valid_methods) %>%
   mutate(
     method=droplevels(method),
     collapsed=case_when(
@@ -95,7 +95,7 @@ ggplot(
 ```{r}
 #| echo: true
 
-model_data_ss <- model_data %>% 
+model_data_ss <- model_data %>%
   filter(RS < 1 & RS > 0, !unit %in% "Kilimanjaro") %>%
   mutate(
     period = factor(time),
@@ -210,12 +210,12 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 ```{r}
 #| echo: true
 
-model_data_ss <- cED_model_data %>% 
+model_data_ss <- cED_model_data %>%
   filter(
     method %in% valid_methods,
     !unit %in% "Kilimanjaro",
     cED_30>0 & cED_30<1
-    ) %>% 
+    ) %>%
   mutate(
     method=factor(method),
     period = factor(time),
@@ -290,12 +290,12 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 ```{r}
 #| echo: true
 
-model_data_ss <- cED_model_data %>% 
+model_data_ss <- cED_model_data %>%
   filter(
     method %in% valid_methods,
     !unit %in% "Kilimanjaro",
     cED_50>0 & cED_50<1
-    ) %>% 
+    ) %>%
   mutate(
     method=factor(method),
     period = factor(time),
@@ -311,12 +311,12 @@ Given that RS represent a relative measure (proportion between 0 and 1), we use 
 ```{r}
 #| echo: true
 
-model_data_ss <- cED_model_data %>% 
+model_data_ss <- cED_model_data %>%
   filter(
     method %in% valid_methods,
     !unit %in% "Kilimanjaro",
     cED_80>0 & cED_80<1
-    ) %>% 
+    ) %>%
   mutate(
     method=factor(method),
     period = factor(time),

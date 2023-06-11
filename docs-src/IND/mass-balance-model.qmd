@@ -33,13 +33,13 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-#results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+target_dir <- "sandbox"
+#results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 #massbalance_results <- readRDS(results_file)
-rds.file <- here::here(target.dir, "massbalance-year-collapse-all-groups.rds")
-year_of_collapse_data <- readRDS(rds.file)
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
+rds_file <- here::here(target_dir, "massbalance-year-collapse-all-groups.rds")
+year_of_collapse_data <- readRDS(rds_file)
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
 ```
 
 We use ice mass balance projections for the glacier of the Cordillera de Mérida based on a glacier evolution model [@Rounce_2023_MassBalance_Global]. This hybrid model combines a mass balance module and a glacier dynamics module to model glaciers independently from 2000-2100 for various ensembles of Global Circulation Models and scenarios. 
@@ -52,9 +52,9 @@ The values used here are the output values (ice mass \pm median absolute deviati
 
 ```{r}
 
-totalmass_year_data %>% 
-  filter(year==2000, !ssp %in% "SSP1-1.9") %>% 
-  group_by(unit_name) %>% 
+totalmass_year_data %>%
+  filter(year==2000, !ssp %in% "SSP1-1.9") %>%
+  group_by(unit_name) %>%
   summarise(median(total_mass), min(min_mass), max(max_mass))
 ```
 
@@ -65,7 +65,7 @@ totalmass_year_data %>%
 
 # "Kilimanjaro", "Ecuador", "Mexico"
 
-totalmass_year_data %>% 
+totalmass_year_data %>%
   filter(
     unit_name == "Cordillera de Merida",
     ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")) %>%
@@ -89,13 +89,13 @@ We use these mass projections to estimate the year of collapse (first year when 
 #| tbl-cap: "Proportion of #| models predicting collapse before 2100 for each assessment unit."
 
 
-year_of_collapse_data %>% 
-  group_by(unit_name,ssp) %>% 
+year_of_collapse_data %>%
+  group_by(unit_name,ssp) %>%
   summarise(
     prob_collapse=mean(collapse_year<2100)*100,
     prob_min=mean(min_collapse_year<2100)*100,
     prob_max=mean(max_collapse_year<2100)*100,
-              .groups="keep"
+              .groups = "keep"
     ) %>%
   transmute(
     unit_name,ssp,
@@ -104,7 +104,7 @@ year_of_collapse_data %>%
       prob_collapse == prob_max & prob_collapse == prob_min ~ "",
       TRUE ~ sprintf("(%0.1f -- %0.1f)", prob_max, prob_min)
     )
-  ) %>% 
+  ) %>%
   pivot_wider(names_from=ssp,values_from=c(prob_collapse, prob_bounds)) %>%
   select(1,3,8,4,9,5,10) %>%
   datatable(
@@ -113,7 +113,7 @@ year_of_collapse_data %>%
       dom = 't', 
       pageLength = -1,
       order = list(list(5, 'asc'))),
-    colnames = c("Assessment unit", "SSP1-2.6", "bounds", "SSP2-4.5", "bounds", "SSP3-7.0", "bounds")) %>% 
+    colnames = c("Assessment unit", "SSP1-2.6", "bounds", "SSP2-4.5", "bounds", "SSP3-7.0", "bounds")) %>%
       formatRound(c("prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP2-4.5"),digits=1) %>%
       formatStyle(
         columns = c("unit_name","prob_collapse_SSP1-2.6", "prob_collapse_SSP3-7.0", "prob_collapse_SSP2-4.5", "prob_bounds_SSP1-2.6", "prob_bounds_SSP3-7.0", "prob_bounds_SSP2-4.5"), 
@@ -129,7 +129,7 @@ For at least seven asssessment units a proportion of the dynamic ice mass balanc
 
 
 ggplot(data=
-  year_of_collapse_data %>% 
+  year_of_collapse_data %>%
     filter(
       collapse_year < 2100, 
       ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")
@@ -147,15 +147,15 @@ ggplot(data=
 #| fig-cap: ECDF (empirical cumulative distribution function) plot of year of collapse for all models (black line) and for each shared socioeconomic pathways (SSP, labeled lines) for the assessment unit of the T.G.E. of Mexico.
 #| warning: false
 
-data_ss <- year_of_collapse_data %>% 
+data_ss <- year_of_collapse_data %>%
   filter(
     unit_name=="Mexico",
     ssp %in% c("SSP1-2.6", "SSP2-4.5", "SSP3-7.0")
     ) 
 label_xy <- data_ss %>%
-    group_by(ssp) %>% 
+    group_by(ssp) %>%
   summarise(x=median(collapse_year),
-              .groups="keep") %>%
+              .groups = "keep") %>%
   mutate(y=0.5)
 
 ggplot(data=data_ss ) +

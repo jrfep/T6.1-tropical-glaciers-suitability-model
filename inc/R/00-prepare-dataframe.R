@@ -35,7 +35,7 @@ output.dir <- sprintf("%s/%s/GBMmodel", gis.out, projectname)
 trop_glaz_pols <- read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg", input.dir)) 
 
 grp_table <- trop_glaz_pols  %>%
-   st_drop_geometry %>% 
+   st_drop_geometry %>%
    transmute(id=factor(id),unit_name=group_name)
 trop_glaciers_classified <- readRDS(
     file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
@@ -50,7 +50,7 @@ all_units <- unique(grp_table$unit_name)
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")[1]
 # Include in GBM model but exclude from assessment: "Famatina", "Norte de Argentina", "Zona Volcanica Central"
 
-jjs <- grp_table %>% 
+jjs <- grp_table %>%
     filter(!unit_name %in% exclude) %>% pull(id) %>% as.numeric()
 
 ## jjs <- unique(trop_glaciers_classified$grp)
@@ -84,8 +84,8 @@ input_raster_data <-
         vals <- values(maps)
         eles <- values(e1)
 
-        glaz_points <- trop_glaciers_classified %>% 
-            filter(grp %in% j) %>% 
+        glaz_points <- trop_glaciers_classified %>%
+            filter(grp %in% j) %>%
             dplyr::select(X1,X2)
         cellnr <- 1:ncell(maps)
         glaz_qry <- terra::cellFromXY(maps, data.frame(glaz_points ))

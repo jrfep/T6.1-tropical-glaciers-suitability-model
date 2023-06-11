@@ -32,10 +32,10 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+target_dir <- "sandbox"
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 ```
@@ -57,7 +57,7 @@ Using the equation for average RS, we can create time series of $\overline{\math
 #| label: fig-rs-ice-all-units
 #| fig-cap: "Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP2-4.5), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated  min and max values for each year."
 #| eval: true
-RStotal <- totalmass_year_data %>% 
+RStotal <- totalmass_year_data %>%
   filter(
     ssp %in% c("SSP2-4.5")
   ) %>%
@@ -75,13 +75,13 @@ RStotal <- RStotal %>%
   cols = starts_with("RS"),
     names_to = "type",
     values_to = "RS"
- )  %>% 
+ )  %>%
  group_by(unit_name,year) %>%
  summarise(
   RSmin = min(RS),
   RSmax = max(RS),
   RSmean = mean(RS),
-  .groups="keep"
+  .groups = "keep"
   ) %>%
  mutate(
   unit_name = factor(unit_name, unit_order),
@@ -100,7 +100,7 @@ ggplot(RStotal) +
 ```
 
 ```{r}
-RStotal <- totalmass_year_data %>% 
+RStotal <- totalmass_year_data %>%
   filter(
     ssp %in% c("SSP2-4.5")
   ) %>%
@@ -112,7 +112,7 @@ RStotal <- totalmass_year_data %>%
     vmax=.x$max_mass,
     formula = "original"
     )) 
-RSyears <- RStotal %>% 
+RSyears <- RStotal %>%
   mutate(
     unit_name = factor(unit_name, unit_order),
     non_collapsed=if_else(RS<0.99,year,2000),
@@ -121,8 +121,8 @@ RSyears <- RStotal %>%
     non_severe=if_else(RS<0.80,year,2000),
     max_non_severe=if_else(RS_min<0.80,year,2000),
     min_non_severe=if_else(RS_max<0.80,year,2000)
-    ) %>% 
-  group_by(unit_name,model_nr) %>% 
+    ) %>%
+  group_by(unit_name,model_nr) %>%
   summarise(
     med_collapse_year=max(non_collapsed,na.rm=T)+1,
     max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
@@ -130,7 +130,7 @@ RSyears <- RStotal %>%
     med_severe_year=max(non_severe,na.rm=T)+1,
     max_severe_year=max(max_non_severe,na.rm=T)+1,
     min_severe_year=max(min_non_severe,na.rm=T)+1,
-            .groups="keep")
+            .groups = "keep")
 
 severity_years <- RSyears %>% pivot_longer(ends_with("year"), values_to = "year",names_to=c("bound","variable"), names_pattern="(.*)_(.*)_year") %>% filter(year<2101)
 
@@ -145,9 +145,9 @@ ggplot(severity_years) +
 ```
 
 ```{r}
-RSyears %>% 
+RSyears %>%
   filter(med_collapse_year<2101) %>%
-  group_by(unit_name) %>% 
+  group_by(unit_name) %>%
   summarise(n = n(), preaviso = median(med_collapse_year-med_severe_year))
 ```
 
@@ -164,8 +164,8 @@ RSyears %>%
 #| fig-cap: "Mean relative severity (RS) of decline in bioclimatic suitability for the assessment unit of the T.G.E. of Ecuador for five global circulation models (points), and three different timeframes (columns), future scenarios (rows) and collapse thresholds (x axis) based on threshold of the confusion matrix ( $acc$: maximum accuracy, $ess$: equal sensitivity and specificity, and $ppv$: Positive predictive value)."
 #| warning: false
 slc_unit <- "Ecuador"
-dat1 <- RS_results %>% 
-  filter(unit %in% slc_unit) %>% 
+dat1 <- RS_results %>%
+  filter(unit %in% slc_unit) %>%
   mutate(year=case_when(
     timeframe %in% "2011-2040"~2025,
     timeframe %in% "2041-2070"~2055,
@@ -174,7 +174,7 @@ dat1 <- RS_results %>%
     scn=str_replace(pathway,"[ssp]+([0-9])([0-9])([0-9])","SSP\\1-\\2.\\3"),) %>%
   group_by(scn,threshold,timeframe,year,modelname) %>%
   summarise(n=n(),RSmean=mean(RS_cor),RSmed=median(RS_cor),
-  .groups="keep")
+  .groups = "keep")
 
 ggplot(dat1) +
   geom_point(data=dat1,

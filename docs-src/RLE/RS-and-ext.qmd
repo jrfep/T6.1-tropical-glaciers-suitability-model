@@ -32,13 +32,13 @@ source(here::here("inc","R","RS-shared.R"))
 #| label: read input data 
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 
-rds.file <- here::here(target.dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds.file)
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 ```
@@ -52,7 +52,7 @@ Given the nature of ice mass as a prediction of a physical measure, we need to w
 If we look at the example of the T.G.E. Kilimanjaro, the value of $RS$ for one combination of model and scenario and the year 2040, we have following values of RS:
 
 ```{r}
-mass_su <- massbalance_results %>% 
+mass_su <- massbalance_results %>%
   filter(
     unit_name %in% c("Kilimanjaro"),
     model_nr %in% c(" 9"),
@@ -60,15 +60,15 @@ mass_su <- massbalance_results %>%
   ) %>%
   mutate(min_mass = mass-mad, max_mass = mass+mad) 
 
-wgs <- mass_su %>% 
-    filter(year==2000) %>% 
+wgs <- mass_su %>%
+    filter(year==2000) %>%
     transmute(RGIId,initial_mass=mass) 
- wgs <- wgs   %>% 
+ wgs <- wgs   %>%
     mutate(w=initial_mass/sum(wgs$initial_mass))
 
-RSvals <- mass_su %>% 
-  select(RGIId,year,mass,min_mass,max_mass) %>% 
-  group_by( RGIId) %>% 
+RSvals <- mass_su %>%
+  select(RGIId,year,mass,min_mass,max_mass) %>%
+  group_by( RGIId) %>%
   group_modify( ~ RSts(
     .x$year,
     .x$mass,
@@ -76,10 +76,10 @@ RSvals <- mass_su %>%
     vmax = .x$max_mass,
     formula = "conditional"
     )
-    ) %>% 
+    ) %>%
     left_join(wgs, by = c( "RGIId")) 
 
-d <- RSvals %>% 
+d <- RSvals %>%
     filter(year %in% 2040)
 d %>% select(RS, initial_mass, w) 
  #%>%
@@ -116,11 +116,11 @@ ggplot() +
 We then calculate $ED_{RS≥x}$ for multiple years.
 
 ```{r}
-d <- RSvals %>% 
+d <- RSvals %>%
     filter(year %in% c(2040,2070,2100))
 
-EDs <- d %>% 
-  group_by(year) %>% 
+EDs <- d %>%
+  group_by(year) %>%
   group_modify( ~ ED_w(
     RS=.x$RS,
     w=.x$w))
@@ -139,18 +139,18 @@ This figure shows a large increase in values of $RS≥0.5$ between 2040 and 2070
  We see from the mean RS values that there is an expected increase from 0.487 (VU) to 0.746 (EN).
 
 ```{r}
-RS_results %>% 
+RS_results %>%
   filter(
     threshold=="acc",
     unit %in% "Ecuador",
     modelname == "mri-esm2-0",
          pathway == "ssp126"
-         ) %>% 
-  group_by(timeframe, pathway) %>% 
+         ) %>%
+  group_by(timeframe, pathway) %>%
   summarise(
     n=n(),
     mean_RS=mean(RS,na.rm=T),
-    mean_RS_cor=mean(RS_cor,na.rm=T)) %>% 
+    mean_RS_cor=mean(RS_cor,na.rm=T)) %>%
   DT::datatable()
 
 ```
@@ -183,7 +183,7 @@ The last plot above allows a more compact comparison of different scenarios and 
 ```{r}
 #| label: fig-hist-norte-peru
 #| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Ecuador using the maximum accuracy threshold.
-d <- RS_results %>% 
+d <- RS_results %>%
   filter(threshold=="acc", 
          unit=="Cordilleras-Norte-de-Peru", 
          modelname == "mri-esm2-0")
@@ -201,11 +201,11 @@ plot_a
 this is probably an error? not including all clusters?
 
 ```{r}
-tt <- RS_results %>% 
+tt <- RS_results %>%
   filter(threshold=="acc", 
          unit=="Cordilleras-Norte-de-Peru", 
          modelname == "mri-esm2-0",
-         pathway == "ssp126") %>% 
+         pathway == "ssp126") %>%
   pull(IUCN_cat) %>% table
 
 tt
@@ -225,13 +225,13 @@ this is the less threatened, shows a transition from VU for short time frames to
 RSecdf <- tibble()
 for (tfm in c("2011-2040", "2041-2070", "2071-2100")) {
   for (thr in c("acc")) {
-    RSvals <- RS_results %>% 
+    RSvals <- RS_results %>%
       filter(
         unit == "Cordilleras-Orientales-de-Peru-y-Bolivia",
         timeframe==tfm,
-        threshold==thr) %>% 
+        threshold==thr) %>%
       pull(RS_cor)
-    RSecdf <- RSecdf %>% 
+    RSecdf <- RSecdf %>%
       bind_rows(
         {RSvExt(RSvals) %>% mutate(timeframe = tfm, threshold = thr)}
       )

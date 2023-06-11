@@ -18,9 +18,9 @@ library(dplyr)
 library(ggplot2)
 
 here::i_am("docs-src/TGE/units.qmd")
-target.dir <- "sandbox"
-trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
-load(here::here(target.dir,"current-bioclim-data-all-groups.rda"))
+target_dir <- "sandbox"
+trop_glaz <- read_sf(here::here(target_dir,"trop-glacier-groups-labelled.gpkg"))
+load(here::here(target_dir,"current-bioclim-data-all-groups.rda"))
 ```
 
 ```{r}
@@ -57,8 +57,8 @@ IUCN Global Ecosystem Typology
 
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
-trop_glaz_names <- trop_glaz %>% 
-  st_drop_geometry()  %>% 
+trop_glaz_names <- trop_glaz %>%
+  st_drop_geometry()  %>%
   filter(!group_name %in% exclude) %>%
   arrange(group_name) %>%
   pull(group_name) %>%

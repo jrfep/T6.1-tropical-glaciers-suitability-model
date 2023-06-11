@@ -13,9 +13,9 @@ library(dplyr)
 library(ggplot2)
 
 here::i_am("docs-src/TGE-units.qmd")
-target.dir <- "sandbox"
-trop_glaz <- read_sf(here::here(target.dir,"trop-glacier-groups-labelled.gpkg"))
-load(here::here(target.dir,"current-bioclim-data-all-groups.rda"))
+target_dir <- "sandbox"
+trop_glaz <- read_sf(here::here(target_dir,"trop-glacier-groups-labelled.gpkg"))
+load(here::here(target_dir,"current-bioclim-data-all-groups.rda"))
 ```
 
 ```{r}
@@ -61,12 +61,12 @@ IUCN Global Ecosystem Typology
       - Level 4: T6.1-SA-01-VE-01 Tropical Glacier Ecosystem of the Cordillera de Mérida
 
 ```{r}
-trop_glaz_names <- trop_glaz %>% 
-  dplyr::select(group_name,id) %>% 
-  st_drop_geometry()  %>% 
+trop_glaz_names <- trop_glaz %>%
+  dplyr::select(group_name,id) %>%
+  st_drop_geometry()  %>%
   arrange(group_name) 
 
-trop_glaz_names %>% 
+trop_glaz_names %>%
   print.AsIs()
 ```
 
@@ -137,8 +137,8 @@ We characterised the 25 km spatial buffers around the glacier outlines of the Co
 Small areas of these buffers (expressed as percentage of raster cells) have extreme cryogenic conditions (seasonal/permanent snow cover or frost conditions):
 
 ```{r}
-bioclim_dat <- trop_glaz_names %>% 
-  left_join(input_raster_data,by="id", multiple="all") # %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
+bioclim_dat <- trop_glaz_names %>%
+  left_join(input_raster_data,by = "id", multiple="all") # %>% filter(!group_name %in% "Temperate Glacier Ecosystems")
 bioclim_tbl <- bioclim_dat %>% group_by(Unit=group_name) %>%
   summarise(`Nr. of cells`=n(),
             `Glacier cells`=sum(glacier,na.rm=T),

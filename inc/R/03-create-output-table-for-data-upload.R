@@ -41,9 +41,9 @@ all_RS_results <-
               grp,
               arch))
     
-    all_results <- testing %>% 
-      inner_join(future_prediction, by=c("id", "cellnr", "glacier")) %>% 
-      dplyr::select(id, cellnr, glacier, IV, FV) %>% 
+    all_results <- testing %>%
+      inner_join(future_prediction, by=c("id", "cellnr", "glacier")) %>%
+      dplyr::select(id, cellnr, glacier, IV, FV) %>%
       mutate(unit=grp, timeframe, modelname, pathway)
     
   if (eval_set %in% "training") {
@@ -57,7 +57,7 @@ all_RS_results <-
       CV <- unname(CT[threshold])
       RS_results <- 
         RS_results %>% bind_rows(
-          all_results %>% 
+          all_results %>%
             mutate(
               eval_set=eval_set,
               threshold=threshold,
@@ -97,11 +97,11 @@ gc()
 ## csv file is very big!
 
 training_RS_results <- all_RS_results %>%
-  filter(eval_set %in% "training") %>% 
+  filter(eval_set %in% "training") %>%
   select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat)
 
 testing_RS_results <- all_RS_results %>%
-  filter(eval_set %in% "testing") %>% 
+  filter(eval_set %in% "testing") %>%
   select(unit, id, cellnr, glacier, IV,FV, timeframe, modelname, pathway, threshold, CV, OD, MD, RS, RS_cor, IUCN_cat)
 
 write.csv(testing_RS_results,

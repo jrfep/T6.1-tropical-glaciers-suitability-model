@@ -28,11 +28,11 @@ options(dplyr.summarise.inform = FALSE)
 ```{r}
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE) %>% 
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit,"-"," "))
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
@@ -52,7 +52,7 @@ $$
 Aggregating unbounded  $\mathrm{RS}_i$ values can be problematic. In this table we calculate mean values for different thresholds and time frames for two assessment units considering one model and scenario combination. In both cases we see a clear increasing trend, but the values of the original formula are clearly influenced by the magnitude of the extreme negative or positive values of the underlying units of observation. 
 
 ```{r}
-d <- RS_results %>% 
+d <- RS_results %>%
   filter(
     unit %in% c("Ruwenzori","Kilimanjaro"),
     threshold %in% "ess",
@@ -65,8 +65,8 @@ tbl_caption <- tags$caption(
   tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp370) for three future time periods and using an equal sensitivity and specificity threshold for each unit. Observations with $MD=0$ have been removed before calculation with the original formula"))
 )
 
-tab <- d %>% 
-  group_by( unit,timeframe) %>% 
+tab <- d %>%
+  group_by( unit,timeframe) %>%
   summarise(
     #n=n(),
     #n_used=sum(is.finite(RS)),
@@ -111,7 +111,7 @@ my.container <- withTags(table(
     container=my.container,
     rownames = FALSE,
     width = '100%', 
-    height = '100%') %>% 
+    height = '100%') %>%
   formatRound(c("min_RS", "mean_RS", "max_RS", "mean_RS_cor"),digits=3)
 
 
@@ -129,7 +129,7 @@ Thus it is possible to calculate RS for the whole unit is by calculating the sum
 
 ```{r}
 #| warning: false
-mass_su <- massbalance_results %>% 
+mass_su <- massbalance_results %>%
   filter(
     unit_name %in% c("Kilimanjaro"),
     model_nr %in% c(" 9"),
@@ -143,9 +143,9 @@ plot_a <- ggplot(mass_su) +
   theme(legend.position = "right") +
   ylab("Ice mass")
 
-RStotal <- mass_su %>% 
+RStotal <- mass_su %>%
   group_by(year) %>%
-  summarise(total_mass=sum(mass),min_mass=sum(min_mass), max_mass = sum(max_mass)) %>%
+  summarise(total_mass = sum(mass),min_mass = sum(min_mass), max_mass = sum(max_mass)) %>%
   ungroup %>%
   group_modify(~RSts(
     .x$year,
@@ -175,15 +175,15 @@ In this case, the calculation of RS for each outline is not informative unless w
 
 ```{r}
 
-wgs <- mass_su %>% 
-    filter(year==2000) %>% 
+wgs <- mass_su %>%
+    filter(year==2000) %>%
     transmute(RGIId,initial_mass=mass) 
- wgs <- wgs   %>% 
+ wgs <- wgs   %>%
     mutate(w=initial_mass/sum(wgs$initial_mass))
 
-RSvals <- mass_su %>% 
-  select(RGIId,year,mass,min_mass,max_mass) %>% 
-  group_by( RGIId) %>% 
+RSvals <- mass_su %>%
+  select(RGIId,year,mass,min_mass,max_mass) %>%
+  group_by( RGIId) %>%
   group_modify( ~ RSts(
     .x$year,
     .x$mass,
@@ -191,15 +191,15 @@ RSvals <- mass_su %>%
     vmax = .x$max_mass,
     formula = "conditional"
     )
-    ) %>% 
+    ) %>%
     left_join(wgs, by = c( "RGIId")) 
 
 # A weighted sum would be the same as the RS of the total
 
-RSws <- RSvals %>% 
+RSws <- RSvals %>%
     rowwise %>%
     mutate(RSw=RS*w) %>%
-    ungroup %>% 
+    ungroup %>%
     group_by(year) %>%
     summarise(w_tot=sum(w),RS=mean(RS),RS_weighted=sum(RSw))
 

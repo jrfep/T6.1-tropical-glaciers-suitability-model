@@ -36,11 +36,11 @@ options(dplyr.summarise.inform = FALSE)
 ```{r}
 #| eval: true
 #| message: false
-target.dir <- "sandbox"
-results_file <- here::here(target.dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
-RS_results <- read_csv(results_file, show_col_types = FALSE) %>% 
+target_dir <- "sandbox"
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit,"-"," "))
-results_file <- here::here(target.dir, "massbalance-model-data-all-groups.rds")
+results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
@@ -56,7 +56,7 @@ Given the nature of ice mass as a prediction of a physical measure, we need to w
 If we look at the example of the T.G.E. Kilimanjaro, for one combination of model and scenario and the year 2040, we have following values of $\mathrm{RS}_{i}$:
 
 ```{r}
-mass_su <- massbalance_results %>% 
+mass_su <- massbalance_results %>%
   filter(
     unit_name %in% c("Kilimanjaro"),
     model_nr %in% c(" 9"),
@@ -64,15 +64,15 @@ mass_su <- massbalance_results %>%
   ) %>%
   mutate(min_mass = mass-mad, max_mass = mass+mad) 
 
-wgs <- mass_su %>% 
-    filter(year==2000) %>% 
+wgs <- mass_su %>%
+    filter(year==2000) %>%
     transmute(RGIId,initial_mass=mass) 
- wgs <- wgs   %>% 
+ wgs <- wgs   %>%
     mutate(w=initial_mass/sum(wgs$initial_mass))
 
-RSvals <- mass_su %>% 
-  select(RGIId,year,mass,min_mass,max_mass) %>% 
-  group_by( RGIId) %>% 
+RSvals <- mass_su %>%
+  select(RGIId,year,mass,min_mass,max_mass) %>%
+  group_by( RGIId) %>%
   group_modify( ~ RSts(
     .x$year,
     .x$mass,
@@ -80,10 +80,10 @@ RSvals <- mass_su %>%
     vmax = .x$max_mass,
     formula = "conditional"
     )
-    ) %>% 
+    ) %>%
     left_join(wgs, by = c( "RGIId")) 
 
-d <- RSvals %>% 
+d <- RSvals %>%
     filter(year %in% 2040)
 d %>% select(RS, initial_mass, w) 
  #%>%
@@ -103,14 +103,14 @@ For small assessment units the spatial sample size for the calculation of $\math
 ```{r}
 #| label: fig-ruwenzori
 #| fig-cap: "Box and whisker plots of the $RS_{bcs}^{acc}$ values for the Tropical Glacier Ecosystem of Ruwenzori. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean (equal to $\\overline{\\mathrm{RS}}$) is marked with an X symbol."
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(
     unit %in% "Ruwenzori", 
     threshold == "acc",
     pathway == "ssp370",
     modelname == "mri-esm2-0")
-dat2 <- dat1 %>% 
-  group_by(timeframe,pathway,modelname) %>% 
+dat2 <- dat1 %>%
+  group_by(timeframe,pathway,modelname) %>%
   summarise(mean_RS=mean(RS_cor))
 
 ggplot(dat1 ) +
@@ -128,13 +128,13 @@ For larger sampling units we can see more complex distributions of $\mathrm{RS}_
 #| label: fig-hist-ecuador
 #| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.
 #| warning: false
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(threshold=="acc", 
          unit_name == "Cordilleras Norte de Peru", 
          modelname == "mri-esm2-0",
          pathway == "ssp126",
          timeframe == "2041-2070")
-dat2 <- dat1 %>% group_by(timeframe) %>% 
+dat2 <- dat1 %>% group_by(timeframe) %>%
   summarise(
     n=n(),
     mean_RS=mean(RS_cor,na.rm=T),
@@ -206,12 +206,12 @@ The shape of the histogram changes in time, with an initial increase followed by
 #| label: fig-hist-colombia
 #| fig-cap: Histogram of the $RS_{cor}$ values for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
 #| warning: false
-dat1 <- RS_results %>% 
+dat1 <- RS_results %>%
   filter(threshold=="ess", 
          grepl("Colombia",unit), 
          modelname == "mri-esm2-0",
          pathway == "ssp126")
-dat2 <- dat1 %>% group_by(timeframe) %>% 
+dat2 <- dat1 %>% group_by(timeframe) %>%
   summarise(
     n=n(),
     mean_RS=mean(RS_cor,na.rm=T),
@@ -245,7 +245,7 @@ Although there is now a large number of cell with very high values of relative s
 tfm <- dat1 %>% distinct(timeframe) %>% pull
 
 fs <- dat1 %>%
-  group_by(timeframe) %>% 
+  group_by(timeframe) %>%
   group_map(~cED_w(.x$RS)) 
 
 xs <- seq(0,1,length=100)
@@ -309,11 +309,11 @@ When we calculate $cED_{x}$ for multiple years we can see a change in the shape 
 ```{r}
 #| echo: true
 #| eval: false
-d <- RSvals %>% 
+d <- RSvals %>%
     filter(year %in% c(2040,2070,2100))
 
-EDs <- d %>% 
-  group_by(year) %>% 
+EDs <- d %>%
+  group_by(year) %>%
   group_modify( ~ cED_w(
     RS=.x$RS,
     weights=.x$w))
