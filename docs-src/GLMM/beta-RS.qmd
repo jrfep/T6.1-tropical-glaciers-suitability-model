@@ -68,16 +68,6 @@ model_data <- model_data %>%
 ```
 
 
-## $\beta$ distribution GLMM of $\overline{\mathrm{RS}}$
-
-Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=RS$ for all observations where $RS<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
-
-Ok, here are two problems: 
-  1. The bioclimatic suitability model perform better in the Andes than outside
-  2. For some reason Kilimanjaro is just completely different
-
-The first issue is understandable given the uneven sample sizes, and the 
-
 ```{r}
 #| echo: true
 
@@ -88,74 +78,89 @@ ggplot(
   geom_boxplot(
     aes(x=RS, y=unit, color=method, group=interaction(unit,method))
     ) +
+    facet_grid(~time) +
     ylab("") +
-    xlab("Overall RS")
+    xlab(expression(bar(RS))) +
+    theme(legend.position="top")
 ```
+
+Ok, here are two problems: 
+  1. The bioclimatic suitability model perform better in the Andes than outside
+  2. For some reason Kilimanjaro is just completely different
+
+The first issue is understandable given the uneven sample sizes, and we might deal with this using additional variables, but for Kilimanjaro it only makes sense to remove it as an outlier. 
+
+
+## $\beta$ distribution GLMM of $\overline{\mathrm{RS}}$
+
+Given that $\overline{\mathrm{RS}}$ represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\overline{\mathrm{RS}}$ for all observations where $\overline{\mathrm{RS}}<1$. Just as the binomial GLMM, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+
+We prepare the data by applying the necessary filters and including a categorial variable representing Andean vs non-Andean units:
 
 ```{r}
 #| echo: true
-
 model_data_ss <- model_data %>%
   filter(RS < 1 & RS > 0, !unit %in% "Kilimanjaro") %>%
   mutate(
-    period = factor(time),
-    andes = grepl("Peru|Colombia|Ecuador",unit)
+    andes = grepl("Peru|Colombia|Ecuador|Merida",unit),
   )
-glimpse(model_data_ss)
 ```
 
-We fit the full model, and alternative versions with dispersion model and reduced fixed effects as:
+We fit the full model, and alternative versions with modelled dispersion parameters and additional fixed effects as:
 
 ```{r}
 #| echo: true
 
-mod_degradation_2way_3nest <- 
-  glmmTMB(RS ~ (period * scenario) + (method*andes)  + (1|andes/unit/method), 
-    dispformula=~method, 
-    data = model_data_ss, 
-    family=beta_family,
-    REML=FALSE)
+mod_degradation_both <- 
+  glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
 
-mod_degradation_2way_2nest <- 
-  glmmTMB(RS ~ (period * scenario) + (method*andes) + (1|unit/method), 
+mod_degradation_andes <- 
+  glmmTMB(RS ~ time + scenario + method + (1|unit/method) + (1|method:andes), 
         dispformula=~method, 
         data = model_data_ss, 
         family=beta_family,
         REML=FALSE)
 
-mod_degradation_3way_2nest <- 
-  glmmTMB(RS ~ period * scenario * method * andes + (1|unit/method), 
+mod_degradation_disp <- 
+  glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
         dispformula=~method, 
         data = model_data_ss, 
         family=beta_family,
         REML=FALSE)
 
-mod_degradation_3way_3nest <- 
-  glmmTMB(RS ~ period * scenario * method * andes + (1|andes/unit/method), 
-        dispformula=~method, 
+mod_degradation_dispandes <- 
+  glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method+andes, 
         data = model_data_ss, 
         family=beta_family,
         REML=FALSE)
+
+
 ```
 
 
-The AIC criterion favours the initial specification with all variables and without dispersion model:
+The AIC criterion favours a model with the original fixed and random effect but an additional dispersion formula including method and region (Andean vs. non-Andean) :
 
 ```{r}
 #| echo: true
-bbmle::AICtab(mod_degradation_3way_3nest,
-              mod_degradation_3way_2nest,
-              mod_degradation_2way_3nest,
-              mod_degradation_2way_2nest)
+bbmle::AICtab(
+  mod_degradation_disp,
+  mod_degradation_dispandes,
+  mod_degradation_andes,
+  mod_degradation_both
+  )
 ```
 
 ### Model diagnostics
 
-Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
+Model diagnostics and residual plots show important deviations, there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units. Particularly, the residuals are lower for the observation with high predicted values.
 
 ```{r}
 #| echo: true
-mod_degradation_simres<-simulateResiduals(mod_degradation_3way_2nest)
+mod_degradation_simres<-simulateResiduals(mod_degradation_dispandes)
 plot(mod_degradation_simres)
 ```
  
@@ -178,208 +183,104 @@ The summary of the model indicates significant positive effects of time and futu
 #| eval: true
 #| attr-output: "style='font-size: 0.8em'"
 options(width=120)
-summary(mod_degradation_3way_2nest)
+summary(mod_degradation_dispandes)
 ```
 
 
-### Random effects
+## $\beta$ distribution GLMM of $\mathrm{cED}(x)$
 
-The random effects of the model give us a ranking of the general magnitude of RS for each assessment unit, regardless of the method used:
+Given that $\mathrm{cED}(x)$ represent a relative measure (proportion between 0 and 1), we can also use a beta distribution GLMM with logit link function with $y=\mathrm{cED}(x)$ for all observations where $\mathrm{cED}(x)<1$.
 
+First let's prepare the dataframe considering the filters and modification applied before:
 ```{r}
-#| eval: true
 #| echo: true
-rr <- ranef(mod_degradation_3way_2nest)
-rr$cond$unit %>% arrange(desc(`(Intercept)`))
+cED_model_data <-
+  cED_model_data %>%
+    filter(
+      method %in% valid_methods,
+      !unit %in% "Kilimanjaro"
+      ) %>%
+    mutate(
+      method=factor(method, levels = valid_methods),
+      andes = grepl("Peru|Colombia|Ecuador|Merida", unit)
+    )
 ```
 
-We see that there are a few large differences in the ranking compared with the model of collapse, most notably in the T.G.E. of Kilimanjaro, but this is likely a result of anomalies in the underlying data.
 
-```{r}
-#| eval: true
-model_data_ss$pred <- predict(mod_degradation_3way_2nest,type="response")
+### $\mathrm{cED}(0.3)$
 
-ggplot(model_data_ss) +
-  geom_boxplot(aes(x=pred,y=unit,color=method,group=interaction(unit,method)))
-```
-
-## $\beta$ distribution GLMM of $\mathrm{cED}(0.3)$
-
-Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\mathrm{cED}(0.3)$ for all observations where $\mathrm{cED}(0.3)<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+ Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
 ```{r}
 #| echo: true
 
 model_data_ss <- cED_model_data %>%
-  filter(
-    method %in% valid_methods,
-    !unit %in% "Kilimanjaro",
-    cED_30>0 & cED_30<1
-    ) %>%
-  mutate(
-    method=factor(method),
-    period = factor(time),
-    andes = grepl("Peru|Colombia|Ecuador",unit)
-  )
-  model_data_ss
-```
+  filter(cED_30>0 & cED_30<1) 
 
-```{r}
-#| echo: true
-mod_cED_30_sat <- 
-  glmmTMB(cED_30 ~  (method*andes) + period + scenario + (1|andes/unit/method), 
-    dispformula = ~ method, 
+mod_cED_30_andes <- 
+  glmmTMB(cED_30 ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method+andes, 
     data = model_data_ss, 
     family = beta_family,
     REML=FALSE)
 
-mod_cED_30_2way_3nest <- 
-  glmmTMB(cED_30 ~ (method*andes) + period + scenario +  (1|unit/method), 
-    dispformula=~method, 
-    data = model_data_ss, 
-    family=beta_family,
-    REML=FALSE)
-
-mod_cED_30_2way_2nest <- 
-  glmmTMB(cED_30 ~ (method*andes) + period + scenario +  (1|unit), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
-
-mod_cED_30_3way_2nest <- 
-  glmmTMB(cED_30 ~ period * scenario + (method*andes) + (1|unit/method), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
-
-mod_cED_30_3way_3nest <- 
-  glmmTMB(cED_30 ~ period * scenario + (method*andes) + (1|andes/unit/method), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
 ```
 
-```{r}
-bbmle::AICtab(
-  mod_cED_30_sat,
-  mod_cED_30_3way_3nest,
-  mod_cED_30_3way_2nest,
-  mod_cED_30_2way_3nest,
-  mod_cED_30_2way_2nest
-  )
-```
-
-### Model diagnostics
-
-Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
+Model diagnostics and residual plots deviate strongly, thus we do not 
 
 ```{r}
 #| echo: true
-mod_cED_simres<-simulateResiduals(mod_cED_30_3way_2nest)
+mod_cED_simres<-simulateResiduals(mod_cED_30_andes)
 plot(mod_cED_simres)
 ```
 
-## $\beta$ distribution GLMM of $\mathrm{cED}(0.5)$
-
-Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\mathrm{cED}(0.5)$ for all observations where $\mathrm{cED}(0.5)<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
-
+###  $\mathrm{cED}(0.5)$
 
 ```{r}
 #| echo: true
 
 model_data_ss <- cED_model_data %>%
-  filter(
-    method %in% valid_methods,
-    !unit %in% "Kilimanjaro",
-    cED_50>0 & cED_50<1
-    ) %>%
-  mutate(
-    method=factor(method),
-    period = factor(time),
-    andes = grepl("Peru|Colombia|Ecuador",unit)
-  )
-  glimpse(model_data_ss)
-```
-## $\beta$ distribution GLMM of $\mathrm{cED}(0.8)$
+  filter(cED_50>0 & cED_50<1) 
 
-Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\mathrm{cED}(0.8)$ for all observations where $\mathrm{cED}(0.8)<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
-
-
-```{r}
-#| echo: true
-
-model_data_ss <- cED_model_data %>%
-  filter(
-    method %in% valid_methods,
-    !unit %in% "Kilimanjaro",
-    cED_80>0 & cED_80<1
-    ) %>%
-  mutate(
-    method=factor(method),
-    period = factor(time),
-    andes = grepl("Peru|Colombia|Ecuador",unit)
-  )
-  glimpse(model_data_ss)
-```
-
-```{r}
-#| echo: true
-mod_cED_80_sat <- 
-  glmmTMB(cED_80 ~ time * method * scenario * andes + (1|unit/method), 
-    dispformula = ~ method, 
+mod_cED_50_andes <- 
+  glmmTMB(cED_50 ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method+andes,  
     data = model_data_ss, 
     family = beta_family,
     REML=FALSE)
 
-mod_cED_80_2way_3nest <- 
-  glmmTMB(cED_80 ~ (period * scenario) + (method*andes)  + (1|andes/unit/method), 
-    dispformula=~method, 
-    data = model_data_ss, 
-    family=beta_family,
-    REML=FALSE)
-
-mod_cED_80_2way_2nest <- 
-  glmmTMB(cED_80 ~ (period * scenario) + (method*andes) + (1|unit/method), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
-
-mod_cED_80_3way_2nest <- 
-  glmmTMB(cED_80 ~ period * scenario * method * andes + (1|unit/method), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
-
-mod_cED_80_3way_3nest <- 
-  glmmTMB(cED_80 ~ period * scenario * method * andes + (1|andes/unit/method), 
-        dispformula=~method, 
-        data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
 ```
 
-```{r}
-bbmle::AICtab(
-  mod_cED_80_sat,
-  mod_cED_80_3way_3nest,
-  mod_cED_80_3way_2nest,
-  mod_cED_80_2way_3nest,
-  mod_cED_80_2way_2nest
-  )
-```
-
-### Model diagnostics
-
-Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
+Model diagnostics and residual plots deviate strongly:
 
 ```{r}
 #| echo: true
-mod_cED_simres<-simulateResiduals(mod_cED_80_3way_2nest)
+mod_cED_simres<-simulateResiduals(mod_cED_50_andes)
+plot(mod_cED_simres)
+```
+
+###  $\mathrm{cED}(0.8)$
+
+```{r}
+#| echo: true
+
+model_data_ss <- cED_model_data %>%
+  filter(cED_80>0 & cED_80<1) 
+
+mod_cED_80_andes <- 
+  glmmTMB(cED_80 ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method+andes, 
+        data = model_data_ss, 
+    family = beta_family,
+    REML=FALSE)
+
+```
+
+Model diagnostics and residual plots deviate strongly:
+
+```{r}
+#| echo: true
+mod_cED_simres<-simulateResiduals(mod_cED_80_andes)
 plot(mod_cED_simres)
 ```
 
@@ -387,3 +288,88 @@ plot(mod_cED_simres)
 ## $\beta$ distribution GLMM of $\mathrm{AUC}_{\mathrm{cED}}$
 
 Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\mathrm{AUC}_{\mathrm{cED}}$ for all observations where $\mathrm{AUC}_{\mathrm{cED}}<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+
+
+```{r}
+#| echo: true
+
+model_data_ss <- cED_model_data %>%
+  filter(AUC_cED>0 & AUC_cED<1) 
+
+
+mod_degradation_both <- 
+  glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+mod_degradation_andes <- 
+  glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method) + (1|method:andes), 
+        dispformula=~method, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+mod_degradation_disp <- 
+  glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+mod_degradation_dispandes <- 
+  glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
+        dispformula=~method+andes, 
+        data = model_data_ss, 
+        family=beta_family,
+        REML=FALSE)
+
+
+```
+
+
+The AIC criterion favours the initial specification with all variables and without dispersion model:
+
+```{r}
+#| echo: true
+bbmle::AICtab(
+  mod_degradation_disp,
+  mod_degradation_dispandes,
+  mod_degradation_andes,
+  mod_degradation_both
+  )
+```
+
+### Model diagnostics
+
+Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
+
+```{r}
+#| echo: true
+mod_cED_simres<-simulateResiduals(mod_degradation_dispandes)
+plot(mod_cED_simres)
+```
+
+
+### Outliers
+
+When we examine the outliers, these are mostly unexpected low values in the T.G.E. Kilimanjaro, but these are probably related to underlying anomalies in climatic conditions in this region. [In fact, when using the original formulafor the time series of the dynamic ice mass balance model there were some spurious effect of negative RS in this unit. We are using now the conditional formula of RS but there is still some unexpected structure in the residuals.]{.aside}
+
+```{r}
+#| eval: true
+#| echo: true
+mod_cED_simres$fittedModel$frame %>% slice(outliers(mod_cED_simres))
+```
+
+### Model summary
+
+The summary of the model indicates significant positive effects of time and future scenarios in the magnitude of RS, as expected. For the method variable, the indirect indicator have significant negative effects when compared with the direct indicator, but the effect is larger for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of RS for this indicator. In general, variability between units is considerably larger than variability between methods, thus we can expect all three methods to reflect general patterns, but will require closer inspection to rule out interaction with the random effects of assessment units.
+
+```{r}
+#| echo: true
+#| eval: true
+#| attr-output: "style='font-size: 0.8em'"
+options(width=120)
+summary(mod_degradation_dispandes)
+```
+

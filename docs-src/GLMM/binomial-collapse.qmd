@@ -75,14 +75,16 @@ model_data %>%
 
 ## Binomial GLMM of predicted collapse
 
-We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels). [Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.]{.aside}
+We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and rabdom effects of assessment unit ($\mathrm{unit}$, 15 levels). [Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.]{.aside}
+
+The variable $\mathrm{method}$ could be interpreted as a fixed effect and/or as a random effect *grouping* variable. Although it might be interesting to explore its interaction with unit in increasing the variability of the response [@Barr_2013_GLMM_effects], our primary question is whether there are significant systematic differences between the methods. So we decide to use this variable as a fixed effect and keep the model simple for interpretability:
 
 Full model specification in `R` using the `glmmTMB` package is as follows:
 
 ```{r}
 #| echo: true
-mod_collapse_sat <- 
-  glmmTMB(collapsed ~ time + method + scenario + (1|unit/method), 
+mod_collapse_fixed <- 
+  glmmTMB(collapsed ~ time + method + scenario + (1|unit), 
        data = model_data, 
        family = binomial,
        REML = FALSE)
@@ -95,41 +97,42 @@ mod_collapse_sat <-
 
 ## alternative with lme4
 library(lme4)
-mod2 <- glmer(
-    collapsed ~ time + method + scenario + (1|unit/method), 
+mod_collapse_full <- glmer(
+    collapsed ~ time + method + scenario + (1|unit), 
     family = binomial,
     data = model_data) 
 ```
 :::
 
-We test alternative specifications removing the fixed effect on $\mathrm{method}$:
 
+
+Alternative with both fixed and random, will have similar fixed effects, but could be used to measure the amount of variability attributed to methods vs. units.
 ```{r}
 #| echo: true
+#| eval: true
 
-mod_collapse_rand <- 
-  glmmTMB(collapsed ~ time + scenario + (1|unit/method), 
+mod_collapse_both <- 
+  glmmTMB(collapsed ~ time + scenario + method + (1|unit/method), 
      data = model_data, 
      family=binomial,
      REML=FALSE)
-
 ```
- 
-The AIC criterion favours the initial specification with all variables:
+
+The AIC criterion clearly favours the model with methods as a fixed and a random grouping variable:
 
 ```{r}
 #| echo: true
-bbmle::AICtab(mod_collapse_sat,
-              mod_collapse_rand)
+bbmle::AICtab(mod_collapse_fixed,
+              mod_collapse_both)
 ```
- 
+
 ### Model diagnostics
 
 Model diagnostics and residual plots look good for this model specification. [According to the [vignette of package DHARMa](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html#interpreting-residuals-and-recognizing-misspecification-problems) small significant effects in the residuals might be spurious due to large sample size.]{.aside}
 
 ```{r}
 #| echo: true
-mod_collapse_simres<-simulateResiduals(mod_collapse_sat)
+mod_collapse_simres<-simulateResiduals(mod_collapse_both)
 plot(mod_collapse_simres)
 ```
  
@@ -141,16 +144,31 @@ Approximation of a $R^2$ statistic for this model suggests more than 90% of the 
 ```{r}
 #| echo: true
 #| warning: false
-MuMIn::r.squaredGLMM(mod_collapse_sat)
+MuMIn::r.squaredGLMM(mod_collapse_both)
 ```
- 
+
+
 ### Model summary
 
-The summary of the model indicates significant positive effects of time and future scenarios in the proportion of model predicting collapse, as expected. For the method variable, the indirect indicator have negative effects when compared with the direct indicator, but this is only significant for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of the collapse threshold for this indicator. In general, variability between unit is much larger than variability between methods, thus we can expect all three methods to reflect patterns between units equally well.
+The summary of the model indicates significant positive effects of time and future scenarios in the proportion of model predicting collapse, as expected. For the method variable, the indirect indicator have negative effects when compared with the direct indicator, but this is only significant for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of the collapse threshold for this indicator. 
+
+Random effect of unit is larger than the random effect of methods within units.
 
 ```{r}
 #| echo: true
-summary(mod_collapse_sat)
+summary(mod_collapse_both)
+```
+
+```{r}
+#| echo: true
+summary(aov(mod_collapse_both))
+```
+
+
+Confidence interval of the coefficients:
+```{r}
+#| echo: true
+confint(mod_collapse_both) 
 ```
 
 ### Random effects
@@ -158,6 +176,18 @@ summary(mod_collapse_sat)
 The random effects of the model give us a ranking of the proportion of models predicting collapse for each assessment unit, regardless of the method used:
 
 ```{r}
-rr <- ranef(mod_collapse_sat)
+rr <- ranef(mod_collapse_both)
 rr$cond$unit %>% arrange(desc(`(Intercept)`))
 ```
+
+### EMmeans
+
+```{r}
+library(emmeans)
+emmeans(
+  mod_collapse_both, 
+  ~ method | scenario + time, 
+  type="response", 
+  allow.new.levels=TRUE)
+```
+

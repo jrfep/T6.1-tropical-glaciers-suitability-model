@@ -59,7 +59,8 @@ theme_update(panel.grid.minor = element_line(colour = "pink"),
 panel.grid.major = element_line(colour = "rosybrown3"))
 ```
 
-
+https://en.wikipedia.org/wiki/Mount_Kilimanjaro
+https://en.wikipedia.org/wiki/Rwenzori_Mountains
 
 ## Compare overall RS 
 
