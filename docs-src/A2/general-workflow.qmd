@@ -15,7 +15,6 @@ These repositories are part of a larger project. Please refer to the following p
 
 ## Steps
 
-### Consolidate input data
 
 ### Consolidate input data
 
