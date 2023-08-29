@@ -1,4 +1,3 @@
-
 library(dplyr)
 library(ggplot2)
 library(readr)
@@ -74,45 +73,53 @@ ggplot(RSi_data %>% drop_units) +
 
 ggsave(here::here("sandbox","Figure-5-ice-mass-Peru.png"), width = 7, height = 5)
 
-dat1 <- RS_results %>%
-  filter(
-    threshold == "acc",
-    pathway == "ssp370",
-    modelname == "mri-esm2-0") %>%
-    mutate(timeframe=str_replace(timeframe,"-","\n"))
-dat2 <- dat1 %>%
-  group_by(timeframe,unit_name) %>%
-  summarise(mean_RS=mean(RS_cor))
-
-dat3 <- dat1 %>%
-  group_by(unit_name,timeframe) %>%
-  group_modify(~summary_cED_w(.x$RS_cor)) %>%
-  inner_join(dat2, by=c("unit_name","timeframe")) %>%
-  mutate(state = case_when(
-            mean_RS == 1 ~ "collapsed",
-            cED_80 >= 0.80 ~ "very wide",
-            cED_80 >= 0.50 ~ "very inter",
-            cED_50 >= 0.80 ~ "high wide",
-            cED_80 >= 0.30 ~ "very local",
-            cED_50 >= 0.50 ~ "high inter",
-            cED_30 >= 0.80 ~ "mod wide",
-            TRUE ~ "low")
-  )
-
-
-sts <- dat3 %>% select(unit_name,timeframe,state)
-dat1 <- dat1 %>%
-  left_join(sts, by=c("unit_name","timeframe"))
-
-  ggplot(dat1 ) +
-  geom_boxplot(aes(y = RS_cor, x = timeframe),colour="grey77") +
-# mucho carnaval:  
-## geom_boxplot(aes(y = RS_cor, x = timeframe, colour=state))+#,colour="grey77") +
-##   scale_colour_manual(values=state_cat_okabe) 
-  geom_point(data=dat2, aes(y = mean_RS, x = timeframe),pch=1,cex=3,colour="grey22") +
-  facet_wrap(~unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
-  theme(legend.position = "none") +
-  ylab(expression(paste("Decline in suitability [", RS[i] * phantom(n) * textstyle(or) * phantom(n) * bar(RS),"]"))) +
-  xlab("Future period") 
+for (slc_ssp in c("ssp126", "ssp370", "ssp585")) {
+  for (slc_thr in c("acc", "ess")) {
+    for (slc_mdl in unique(RS_results$modelname)) {
+        dat1 <- RS_results %>%
+    filter(
+      threshold == slc_thr,
+      pathway == slc_ssp,
+      modelname == slc_mdl) %>%
+      mutate(timeframe=str_replace(timeframe,"-","\n"))
+  dat2 <- dat1 %>%
+    group_by(timeframe,unit_name) %>%
+    summarise(mean_RS=mean(RS_cor))
   
-ggsave(here::here("sandbox","Figure-7-RS-suitability-per-unit.png"), width = 7, height = 5)
+  dat3 <- dat1 %>%
+    group_by(unit_name,timeframe) %>%
+    group_modify(~summary_cED_w(.x$RS_cor)) %>%
+    inner_join(dat2, by=c("unit_name","timeframe")) %>%
+    mutate(state = case_when(
+              mean_RS == 1 ~ "collapsed",
+              cED_80 >= 0.80 ~ "very wide",
+              cED_80 >= 0.50 ~ "very inter",
+              cED_50 >= 0.80 ~ "high wide",
+              cED_80 >= 0.30 ~ "very local",
+              cED_50 >= 0.50 ~ "high inter",
+              cED_30 >= 0.80 ~ "mod wide",
+              TRUE ~ "low")
+    )
+  
+  
+  sts <- dat3 %>% select(unit_name,timeframe,state)
+  dat1 <- dat1 %>%
+    left_join(sts, by=c("unit_name","timeframe"))
+  
+    ggplot(dat1 ) +
+    geom_boxplot(aes(y = RS_cor, x = timeframe),colour="grey77") +
+  # mucho carnaval:  
+  ## geom_boxplot(aes(y = RS_cor, x = timeframe, colour=state))+#,colour="grey77") +
+  ##   scale_colour_manual(values=state_cat_okabe) 
+    geom_point(data=dat2, aes(y = mean_RS, x = timeframe),pch=1,cex=3,colour="grey22") +
+    facet_wrap(~unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
+    theme(legend.position = "none") +
+    ylab(expression(paste("Decline in suitability [", RS[i] * phantom(n) * textstyle(or) * phantom(n) * bar(RS),"]"))) +
+    xlab("Future period") 
+    
+  ggsave(here::here("sandbox",
+                    sprintf("Figure-7-RS-suitability-per-unit-%s-%s-%s.png",
+                            slc_ssp, slc_mdl, slc_thr)), width = 7, height = 5)
+    }
+  }
+}
