@@ -1,14 +1,20 @@
 ---
-title: "Magnitude of degradation"
-output: html_document
+title: "Supplementary material"
+execute:
+  echo: true
+format: docx
+fig-dpi: 300
 editor_options: 
   chunk_output_type: console
 ---
 
+# Appendix C. Full GLMM diagnostics and results 
+
+## Prediction of collapse
+
+Over the time frame of 100 years most of the assessment units are predicted to reach collapse by complete loss of ice mass. Since we are using a direct indicator of an ecosystem property (icy substrate) and we are predicting total ice mass for each unit, complete loss of ice is equivalent to a value of $RS_{ice}^{CT=0} = 1$. In the case of an indirect indicator such as bioclimatic suitability, we have more uncertainty in the real value of collapse, and thus use alternative collapse threshold to capture plausible ranges. 
 
 We expect that both direct and indirect indicators will have similar performance in describing the magnitude of degradation and predicting collapse. We will use two generalised linear mixed models (GLMM) to test if there are significant differences in inferences based on these estimates of relative severity.
-
-For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $\overline{\mathrm{RS}}$, $cED(0.25)$, $cED(0.25)$, $cED(0.25)$ and $AUC_{cED}$.
 
 
 ```{r}
@@ -28,7 +34,7 @@ library(tidyr)
 library(glmmTMB)
 library(lme4)
 library(DHARMa)
-here::i_am("docs-src/GLMM/beta-RS.qmd")
+here::i_am("docs-src/GLMM/binomial-collapse.qmd")
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
 ```
@@ -36,6 +42,7 @@ source(here::here("inc","R","RS-shared.R"))
 ```{r}
 #| label: read input data 
 #| eval: true
+#| echo: false
 #| message: false
 target_dir <- "sandbox"
 rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
@@ -45,6 +52,118 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
   mutate(unit_name=str_replace_all(unit," ","-"))
 rds_file <- here::here(target_dir,"totalmass-suitability-glmm-data.rds")
 model_data <- readRDS(rds_file)
+
+```
+
+
+To compare both indicators we used the $RS_{bcs}^{CT=acc}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
+
+## Proportion of models predicting collapse
+
+This table will give us an overview of how many realisations of the predictions reach a point of collapse for each assessment unit:
+
+```{r}
+valid_methods <- c("ice","ess","acc")
+model_data <- model_data %>%
+  filter(method %in% valid_methods) %>%
+  mutate(
+    method=droplevels(method),
+    collapsed=case_when(
+      method %in% "ice" & RS == 1 ~ 1L,
+      !(method %in% "ice") & RS >0.99 ~ 1L,
+      TRUE ~ 0L
+    )
+    )
+model_data %>%
+  group_by(unit,method) %>%
+  summarise(collapse=sum(collapsed,na.rm=T), .groups = "keep") %>%
+  pivot_wider(values_from=collapse,names_from=method) %>%
+  knitr::kable()
+
+```
+
+
+## Binomial GLMM of predicted collapse
+
+We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and rabdom effects of assessment unit ($\mathrm{unit}$, 15 levels). [Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.]{.aside}
+
+The variable $\mathrm{method}$ could be interpreted as a fixed effect and/or as a random effect *grouping* variable. Although it might be interesting to explore its interaction with unit in increasing the variability of the response [@Barr_2013_GLMM_effects], our primary question is whether there are significant systematic differences between the methods. So we decide to use this variable as a fixed effect and keep the model simple for interpretability:
+
+Full model specification in `R` using the `glmmTMB` with both fixed and random effects  to measure the amount of variability attributed to methods vs. units.
+
+```{r}
+#| echo: true
+#| eval: true
+
+mod_collapse_both <- 
+  glmmTMB(collapsed ~ time + scenario + method + (1|unit/method), 
+     data = model_data, 
+     family=binomial,
+     REML=FALSE)
+```
+
+
+### Model diagnostics
+
+Model diagnostics and residual plots look good for this model specification (small significant effects in the residuals might be spurious due to large sample size). 
+
+```{r}
+#| echo: true
+#| fig-width: 8
+#| fight-height: 6
+mod_collapse_simres<-simulateResiduals(mod_collapse_both)
+plot(mod_collapse_simres)
+```
+ 
+  
+### Explained variance
+
+Approximation of a $R^2$ statistic for this model suggests more than 90% of the variance explained by the full model (random and fixed effects) and at least 40% explained by the fixed effects alone.
+
+```{r}
+#| echo: true
+#| warning: false
+MuMIn::r.squaredGLMM(mod_collapse_both)
+```
+
+
+### Model summary
+
+The summary of the model indicates significant positive effects of time and future scenarios in the proportion of model predicting collapse, as expected. For the method variable, the indirect indicator have negative effects when compared with the direct indicator, but this is only significant for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of the collapse threshold for this indicator. 
+
+Random effect of unit is larger than the random effect of methods within units.
+
+```{r}
+#| echo: true
+summary(mod_collapse_both)
+```
+
+```{r}
+#| echo: true
+summary(aov(mod_collapse_both))
+```
+
+
+Confidence interval of the coefficients:
+```{r}
+#| echo: true
+confint(mod_collapse_both) 
+```
+
+
+## Magnitude of degradation
+
+We expect that both direct and indirect indicators will have similar performance in describing the magnitude of degradation and predicting collapse. We will use two generalised linear mixed models (GLMM) to test if there are significant differences in inferences based on these estimates of relative severity.
+
+For the combinations of units and models that did not reach a point of collapse, we wanted to compare the magnitude of degradation as indicated by the value of $\overline{\mathrm{RS}}$, $cED(0.30)$, $cED(0.50)$, $cED(0.80)$ and $AUC_{cED}$.
+
+
+
+```{r}
+#| label: read more input data 
+#| eval: true
+#| echo: false
+#| message: false
 rds_file <- here::here(target_dir,"totalmass-suitability-cED-data.rds")
 cED_model_data <- readRDS(rds_file)
 
@@ -67,31 +186,13 @@ model_data <- model_data %>%
     )
 ```
 
+We have to consider two issues with the data:
 
-```{r}
-#| echo: true
-
-ggplot(
-  model_data %>%
-  mutate(unit = factor(unit, unit_order))
-) +
-  geom_boxplot(
-    aes(x=RS, y=unit, color=method, group=interaction(unit,method))
-    ) +
-    facet_grid(~time) +
-    ylab("") +
-    xlab(expression(bar(RS))) +
-    theme(legend.position="top")
-```
-
-Ok, here are two problems: 
-  1. The bioclimatic suitability model perform better in the Andes than outside
-  2. For some reason Kilimanjaro is just completely different
-
-The first issue is understandable given the uneven sample sizes, and we might deal with this using additional variables, but for Kilimanjaro it only makes sense to remove it as an outlier. 
+  1. The bioclimatic suitability model perform better in the Andes than outside, probably as an effect of uneven sample sizes, so we use an additional variable for region, and
+  2. Kilimanjaro has a very poor fit, and we remove it as an outlier.
 
 
-## $\beta$ distribution GLMM of $\overline{\mathrm{RS}}$
+### $\beta$ distribution GLMM of $\overline{\mathrm{RS}}$
 
 Given that $\overline{\mathrm{RS}}$ represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\overline{\mathrm{RS}}$ for all observations where $\overline{\mathrm{RS}}<1$. Just as the binomial GLMM, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
@@ -154,19 +255,21 @@ bbmle::AICtab(
   )
 ```
 
-### Model diagnostics
+#### Model diagnostics
 
 Model diagnostics and residual plots show important deviations, there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units. Particularly, the residuals are lower for the observation with high predicted values.
 
 ```{r}
 #| echo: true
+#| fig-width: 8
+#| fight-height: 6
 mod_degradation_simres<-simulateResiduals(mod_degradation_dispandes)
 plot(mod_degradation_simres)
 ```
  
-### Outliers
+#### Outliers
 
-When we examine the outliers, these are mostly unexpected low values in the T.G.E. Kilimanjaro, but these are probably related to underlying anomalies in climatic conditions in this region. [In fact, when using the original formulafor the time series of the dynamic ice mass balance model there were some spurious effect of negative RS in this unit. We are using now the conditional formula of RS but there is still some unexpected structure in the residuals.]{.aside}
+When we examine the outliers, these are all related to the most optimistic scenario.
 
 ```{r}
 #| eval: true
@@ -174,7 +277,7 @@ When we examine the outliers, these are mostly unexpected low values in the T.G.
 mod_degradation_simres$fittedModel$frame %>% slice(outliers(mod_degradation_simres))
 ```
 
-### Model summary
+#### Model summary
 
 The summary of the model indicates significant positive effects of time and future scenarios in the magnitude of RS, as expected. For the method variable, the indirect indicator have significant negative effects when compared with the direct indicator, but the effect is larger for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of RS for this indicator. In general, variability between units is considerably larger than variability between methods, thus we can expect all three methods to reflect general patterns, but will require closer inspection to rule out interaction with the random effects of assessment units.
 
@@ -187,7 +290,7 @@ summary(mod_degradation_dispandes)
 ```
 
 
-## $\beta$ distribution GLMM of $\mathrm{cED}(x)$
+### $\beta$ distribution GLMM of $\mathrm{cED}(x)$
 
 Given that $\mathrm{cED}(x)$ represent a relative measure (proportion between 0 and 1), we can also use a beta distribution GLMM with logit link function with $y=\mathrm{cED}(x)$ for all observations where $\mathrm{cED}(x)<1$.
 
@@ -207,7 +310,7 @@ cED_model_data <-
 ```
 
 
-### $\mathrm{cED}(0.3)$
+#### $\mathrm{cED}(0.3)$
 
  Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
@@ -226,15 +329,19 @@ mod_cED_30_andes <-
 
 ```
 
-Model diagnostics and residual plots deviate strongly, thus we do not 
+Model diagnostics and residual plots deviate strongly, thus this model is not considered further.
 
 ```{r}
 #| echo: true
+#| fig-width: 8
+#| fight-height: 6
 mod_cED_simres<-simulateResiduals(mod_cED_30_andes)
 plot(mod_cED_simres)
 ```
 
-###  $\mathrm{cED}(0.5)$
+####  $\mathrm{cED}(0.5)$
+
+We fit similar models for $\mathrm{cED}(0.5)$:
 
 ```{r}
 #| echo: true
@@ -251,15 +358,19 @@ mod_cED_50_andes <-
 
 ```
 
-Model diagnostics and residual plots deviate strongly:
+But model diagnostics and residual plots deviate strongly again.
 
 ```{r}
 #| echo: true
+#| fig-width: 8
+#| fight-height: 6
 mod_cED_simres<-simulateResiduals(mod_cED_50_andes)
 plot(mod_cED_simres)
 ```
 
 ###  $\mathrm{cED}(0.8)$
+
+We fit similar models for $\mathrm{cED}(0.8)$:
 
 ```{r}
 #| echo: true
@@ -276,18 +387,20 @@ mod_cED_80_andes <-
 
 ```
 
-Model diagnostics and residual plots deviate strongly:
+But model diagnostics and residual plots deviate strongly again.
 
 ```{r}
 #| echo: true
+#| fig-width: 8
+#| fight-height: 6
 mod_cED_simres<-simulateResiduals(mod_cED_80_andes)
 plot(mod_cED_simres)
 ```
 
 
-## $\beta$ distribution GLMM of $\mathrm{AUC}_{\mathrm{cED}}$
+### $\beta$ distribution GLMM of $\mathrm{AUC}_{\mathrm{cED}}$
 
-Given that RS represent a relative measure (proportion between 0 and 1), we use a beta distribution GLMM with logit link function with $y=\mathrm{AUC}_{\mathrm{cED}}$ for all observations where $\mathrm{AUC}_{\mathrm{cED}}<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
+We also use a beta distribution GLMM with logit link function with $y=\mathrm{AUC}_{\mathrm{cED}}$ for all observations where $\mathrm{AUC}_{\mathrm{cED}}<1$. Just as the model above, we included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and nested effect of $\mathrm{method}$ within each assessment unit ($\mathrm{unit}$, 15 levels) and implied nested effects of model within $\mathrm{method}$.
 
 
 ```{r}
@@ -340,20 +453,22 @@ bbmle::AICtab(
   )
 ```
 
-### Model diagnostics
+#### Model diagnostics
 
 Model diagnostics and residual plots look more or less ok, but there is probably some effect of the unequal sample sizes between units, as we are excluding observations with $RS=1$ and these are not evenly distributed among the assessment units.
 
 ```{r}
 #| echo: true
+#| fig-width: 8
+#| fight-height: 6
 mod_cED_simres<-simulateResiduals(mod_degradation_dispandes)
 plot(mod_cED_simres)
 ```
 
 
-### Outliers
+#### Outliers
 
-Let's examine the outliers:
+When we examine the outliers, these are mostly related to the more optimistic scenario, or to regions with extreme risk of collapse.
 
 ```{r}
 #| eval: true
@@ -361,15 +476,24 @@ Let's examine the outliers:
 mod_cED_simres$fittedModel$frame %>% slice(outliers(mod_cED_simres))
 ```
 
-### Model summary
+#### Model summary
 
-The summary of the model indicates significant positive effects of time and future scenarios in the magnitude of RS, as expected. For the method variable, the indirect indicator have significant negative effects when compared with the direct indicator, but the effect is larger for the maximum accuracy threshold. We can interpret this to be the lower, more conservative or optimistic bound of RS for this indicator. In general, variability between units is considerably larger than variability between methods, thus we can expect all three methods to reflect general patterns, but will require closer inspection to rule out interaction with the random effects of assessment units.
+The summary of the model for $AUC_{cED}$ indicates significant positive effects of time and future scenarios in the magnitude of degradation, with similar patterns as those described for $\overline{\mathrm{RS}}$ above.
 
 ```{r}
 #| echo: true
 #| eval: true
-#| attr-output: "style='font-size: 0.8em'"
+
 options(width=120)
 summary(mod_degradation_dispandes)
 ```
 
+## R session info
+
+Analysis was conducted in R using following packages and versions:
+
+```{r}
+
+options(width=120)
+sessionInfo()
+```

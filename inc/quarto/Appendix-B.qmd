@@ -1,0 +1,113 @@
+---
+title: "Supplementary material"
+execute:
+  echo: false
+format: docx
+fig-dpi: 300
+editor_options: 
+  chunk_output_type: console
+---
+
+
+# Appendix B. Results for different assessmnet units
+
+
+```{r}
+#| label: libraries
+#| warning: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+library(purrr)
+library(readr)
+library(tidyr)
+library(forcats)
+
+```
+
+
+```{r}
+#| label: read functions and data
+#| warning: false
+#| message: false
+here::i_am("inc/R/21-ms-figs-3-and-4.R")
+source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
+
+target_dir <- "sandbox"
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
+results_file <- here::here(target_dir, "collapse-trajectory-data.rds")
+collapse_trajectories <- readRDS(results_file) %>%
+  mutate(state=factor(state, state_order))
+```
+
+
+```{r}
+
+results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
+RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
+  mutate(unit_name=str_replace_all(unit,"-"," ")) %>%
+  mutate(unit_name = factor(unit_name, unit_order) )
+
+varRSplot <- function(dts, grp) {
+  x <- dts %>%
+    filter(unit_name %in% grp, threshold %in% c("acc","ess")) %>%
+      mutate(timeframe=str_replace(timeframe,"-","\n"))
+  y <- x %>%
+    group_by(timeframe,threshold,pathway,modelname) %>%
+    summarise(mean_RS=mean(RS_cor), .groups ="drop")
+  z <- x %>% 
+    group_by(timeframe,threshold,pathway,modelname) %>%
+    group_modify(~summary_cED_w(.x$RS_cor)) %>%
+    inner_join(y, by=c("timeframe", "threshold","pathway","modelname"), 
+               relationship = "many-to-many") %>%
+    mutate(state = case_when(
+              mean_RS == 1 ~ "collapsed",
+              cED_80 >= 0.80 ~ "very wide",
+              cED_80 >= 0.50 ~ "very inter",
+              cED_50 >= 0.80 ~ "high wide",
+              cED_80 >= 0.30 ~ "very local",
+              cED_50 >= 0.50 ~ "high inter",
+              cED_30 >= 0.80 ~ "mod wide",
+              TRUE ~ "low")
+    )
+  #return(z)
+  ggplot(x ) +
+    geom_boxplot(aes(y = RS_cor, x = timeframe, fill = threshold),
+                 alpha = 0.5,
+                 outlier.shape = 19,
+                  outlier.size = 1,
+                  outlier.stroke = 0.35,
+                  outlier.alpha = 0.25) +
+    geom_point(data=y, 
+               aes(y = mean_RS, x = timeframe, pch = threshold),
+               position = position_nudge(x = if_else(y$threshold %in% "acc",-0.2,0.2)),
+               cex=2.35, colour="black", fill="peru") +
+    facet_grid(modelname ~ pathway ) +
+    theme(legend.position = "top") +
+    ylab(expression(paste("Decline in suitability [", RS[i] * phantom(n) * textstyle(or) * phantom(n) * bar(RS),"]"))) +
+    xlab("Future period") 
+}
+
+
+```
+
+```{r}
+#| fig-height: 7
+#| fig-width: 5
+#| results: asis
+
+fignr <- 1
+
+for(rr in unique(RS_results$unit_name)) {
+  cptn <- sprintf("\n\n**Figure B%s**.  Variability of $RS_i$ (box and whisker plot) and average RS (solid symbols) based on the decline in bioclimatic suitability for the assessment unit of %s.\n\n", fignr, rr)
+  cat(cptn)
+  pltrr <- varRSplot(RS_results,rr)
+  print(pltrr)
+  fignr <- fignr+1
+}
+```

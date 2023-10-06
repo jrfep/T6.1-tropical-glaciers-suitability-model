@@ -48,7 +48,7 @@ model_data <- readRDS(rds_file)
 ```
 
 
-To compare both indicators we used the $RS_{bcs}^{CT=acc}$, $RS_{bcs}^{CT=ppv}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
+To compare both indicators we used the $RS_{bcs}^{CT=acc}$ and $RS_{bcs}^{CT=ess}$ for the future periods paired with the $RS_{ice}^{CT=0}$ values for the years 2040, 2070 and 2100. We coded these three periods/years as variable $\mathrm{time}$ with values $0, 1, 2$ respectively. We use the respective total or mean $RS$ values to calculate the response variable and includes a categorical variable $\mathrm{method}$ with three levels indicating either the direct indicator ($ice$) or indirect indicator with two alternative thresholds ($acc$ or $ess$).
 
 ## Proportion of models predicting collapse
 

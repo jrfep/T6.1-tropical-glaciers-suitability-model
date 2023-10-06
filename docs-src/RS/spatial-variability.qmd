@@ -83,7 +83,7 @@ adjm1/rowSums(adjm1)
 ```
 
 ```{mermaid}
-%%| label: fig-goal-one
+%%| label: fig-traj
 %%| fig-cap: "Main trajectories towards collapse."
 %%| file: states-collapse.mmd
 ```

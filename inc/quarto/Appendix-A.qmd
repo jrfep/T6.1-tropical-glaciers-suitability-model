@@ -1,0 +1,230 @@
+---
+title: "Supplementary material"
+execute:
+  echo: false
+format: docx
+fig-dpi: 300
+editor_options: 
+  chunk_output_type: console
+---
+
+# Appendix A. Results for different Shared Socio-economic Pathways
+
+```{r}
+#| label: libraries
+#| warning: false
+#| message: false
+library(dplyr)
+library(ggplot2)
+library(units)
+library(stringr)
+library(ggrepel)
+library(purrr)
+library(readr)
+library(tidyr)
+library(forcats)
+
+```
+
+
+```{r}
+#| label: read functions and data
+#| warning: false
+#| message: false
+here::i_am("inc/R/21-ms-figs-3-and-4.R")
+source(here::here("inc","R","RS-functions.R"))
+source(here::here("inc","R","RS-shared.R"))
+
+target_dir <- "sandbox"
+rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
+totalmass_year_data <- readRDS(rds_file)
+results_file <- here::here(target_dir, "collapse-trajectory-data.rds")
+collapse_trajectories <- readRDS(results_file) %>%
+  mutate(state=factor(state, state_order))
+```
+```{r}
+pats <- c("Cordilleras" = "C", 
+          "Cordillera" = "C", 
+          "Sierra Nevada" = "SN",
+          " de "=" ",
+          "Volcanos" = "V",
+          "Norte" = "N",
+          "Orientales" = "O",
+          " y " = "/")
+
+RStotalDF <- function(dts,slc) {
+  x <- dts %>%
+    filter(
+      ssp %in% c(slc)
+    ) %>%
+    group_by(unit_name, model_nr) %>%
+    group_modify(~RSts(
+      .x$year,
+      .x$total_mass,
+      vmin=.x$min_mass,
+      vmax=.x$max_mass,
+      formula = "original"
+    )
+    ) 
+  x <- x %>%
+    pivot_longer(
+      cols = starts_with("RS"),
+      names_to = "type",
+      values_to = "RS"
+    )  %>%
+    group_by(unit_name,year) %>%
+    summarise(
+      RSmin = min(RS),
+      RSmax = max(RS),
+      RSmean = mean(RS),
+      .groups = "keep"
+    ) %>%
+    mutate(
+      unit_name = factor(
+        #unit_name, unit_order
+        str_replace_all(unit_name,pattern=pats), 
+        str_replace_all(unit_order,pattern=pats)
+      ),
+      collapsed = RSmin>0.99
+    ) 
+  return(x)
+}
+
+
+plotRStotal <- function(dts,slc) {
+  x <- RStotalDF(dts, slc)
+  ggplot(x) +
+    geom_ribbon(aes(x = year, ymin = RSmin, ymax = RSmax), 
+                alpha=.55, fill = okabe[2]) +
+    geom_line(aes(x = year, y = RSmean, colour = collapsed), 
+              alpha=.85, linewidth=1.2) +
+    facet_wrap(~ unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
+    scale_colour_discrete(type=okabe[c(5,6)]) +
+    theme(legend.position="none") +
+    ylab(expression(bar(RS))) +
+    xlab("Year") +
+    theme(
+      axis.text.x = element_text(angle = 47, vjust = 1, hjust = 1)) 
+
+  
+}
+```
+
+
+```{r}
+#| label: severity years function
+severityYears <- function(dts, slc){
+  x <- dts %>%
+    filter(
+      ssp %in% slc
+    ) %>%
+    group_by(unit_name, model_nr) %>%
+    group_modify(~RSts(
+      .x$year,
+      .x$total_mass,
+      vmin=.x$min_mass,
+      vmax=.x$max_mass,
+      formula = "original"
+    )) 
+  RSyears <- x %>%
+    mutate(
+      unit_name = factor(
+        #unit_name, unit_order
+        str_replace_all(unit_name,pattern=pats), 
+        str_replace_all(unit_order,pattern=pats)
+      ),
+      non_collapsed=if_else(RS<0.99,year,2000),
+      max_non_collapsed=if_else(RS_min<0.99,year,2000),
+      min_non_collapsed=if_else(RS_max<0.99,year,2000),
+      non_severe=if_else(RS<0.80,year,2000),
+      max_non_severe=if_else(RS_min<0.80,year,2000),
+      min_non_severe=if_else(RS_max<0.80,year,2000)
+    ) %>%
+    group_by(unit_name,model_nr) %>%
+    summarise(
+      med_collapse_year=max(non_collapsed,na.rm=T)+1,
+      max_collapse_year=max(max_non_collapsed,na.rm=T)+1,
+      min_collapse_year=max(min_non_collapsed,na.rm=T)+1,
+      med_severe_year=max(non_severe,na.rm=T)+1,
+      max_severe_year=max(max_non_severe,na.rm=T)+1,
+      min_severe_year=max(min_non_severe,na.rm=T)+1,
+      .groups = "keep")
+
+  severity_years <- RSyears %>% pivot_longer(ends_with("year"), values_to = "year",names_to=c("bound","variable"), names_pattern="(.*)_(.*)_year") %>% filter(year<2101)
+}
+ 
+
+ clrs <- c("severe"=okabe[4],"collapse"=okabe[1])
+
+severityYearsPlot <- function(dts, slc) {
+   severity_years <- severityYears(dts,slc)
+  
+   ggplot(severity_years) +
+    geom_histogram(aes(x=year,fill=variable, weight=50/3),binwidth=5) +
+    facet_wrap(~ unit_name, labeller=labeller(unit_name=label_wrap_gen())) +
+    scale_fill_manual(name="",
+                        values=clrs,
+                      labels=c(expression(bar(RS)>0.99),
+                               expression(bar(RS)>=0.80))) +
+    theme(legend.position="top") +
+    xlab("Year") + 
+    ylab("Nr. of replicates") +
+    theme(axis.text.x = element_text(angle = 47, vjust = 1, hjust = 1))
+
+ }
+
+plotTrajectories <- function(dts, slc, rgn) {
+  pl_data <- dts %>%
+    filter(
+      countdown>=0, 
+      unit_name %in% rgn,
+      scenario %in% slc) %>% 
+    mutate(unit_name=str_replace_all(unit_name,pattern=pats))
+  ggplot(pl_data) +
+    geom_point(aes(x=countdown,y=RS, colour=state), size=.65) +
+    scale_colour_manual(values=state_cat_okabe) +
+    scale_x_continuous(trans="reverse") +
+    xlab("Years before collapse") +
+    ylab(expression(bar(RS))) +
+    facet_wrap(~unit_name) +
+    theme(legend.position="top")
+  
+}
+
+
+```
+
+
+```{r}
+#| fig-height: 5
+#| fig-width: 5
+#| results: asis
+rgns <- c("Ruwenzori","Kilimanjaro","Mount Kenia","Puncak Jaya","Sierra Nevada de Santa Marta", "Cordillera de Merida", "Mexico")
+
+fignr <- 1
+for(rr in c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")) {
+  cptn <- sprintf("\n\n**Figure A%s**. Time series of averaged RS of the projected loss of ice mass, blue line and shaded ribbon represents smoothed median, maxima and minima calculated from median and median absolute deviation of 50 replicates from each of 12 GCM models under scenario %s.  Red segments indicate that all models predict collapse ($RS>0.99$).\n\n",fignr, rr)
+  cat(cptn)
+  pltrr <- plotRStotal(totalmass_year_data, rr) + 
+    labs(title = sprintf("Results for %s",rr))
+
+  print(pltrr)
+  fignr <- fignr+1
+
+  cptn <- sprintf("\n\n**Figure A%s**. Histogram of year when time series of average RS of loss of ice mass reaches thresholds of very high severity ($\\bar{\\textrm{RS}} \\geq 0.80$) and collapse ($\\bar{\\textrm{RS}} \\geq 0.99$) under scenario %s.\n\n", fignr, rr)
+  cat(cptn)
+  pltrr <- severityYearsPlot(totalmass_year_data, rr) + 
+    labs(title = sprintf("Results for %s",rr))
+  print(pltrr)
+  fignr <- fignr+1
+  
+  cptn <- sprintf("\n\n**Figure A%s**. Time series of average RS for six units indicating transition between states defined by thresholds of relative severity (moderate: 0.3, high: 0.5, very high: 0.8) and cumulative extent of decline (localised: 0.3, intermediate: 0.5 and widespread: 0.8) of loss of ice mass for scenario %s. Years are rescaled to represent time prior to collapse (year=0).\n\n", fignr, rr)
+  cat(cptn)
+  pltrr <- plotTrajectories(collapse_trajectories, rr , rgns)
+  print(pltrr)
+  fignr <- fignr+1
+}
+```
+
+
+
