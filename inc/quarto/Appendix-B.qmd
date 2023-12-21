@@ -1,15 +1,40 @@
 ---
-title: "Supplementary material"
+title: "Appendix B. Results for different assessmnet units"
+subtitle: "Supplement to: _Trade-offs in the use of direct and indirect indicators of ecosystem degradation for risk assessment_"
+author: 
+    - name: "José R. Ferrer-Paris"
+      email: j.ferrer@unsw.edu.au
+      orcid: 0000-0002-9554-3395
+      corresponding: true
+      affiliations:
+        - id: ces
+          name: Centre for Ecosystem Science, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: udash
+          name: UNSW Data Science Hub, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: iucn
+          name: IUCN Commission on Ecosystem Management
+          city: Gland
+          country: Switzerland 
+    - name: "David A. Keith"
+      orcid: 0000-0002-7627-4150
+      affiliations:
+        - ref: ces
+        - ref: iucn
+date: "2023-12-08"
 execute:
   echo: false
-format: docx
+format: 
+  elsevier-pdf:
+    journal:
+      name: Ecological Indicators
 fig-dpi: 300
 editor_options: 
   chunk_output_type: console
 ---
-
-
-# Appendix B. Results for different assessmnet units
 
 
 ```{r}
@@ -104,7 +129,7 @@ varRSplot <- function(dts, grp) {
 fignr <- 1
 
 for(rr in unique(RS_results$unit_name)) {
-  cptn <- sprintf("\n\n**Figure B%s**.  Variability of $RS_i$ (box and whisker plot) and average RS (solid symbols) based on the decline in bioclimatic suitability for the assessment unit of %s.\n\n", fignr, rr)
+  cptn <- sprintf("\n{{< pagebreak >}}\n**Figure B%s**.  Variability of $RS_i$ (box and whisker plot) and average RS (solid symbols) based on the decline in bioclimatic suitability with two thresholds for the ecosystem type  ***Tropical glacier ecoystem of %s*** for five Global Circulation Models (rows) and three different Shared Socioeconomic Pathways (columns).\n\n", fignr, rr)
   cat(cptn)
   pltrr <- varRSplot(RS_results,rr)
   print(pltrr)

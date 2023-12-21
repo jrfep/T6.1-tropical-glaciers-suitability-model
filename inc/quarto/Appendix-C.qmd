@@ -1,18 +1,46 @@
 ---
-title: "Supplementary material"
+title: "Appendix C. Full GLMM diagnostics and results"
+subtitle: "Supplement to: _Trade-offs in the use of direct and indirect indicators of ecosystem degradation for risk assessment_"
+author: 
+    - name: "José R. Ferrer-Paris"
+      email: j.ferrer@unsw.edu.au
+      orcid: 0000-0002-9554-3395
+      corresponding: true
+      affiliations:
+        - id: ces
+          name: Centre for Ecosystem Science, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: udash
+          name: UNSW Data Science Hub, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: iucn
+          name: IUCN Commission on Ecosystem Management
+          city: Gland
+          country: Switzerland 
+    - name: "David A. Keith"
+      orcid: 0000-0002-7627-4150
+      affiliations:
+        - ref: ces
+        - ref: iucn
+date: "2023-12-08"
 execute:
   echo: true
-format: docx
+format: 
+  elsevier-pdf:
+    journal:
+      name: Ecological Indicators
 fig-dpi: 300
 editor_options: 
   chunk_output_type: console
+bibliography: 
+  - appendix-references.bib
 ---
-
-# Appendix C. Full GLMM diagnostics and results 
 
 ## Prediction of collapse
 
-Over the time frame of 100 years most of the assessment units are predicted to reach collapse by complete loss of ice mass. Since we are using a direct indicator of an ecosystem property (icy substrate) and we are predicting total ice mass for each unit, complete loss of ice is equivalent to a value of $RS_{ice}^{CT=0} = 1$. In the case of an indirect indicator such as bioclimatic suitability, we have more uncertainty in the real value of collapse, and thus use alternative collapse threshold to capture plausible ranges. 
+Over the time frame of 100 years most of the tropical glacier ecosystem types are predicted to reach collapse by complete loss of ice mass. Since we are using a direct indicator of an ecosystem property (icy substrate) and we are predicting total ice mass for each unit, complete loss of ice is equivalent to a value of $RS_{ice}^{CT=0} = 1$. In the case of an indirect indicator such as bioclimatic suitability, we have more uncertainty in the real value of collapse, and thus use alternative collapse threshold to capture plausible ranges. 
 
 We expect that both direct and indirect indicators will have similar performance in describing the magnitude of degradation and predicting collapse. We will use two generalised linear mixed models (GLMM) to test if there are significant differences in inferences based on these estimates of relative severity.
 
@@ -46,10 +74,10 @@ source(here::here("inc","R","RS-shared.R"))
 #| message: false
 target_dir <- "sandbox"
 rds_file <- here::here(target_dir,"massbalance-totalmass-all-groups.rds")
-totalmass_year_data <- readRDS(rds_file)
+totalmass_year_data <- readRDS(rds_file) # five scenarios
 results_file <- here::here(target_dir, "relative-severity-degradation-suitability-all-tropical-glaciers.csv")
 RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
-  mutate(unit_name=str_replace_all(unit," ","-"))
+  mutate(unit_name=str_replace_all(unit," ","-")) ## three scenarios
 rds_file <- here::here(target_dir,"totalmass-suitability-glmm-data.rds")
 model_data <- readRDS(rds_file)
 
@@ -85,7 +113,9 @@ model_data %>%
 
 ## Binomial GLMM of predicted collapse
 
-We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and rabdom effects of assessment unit ($\mathrm{unit}$, 15 levels). [Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.]{.aside}
+We used a binomial GLMM with logit link function, using a response variable with values $y=1$ when $RS=1$ and $y=0$ otherwise. We included fixed effects of scenarios ($\mathrm{scenario}$ with three levels) and $\mathrm{time}$, and rabdom effects of assessment unit ($\mathrm{unit}$, 15 levels). [^1]
+
+[^1]: Each observation corresponds to the prediction of one global circulation model, but since models are not identified in the ice mass balance model, we threat the different models as anonymous replicates, and this implies that the effect of the model is nested within $\mathrm{method}$.
 
 The variable $\mathrm{method}$ could be interpreted as a fixed effect and/or as a random effect *grouping* variable. Although it might be interesting to explore its interaction with unit in increasing the variability of the response [@Barr_2013_GLMM_effects], our primary question is whether there are significant systematic differences between the methods. So we decide to use this variable as a fixed effect and keep the model simple for interpretability:
 
@@ -111,7 +141,7 @@ Model diagnostics and residual plots look good for this model specification (sma
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_collapse_simres<-simulateResiduals(mod_collapse_both)
+mod_collapse_simres <- simulateResiduals(mod_collapse_both)
 plot(mod_collapse_simres)
 ```
  
@@ -150,6 +180,48 @@ Confidence interval of the coefficients:
 confint(mod_collapse_both) 
 ```
 
+### Rank order of units
+
+The fitted model suggest a general correlation of values between methods, but this does not mean that the rank order of predicted values is maintained between units. Here we calculate the mean predicted value for each combination of unit, method and scenario:
+
+```{r}
+model_data$pred_collapse <- predict(mod_collapse_both)
+
+pred_collapse_values <- model_data %>% 
+  group_by(unit, method, scenario) %>% 
+  summarise(
+    pcollapse = mean(pred_collapse),
+    .groups="drop") %>% 
+  pivot_wider(
+    names_from = c(scenario, method),
+    values_from = pcollapse) %>%
+  arrange(desc(`SSP1-2.6_ice`)) 
+```
+
+Now we calculate the rank for each column of this table, and calculate the range of ranks for the direct indicator `ice` and the indirect indicator (suitability) for all three scenarios of socio-economic pathways:
+
+```{r}
+pred_collapse_ranks <- pred_collapse_values %>%
+  apply(2,rank)
+
+pred_collapse_values$ice_rank <- 
+  apply(pred_collapse_ranks[,(2:4)], 1,
+    function(x) paste(unique(range(x)), collapse = "—"))
+pred_collapse_values$suit_rank <- 
+  apply(pred_collapse_ranks[,-(1:4)], 1,
+    function(x) paste(unique(range(x)), collapse = "—"))
+
+```
+
+This table show the results:
+
+```{r}
+pred_collapse_values %>% 
+  select(unit, ice_rank, suit_rank) %>% 
+  knitr::kable()
+```
+
+The first four units have overlapping ranks, but Kilimanjaro and Mexico have lower ranks and the cordilleras of Colombia and North Peru are ranked higher by the indicator based on suitability. This discrepancies are in line with the different number of realisations reaching collapse in each unit.
 
 ## Magnitude of degradation
 
@@ -164,7 +236,7 @@ For the combinations of units and models that did not reach a point of collapse,
 #| eval: true
 #| echo: false
 #| message: false
-rds_file <- here::here(target_dir,"totalmass-suitability-cED-data.rds")
+rds_file <- here::here(target_dir, "totalmass-suitability-cED-data.rds")
 cED_model_data <- readRDS(rds_file)
 
 ```
@@ -215,29 +287,29 @@ We fit the full model, and alternative versions with modelled dispersion paramet
 mod_degradation_both <- 
   glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_andes <- 
   glmmTMB(RS ~ time + scenario + method + (1|unit/method) + (1|method:andes), 
-        dispformula=~method, 
+        dispformula = ~ method, 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_disp <- 
   glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method, 
+        dispformula = ~ method, 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_dispandes <- 
   glmmTMB(RS ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method+andes, 
+        dispformula = ~ method + andes, 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 
 ```
@@ -263,7 +335,7 @@ Model diagnostics and residual plots show important deviations, there is probabl
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_degradation_simres<-simulateResiduals(mod_degradation_dispandes)
+mod_degradation_simres <- simulateResiduals(mod_degradation_dispandes)
 plot(mod_degradation_simres)
 ```
  
@@ -274,7 +346,8 @@ When we examine the outliers, these are all related to the most optimistic scena
 ```{r}
 #| eval: true
 #| echo: true
-mod_degradation_simres$fittedModel$frame %>% slice(outliers(mod_degradation_simres))
+mod_degradation_simres$fittedModel$frame %>% 
+ slice(outliers(mod_degradation_simres))
 ```
 
 #### Model summary
@@ -289,6 +362,49 @@ options(width=120)
 summary(mod_degradation_dispandes)
 ```
 
+
+#### Rank order of units
+
+The fitted model suggest a general correlation of values between methods, but this does not mean that the rank order of predicted values is maintained between units. Here we calculate the mean predicted value for each combination of unit, method and scenario:
+
+```{r}
+model_data_ss$pred_beta <- predict(mod_degradation_dispandes)
+
+pred_degradation_values <- model_data_ss %>% 
+  group_by(unit, method,scenario) %>% 
+  summarise(
+    pdeg = mean(pred_beta), 
+    .groups="drop") %>% 
+  pivot_wider(
+    names_from = c(scenario, method),
+    values_from = pdeg) %>%
+  arrange(`SSP1-2.6_ice`)
+```
+
+Now we calculate the rank for each column of this table, and calculate the range of ranks for the direct indicator `ice` and the indirect indicator (suitability) for all three scenarios of socio-economic pathways:
+
+```{r}
+pred_degradation_ranks <- pred_degradation_values %>%
+  apply(2,rank) %>% data.frame()
+
+pred_degradation_values$ice_rank <- 
+  apply(pred_degradation_ranks[,(2:4)], 1,
+    function(x) paste(unique(range(x)),collapse="—"))
+pred_degradation_values$suit_rank <- 
+  apply(pred_degradation_ranks[,-(1:4)], 1,
+    function(x) paste(unique(range(x)),collapse="—"))
+
+```
+
+This table show the results:
+
+```{r}
+pred_degradation_values %>% 
+  select(unit, ice_rank, suit_rank) %>% 
+  knitr::kable()
+```
+
+Predictions are very variable for the indirect indicators, generating very wide ranges and strong discrepancies in rank order. 
 
 ### $\beta$ distribution GLMM of $\mathrm{cED}(x)$
 
@@ -322,10 +438,10 @@ model_data_ss <- cED_model_data %>%
 
 mod_cED_30_andes <- 
   glmmTMB(cED_30 ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method+andes, 
+        dispformula = ~ method + andes, 
     data = model_data_ss, 
     family = beta_family,
-    REML=FALSE)
+    REML = FALSE)
 
 ```
 
@@ -335,7 +451,7 @@ Model diagnostics and residual plots deviate strongly, thus this model is not co
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_cED_simres<-simulateResiduals(mod_cED_30_andes)
+mod_cED_simres <- simulateResiduals(mod_cED_30_andes)
 plot(mod_cED_simres)
 ```
 
@@ -351,10 +467,10 @@ model_data_ss <- cED_model_data %>%
 
 mod_cED_50_andes <- 
   glmmTMB(cED_50 ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method+andes,  
+        dispformula = ~ method + andes,  
     data = model_data_ss, 
     family = beta_family,
-    REML=FALSE)
+    REML = FALSE)
 
 ```
 
@@ -364,7 +480,7 @@ But model diagnostics and residual plots deviate strongly again.
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_cED_simres<-simulateResiduals(mod_cED_50_andes)
+mod_cED_simres <- simulateResiduals(mod_cED_50_andes)
 plot(mod_cED_simres)
 ```
 
@@ -380,10 +496,10 @@ model_data_ss <- cED_model_data %>%
 
 mod_cED_80_andes <- 
   glmmTMB(cED_80 ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method+andes, 
+        dispformula = ~ method + andes,  
         data = model_data_ss, 
     family = beta_family,
-    REML=FALSE)
+    REML = FALSE)
 
 ```
 
@@ -393,7 +509,7 @@ But model diagnostics and residual plots deviate strongly again.
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_cED_simres<-simulateResiduals(mod_cED_80_andes)
+mod_cED_simres <- simulateResiduals(mod_cED_80_andes)
 plot(mod_cED_simres)
 ```
 
@@ -413,29 +529,29 @@ model_data_ss <- cED_model_data %>%
 mod_degradation_both <- 
   glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_andes <- 
   glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method) + (1|method:andes), 
-        dispformula=~method, 
+        dispformula = ~ method, 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_disp <- 
   glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method, 
+        dispformula = ~ method, 
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 mod_degradation_dispandes <- 
   glmmTMB(AUC_cED ~ time + scenario + method + (1|unit/method), 
-        dispformula=~method+andes, 
+        dispformula = ~ method + andes,  
         data = model_data_ss, 
-        family=beta_family,
-        REML=FALSE)
+        family = beta_family,
+        REML = FALSE)
 
 
 ```
@@ -461,7 +577,7 @@ Model diagnostics and residual plots look more or less ok, but there is probably
 #| echo: true
 #| fig-width: 8
 #| fight-height: 6
-mod_cED_simres<-simulateResiduals(mod_degradation_dispandes)
+mod_cED_simres <- simulateResiduals(mod_degradation_dispandes)
 plot(mod_cED_simres)
 ```
 
@@ -473,7 +589,8 @@ When we examine the outliers, these are mostly related to the more optimistic sc
 ```{r}
 #| eval: true
 #| echo: true
-mod_cED_simres$fittedModel$frame %>% slice(outliers(mod_cED_simres))
+mod_cED_simres$fittedModel$frame %>% 
+  slice(outliers(mod_cED_simres))
 ```
 
 #### Model summary
@@ -493,7 +610,6 @@ summary(mod_degradation_dispandes)
 Analysis was conducted in R using following packages and versions:
 
 ```{r}
-
 options(width=120)
 sessionInfo()
 ```

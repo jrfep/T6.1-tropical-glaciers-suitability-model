@@ -1,14 +1,40 @@
 ---
-title: "Supplementary material"
+title: "Appendix A. Results for different Shared Socio-economic Pathways"
+subtitle: "Supplement to: _Trade-offs in the use of direct and indirect indicators of ecosystem degradation for risk assessment_"
+author: 
+    - name: "José R. Ferrer-Paris"
+      email: j.ferrer@unsw.edu.au
+      orcid: 0000-0002-9554-3395
+      corresponding: true
+      affiliations:
+        - id: ces
+          name: Centre for Ecosystem Science, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: udash
+          name: UNSW Data Science Hub, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: iucn
+          name: IUCN Commission on Ecosystem Management
+          city: Gland
+          country: Switzerland 
+    - name: "David A. Keith"
+      orcid: 0000-0002-7627-4150
+      affiliations:
+        - ref: ces
+        - ref: iucn
+date: "2023-12-08"
 execute:
   echo: false
-format: docx
+format: 
+  elsevier-pdf:
+    journal:
+      name: Ecological Indicators
 fig-dpi: 300
 editor_options: 
   chunk_output_type: console
 ---
-
-# Appendix A. Results for different Shared Socio-economic Pathways
 
 ```{r}
 #| label: libraries
@@ -203,7 +229,7 @@ rgns <- c("Ruwenzori","Kilimanjaro","Mount Kenia","Puncak Jaya","Sierra Nevada d
 
 fignr <- 1
 for(rr in c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")) {
-  cptn <- sprintf("\n\n**Figure A%s**. Time series of averaged RS of the projected loss of ice mass, blue line and shaded ribbon represents smoothed median, maxima and minima calculated from median and median absolute deviation of 50 replicates from each of 12 GCM models under scenario %s.  Red segments indicate that all models predict collapse ($RS>0.99$).\n\n",fignr, rr)
+  cptn <- sprintf("\n{{< pagebreak >}}\n**Figure A%s**. Time series of averaged relative severity (RS) of the projected loss of ice mass for 12 tropical glacier ecosystem types, blue line and shaded ribbon represents smoothed median, maxima and minima calculated from median and median absolute deviation of 50 replicates from each of 12 GCM models under shared socio-economic pathway %s.  Red segments indicate that all models predict collapse ($RS>0.99$).\n\n",fignr, rr)
   cat(cptn)
   pltrr <- plotRStotal(totalmass_year_data, rr) + 
     labs(title = sprintf("Results for %s",rr))
@@ -211,14 +237,14 @@ for(rr in c("SSP1-2.6", "SSP3-7.0", "SSP5-8.5")) {
   print(pltrr)
   fignr <- fignr+1
 
-  cptn <- sprintf("\n\n**Figure A%s**. Histogram of year when time series of average RS of loss of ice mass reaches thresholds of very high severity ($\\bar{\\textrm{RS}} \\geq 0.80$) and collapse ($\\bar{\\textrm{RS}} \\geq 0.99$) under scenario %s.\n\n", fignr, rr)
+  cptn <- sprintf("\n{{< pagebreak >}}\n**Figure A%s**. Histogram of year when time series of average relative severity (RS) of loss of ice mass reaches thresholds of very high severity ($\\bar{\\textrm{RS}} \\geq 0.80$) and collapse ($\\bar{\\textrm{RS}} \\geq 0.99$) under shared socio-economic pathway %s for 12 tropical glacier ecosystem types.\n\n", fignr, rr)
   cat(cptn)
   pltrr <- severityYearsPlot(totalmass_year_data, rr) + 
     labs(title = sprintf("Results for %s",rr))
   print(pltrr)
   fignr <- fignr+1
   
-  cptn <- sprintf("\n\n**Figure A%s**. Time series of average RS for six units indicating transition between states defined by thresholds of relative severity (moderate: 0.3, high: 0.5, very high: 0.8) and cumulative extent of decline (localised: 0.3, intermediate: 0.5 and widespread: 0.8) of loss of ice mass for scenario %s. Years are rescaled to represent time prior to collapse (year=0).\n\n", fignr, rr)
+  cptn <- sprintf("\n{{< pagebreak >}}\n**Figure A%s**. Time series of average relative severity (RS) for six tropical glacier ecosystem types at risk of collapse and 12 GCMs, each point is a time step (1 year) with colours indicating transition between states defined by thresholds of relative severity (moderate: 0.3, high: 0.5, very high: 0.8) and cumulative extent of decline (localised: 0.3, intermediate: 0.5 and widespread: 0.8) of loss of ice mass for shared socio-economic pathway %s. Years are rescaled to represent time prior to collapse (year=0).\n\n", fignr, rr)
   cat(cptn)
   pltrr <- plotTrajectories(collapse_trajectories, rr , rgns)
   print(pltrr)
