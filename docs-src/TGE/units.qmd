@@ -99,6 +99,16 @@ leaflet() %>%
   )  %>% hideGroup("Spatial buffer")
 ```
 
+## latitudinal distribution 
+
+```{r}
+grp_outlines <- trop_glaz %>% group_by(group_name) %>% summarise(geom=st_union(geom)) 
+st_bbox(grp_outlines[c(1:5,7:9,11:13,15),])
+st_bbox(grp_outlines[-c(1:5,7:9,11:13,15),])
+```
+
+
+
 ## Characteristic biota
 
 Tropical Glacier Ecosystems have five main ecological zones [@Hotaling_2017_glacier_ecosystem]: the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields. 
