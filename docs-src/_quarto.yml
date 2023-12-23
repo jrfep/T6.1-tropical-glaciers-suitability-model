@@ -1,5 +1,6 @@
 project:
   type: book
+  output-dir: ../docs
 book:
   author: "José R. Ferrer-Paris"
   title: "Environmental degradation and collapse of Tropical Glacier Ecosystems"
