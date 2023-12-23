@@ -5,9 +5,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-Tropical Glacier Ecosystems are cryogenic ecosystems in tropical environments where the main substrate is formed by ice accumulated over several years and provides different habitats to microbiological communities and other meso- and macro-biota.
+We define tropical glacier ecosystems as cryogenic ecosystems in tropical environments where a dynamic icy substrate, melted water and exposed rock and soil host diverse microbial communities, including extremophiles, and provides habitat for the limited meio- and macro-biota [@FerrerParis_2023;@Hotaling2020;@Hotaling_2017_glacier_ecosystem].  This substrate is dynamic, receiving inputs from compaction of snowfall (accumulation) and outputs via melting and sublimation and occasional mass movement (ablation). Local topography modulates the interaction and movement of the ice mass with the rocky substrate.
 
-Tropical Glacier Ecosystems are originally formed by processes of snow and ice accumulation and ablation over geological time frames. However the characteristic microbiota can persist in the ice substrate even if processes of ice accumulation have ceased or the overall mass balance of ice is negative.
+
 
 ```{r}
 #| warning: false
@@ -49,11 +49,12 @@ IUCN Global Ecosystem Typology
 - Level 1: Terrestrial Realm
   - Level 2: T6 Polar/Alpine (cryogenic) functional biome
     - Level 3: T6.1 Ice sheets, glaciers and perennial snowfields
-      - Subgroup: Tropical Glacier Ecosystems
+      - Subgroup: Tropical glacier ecosystems (TGE)
       - Level 4: 12 units as follows:
 
 ```{r}
 #| label: name of units
+#| results: asis
 
 exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
 
@@ -63,18 +64,16 @@ trop_glaz_names <- trop_glaz %>%
   arrange(group_name) %>%
   pull(group_name) %>%
   unique 
-sprintf("T.G.E. %s", trop_glaz_names)
+cat(sprintf("        - TGE of %s\n", trop_glaz_names))
 ```
 
-We exclude transitional units
+We excluded transitional units (Rock glaciers, or temperate glaciers).
 
 ## Spatial distribution
 
-We use glacier outlines
-
-The Tropical Glacier Ecosystem are found in the highest tropical mountains above the snowline. 
-
-We use available global and regional data on glacier outlines and point records to estimate the global distribution of Tropical Glacier Ecosystems. In the Randolph Glacier Inventory version 6.0 [@RGI_2017_glacier_inventory] all tropical glaciers are includes in region ... Lower Latitudes. We compared these records with other global sources [] and include additional point records from national glacier inventories of Argentina and Chile to increase the coverage of these regions [@fig-map]. 
+ We define the tropics notionally as the region between latitudes of 20 N and 20 S, and include all known glaciers from the highest summits of Puncak Jaya in Indonesia; Mount Kilimanjaro, Mount Kenya and the Rwenzori Mountains in East Africa;  the Eje Volcánico Transversal of México; and tropical Andes glaciers groups of the inner tropics (including the Sierra Nevada de Santa Marta), wet outer tropics and dry outer tropics [@Veettil2019;@Sagredo_2012_climatology_andes]. 
+ 
+We use available global and regional data on glacier outlines and point records to estimate the global distribution of Tropical Glacier Ecosystems. In the Randolph Glacier Inventory version 6.0 [@RGI_2017_glacier_inventory] all tropical glaciers are includes in region *Lower Latitudes*. We compared these records with other global sources [@Raup2007;@GLIMS_database] and include additional point records from national glacier inventories [@INAIGEM2018;@Barcaza2017;@Zalazar2020] to increase the coverage in some regions [@fig-map]. 
 
 ```{r}
 #| label: fig-map
@@ -99,24 +98,31 @@ leaflet() %>%
   )  %>% hideGroup("Spatial buffer")
 ```
 
-## latitudinal distribution 
 
-```{r}
+```{r latitudinal distribution}
+#| eval: false
 grp_outlines <- trop_glaz %>% group_by(group_name) %>% summarise(geom=st_union(geom)) 
 st_bbox(grp_outlines[c(1:5,7:9,11:13,15),])
 st_bbox(grp_outlines[-c(1:5,7:9,11:13,15),])
 ```
 
+We divided Tropical glacier ecosystems into 12 regional units considering previous classifications [@Sagredo_2012_climatology_andes], geographical proximity and similarity in bioclimatic conditions at different scales. These boundaries are provisional, since our knowledge about the biota and biogeographical relationships between glaciers in different tropical regions of the world is incomplete  [@Dial2020;@Hotaling_2017_glacier_ecosystem;@Kuhn2011].
 
+@Sagredo_2012_climatology_andes suggested a subdivision of tropical glaciers into four classes with different climatic profiles and a distinct separation from subtropical glaciers in the Andes. Their analysis excluded glaciers in tropical and subtropical latitudes of the southern hemisphere (between 20 and 30 degrees South) that could be considered transitional in terms of climate but are mostly classified as rock glaciers or permanent snowfields in national inventories. Based on ecological zonation and ice dynamics in these transitional regions, which differs from tropical regions, we suggest they are best addressed in a separate assessment.
 
-## Characteristic biota
+## Conceptual ecosystem model
 
-Tropical Glacier Ecosystems have five main ecological zones [@Hotaling_2017_glacier_ecosystem]: the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields. 
-
-## Definition of collapsed states
+Here we consider a simplified conceptual ecosystem model for tropical glacier ecosystems including only the variables directly related to this analysis [See @FerrerParis_2023 for details]. The different ecosystem compartments [the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields; @Hotaling_2017_glacier_ecosystem] are simplified here as a dashed box on the bottom containing one main abiotic substrate (blue hexagon) and the key biotic component (green hexagon). The main threat (red box) is climate change, it influences three climatic features (blue hexagons) that maintain abiotic processes of ice dynamic (blue ellipses). The grey boxes represent one indirect and one direct indicators of the key abiotic processes.
 
 ```{r out.height="400px"}
 #| label: fig-CEM
 #| fig-cap: Simplified Conceptual Ecosystem Model for Tropical Glacier Ecosystems
 DiagrammeR::grViz("CEM-all-TGE.gv")
 ```
+
+
+## Definition of collapsed states
+
+Tropical glaciers are originally formed by processes of snow and ice accumulation and ablation over geological time frames. However the characteristic microbiota can persist in the ice substrate even if processes of ice accumulation have ceased or the overall mass balance of ice is negative.
+
+Thus we defined a glacier as collapsed when the ice substrate disappears completely (ice mass equals zero kg).

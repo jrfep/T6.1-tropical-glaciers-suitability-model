@@ -49,6 +49,7 @@ book:
       - icon: twitter
         href: https://twitter.com/neomapas
 bibliography: 
+  - bibtex/TGE-references.bib
   - bibtex/references.bib
   - bibtex/glacier-assessments.bib
 csl: bibtex/ecological-indicators.csl
