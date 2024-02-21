@@ -13,8 +13,9 @@ These repositories are part of a larger project. Please refer to the following p
 - [Global RLE assessment of Tropical Glacier Ecosystems](https://osf.io/792qb/)
 - [Data for the global RLE assessment of Tropical Glacier Ecosystems](https://osf.io/432sb/)
 
-## Steps
+## Steps {#sec-workflow}
 
+See @sec-workflow
 
 ### Consolidate input data
 

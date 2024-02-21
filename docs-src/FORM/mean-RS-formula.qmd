@@ -36,6 +36,7 @@ results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
+source(here::here("inc","R","html-css-shared.R"))
 ```
 
 
@@ -60,10 +61,6 @@ d <- RS_results %>%
     modelname %in% "mri-esm2-0"
     ) 
 
-tbl_caption <- tags$caption(
-  tags$b("Mean RS values for two assessment units."),
-  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp370) for three future time periods and using an equal sensitivity and specificity threshold for each unit. Observations with $MD=0$ have been removed before calculation with the original formula"))
-)
 
 tab <- d %>%
   group_by( unit,timeframe) %>%
@@ -76,13 +73,14 @@ tab <- d %>%
     max_RS=max(if_else(is.finite(RS),RS,as.numeric(NA)),na.rm=T),
     mean_RS_cor=mean(RS_cor,na.rm=T)) 
 
-###Create HTML formatting code for header and overall table HTML container
-#create header style HTML code
-# use colors from the flatly theme?
-header.style <- "th { font-family: 'Arial'; font-weight: bold; color: white; background-color: #18bc9c;}"
-cell.style <- "text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white"
-hcell.style <- "text-align: center; border-width: 1px; border-style: solid; border-color: white; font-size:8px; background-color: #18bc9c;"
 
+
+
+
+tbl_caption <- tags$caption(
+  tags$b("Mean RS values for two assessment units."),
+  tags$p(sprintf("The calculation is based on predicted future bioclimatic suitability from one global circulation model (mri-esm2-0) and scenario (ssp370) for three future time periods and using an equal sensitivity and specificity threshold for each unit. Observations with $MD=0$ have been removed before calculation with the original formula"))
+)
 #pull header names from the table
 header.names <- c("Assessment Unit", "Period", "min(RS[i])", "mean RS", "max(RS[i])", "mean RS")
 # The container parameter allows us to design the header of the table using CSS

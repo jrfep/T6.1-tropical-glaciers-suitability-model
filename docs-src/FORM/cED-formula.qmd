@@ -1,9 +1,10 @@
 ---
-title: "The cED formula"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+# The cED formula {#sec-EDform}
 
 We can use the average RS to describe the overall magnitude of decline, but the values of relative severity vary across any sample of sites or locations. 
 
@@ -44,6 +45,7 @@ results_file <- here::here(target_dir, "massbalance-model-data-all-groups.rds")
 massbalance_results <- readRDS(results_file)
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
+source(here::here("inc","R","html-css-shared.R"))
 ```
 
 
@@ -84,12 +86,34 @@ RSvals <- mass_su %>%
     left_join(wgs, by = c( "RGIId")) 
 
 d <- RSvals %>%
-    filter(year %in% 2040)
-d %>% select(RS, initial_mass, w) 
- #%>%
- #   arrange(RS) %>%
- #   ungroup %>% select(w) %>%
- #   map(~cumsum(.x))
+    filter(year %in% 2040) %>%
+    mutate(initial_mass = initial_mass/1e6)
+
+    #pull header names from the table
+header.names <- c("RGI id", "RS", "Initial mass (Mt)", "weigth")
+# The container parameter allows us to design the header of the table using CSS
+my.container <- withTags(table(
+  style(type = "text/css", header.style),
+    thead(
+      tr(
+      lapply(header.names, th, style = cell.style)
+      )
+    )
+  )
+)
+
+d %>% select(RGIId, RS, initial_mass, w) %>%
+  datatable(
+    rownames = FALSE,
+    container=my.container,
+    colnames = ,
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(2, 'asc')))
+    ) %>%
+      formatRound(2:4,digits=3)
+
 ```
 
 Sites with high RS but low initial ice mass will contribute less to the average RS, but nonetheless indicate localised high rates of degradation. 

@@ -22,10 +22,13 @@ library(purrr)
 library(readr)
 library(tidyr)
 library(forcats)
+library(DT)
+library(htmltools)
 
 here::i_am("docs-src/RS/time-series.qmd")
 source(here::here("inc","R","RS-functions.R"))
 source(here::here("inc","R","RS-shared.R"))
+source(here::here("inc","R","html-css-shared.R"))
 ```
 
 ```{r}
@@ -43,11 +46,9 @@ RS_results <- read_csv(results_file, show_col_types = FALSE) %>%
 
 ## Loss of ice mass
 
-The data from the Dynamic Ice Mass Balance model is provided in one year intervals, and we have summarise the data to provide the total value of ice mass of each assessment unit for each year.
+The data from the Dynamic Ice Mass Balance model is available in one year intervals, and we have summarised the data to provide the total value of ice mass of each assessment unit for each year.
 
-We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of $0 kg$. [We denote this estimate of relative severity as $RS_{ice}^{CT=0}$.]{.aside} Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula.
-
-An example is given in @fig-rs-ice-example-kili.
+We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of $0 \mathrm{kg}$. [We denote this estimate of relative severity as $RS_{ice}^{CT=0}$.]{.aside} Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula. An example of these calculations is given in @fig-rs-ice-example-kili.
 
 ### Average RS time series
 
@@ -99,7 +100,15 @@ ggplot(RStotal) +
   
 ```
 
+### Milestones of degradation and collapse
+
+The curves indicate an increase of RS, and in some units the maximum value of 1 is attained, indicating ecosystem collapse (red sections of the curve). Certain thresholds could be used to indicate increasing levels of degradation before collapse. For example, a threshold of 0.8 (80% of the maximum value of RS) could be indictive of widespread and very high degradation. The use of these thresholds could be informative to determine the expected tempo of the process of ecosystem collapse.
+
+
 ```{r}
+#| label: fig-thresholds-ice-all-units
+#| fig-cap: "Histogram of years when thresholds of very high degradation and collapse are reached. "
+#| eval: true
 RStotal <- totalmass_year_data %>%
   filter(
     ssp %in% c("SSP2-4.5")
@@ -144,19 +153,45 @@ ggplot(severity_years) +
   xlab("Year") + ylab("Nr. of replicates")
 ```
 
+For example if we compare the years when a model predicts very high degradation and the year when it predicts collapse [@fig-thresholds-ice-all-units], we can see that the gap between both milestones can be as short as 15 years (for Puncak Jaya and Mount Kenia) or as long as half a century (for Mexico), see table @tbl-gap-thresholds. 
+
 ```{r}
+#| label: tbl-gap-thresholds
+#| tbl-cap: "Median gap between the year when very high degradation is reached and the year of collapse. Based on the values shown in @fig-thresholds-ice-all-units."
+
+#pull header names from the table
+header.names <- c("Assessment unit", "Nr. of Models indicating collapse", "Gap in years")
+# The container parameter allows us to design the header of the table using CSS
+my.container <- withTags(table(
+  style(type = "text/css", header.style),
+    thead(
+      tr(
+      lapply(header.names, th, style = cell.style)
+      )
+    )
+  )
+)
+
 RSyears %>%
   filter(med_collapse_year<2101) %>%
   group_by(unit_name) %>%
-  summarise(n = n(), preaviso = median(med_collapse_year-med_severe_year))
+  summarise(n = n(), preaviso = median(med_collapse_year-med_severe_year)) %>%
+  datatable(
+    rownames = FALSE,
+    options = list(
+      dom = 't', 
+      pageLength = -1,
+      order = list(list(2, 'asc'))),
+      container=my.container,
+    colnames = )
 ```
 
 
 ## Degradation of bioclimatic suitability
 
+For the habitat suitability model the predictions are available for four time frames. The first time frame (1980-2010) represents current conditions (our initial values), and the three future time frames can be used as final values to track the progression of RS over time. 
 
-
-  Given that both initial and final values of suitability can be below these thresholds, and that future suitability predictions can be well above current values, we use the conditional RS formula for these estimates of RS.
+Thresholds of collapse for the bioclimatic suitability model are estimated based on optimal cut-off points that minimise classification errors. Given that both initial and final values of suitability can be below these thresholds, and that future suitability predictions can be well above current values, we use the conditional RS formula for these estimates of RS.
 
 
 ```{r}

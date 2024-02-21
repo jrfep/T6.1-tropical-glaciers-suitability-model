@@ -2,11 +2,32 @@ project:
   type: book
   output-dir: ../docs
 book:
-  author: "José R. Ferrer-Paris"
+  author: 
+    - name: "J. R. Ferrer-Paris"
+      email: j.ferrer@unsw.edu.au
+      orcid: 0000-0002-9554-3395
+      corresponding: true
+      affiliations:
+        - id: ces
+          name: Centre for Ecosystem Science, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: udash
+          name: UNSW Data Science Hub, University of New South Wales
+          city: Sydney
+          country: Australia
+        - id: iucn
+          name: IUCN Commission on Ecosystem Management
+          city: Gland
+          country: Switzerland 
+    - name: "David A. Keith"
+      orcid: 0000-0002-7627-4150
+      affiliations:
+        - ref: ces
+        - ref: iucn
   title: "Environmental degradation and collapse of Tropical Glacier Ecosystems"
-  subtitle: "Using relative severity and extent of degradation in collapse risk assessment"
-  date: "2023-04-03"
-  repo-url: https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/
+  subtitle: "Using relative severity and extent of degradation in assessments of risk of ecosystem collapse"
+  date: "2024-02-20"
   chapters:
     - index.qmd
     - part: "Assessment units"
@@ -14,10 +35,12 @@ book:
         - TGE/units.qmd
     - part: "Indicator variables"
       chapters:
+        - IND/indicator-variables.qmd
         - IND/mass-balance-model.qmd
         - IND/suitability-model.qmd
     - part: "Relative Severity and Extent of Decline"
       chapters:
+        - FORM/functional-degradation.qmd
         - FORM/RS-formula.qmd
         - FORM/mean-RS-formula.qmd
         - FORM/cED-formula.qmd
@@ -42,14 +65,19 @@ book:
     - part: "Code reproducibility"
       chapters:
         - A2/general-workflow.qmd
+  sidebar:
+    logo: "assets/logo_RLE.png"
   page-footer:
     left: "Created by: JR Ferrer-Paris"
     right:
       - icon: github
         href: https://github.com/jrfep
-      - icon: twitter
-        href: https://twitter.com/neomapas
+  search: true
+  repo-url: https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/
+  repo-actions: [edit, issue]
+  sharing: [twitter, facebook]
 bibliography: 
+  - bibtex/RLE-references.bib
   - bibtex/TGE-references.bib
   - bibtex/references.bib
   - bibtex/glacier-assessments.bib

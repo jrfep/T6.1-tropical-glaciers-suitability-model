@@ -1,0 +1,13 @@
+flowchart BT
+    Low["Low degradation"]:::LowState
+    VeryLocal["localised\nvery high\ndegradation"]:::VeryLocalState
+    VeryWide["widespread\nvery high\ndegradation"]:::VeryWideState
+    Collapsed(("Collapse")):::CollapsedState
+
+    Low ==> VeryLocal ==> VeryWide 
+    VeryWide -.-> Collapsed
+ 
+    classDef LowState font-style:italic,font-weight:bold,fill:#0072B2,stroke:white
+    classDef VeryLocalState font-style:italic,font-weight:bold,fill:#F0E442
+    classDef VeryWideState font-style:italic,font-weight:bold,fill:#CC79A7
+    classDef CollapsedState font-style:italic,font-weight:bold,fill:black,stroke:white

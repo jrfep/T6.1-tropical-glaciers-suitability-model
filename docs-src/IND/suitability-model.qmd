@@ -2,17 +2,279 @@
 output: html_document
 editor_options: 
   chunk_output_type: console
+execute:
+  eval: false
+  echo: true
 ---
 
-## Bioclimatic suitability model
+# Bioclimatic suitability model {#sec-suitability}
 
-For Criterion C we analysed the potential effect of climate change on the suitability of bioclimatic conditions for the presence of Tropical Glacier Ecosystems. We used a Gradient Boosting Machine (GBM) model to analyse the current climatic conditions in areas occupied by Tropical Glacier Ecosystems in all the tropics. Details of the model fitting and validation process are in preparation (Ferrer-Paris et al. MS), brief summary follows.
+We used a bioclimatic suitability model to analyse the current climatic conditions in areas occupied by Tropical glacier ecosystems in all the tropics. 
 
-Occurrence records were selected using stratified random sampling from all the glacier outlines in tropical areas and 25 km distance buffers around glacier outlines. We applied a first partition of the data by withhold the occurrence records of the target assessment unit for final model evaluation of prediction performance of the model (target partition) and the rest of the occurrence records were used for model fitting (modeling partition). Random subsets of the modeling partition were divided in calibration (80%) and test partitions (20%) for tuning of model parameters (number of trees, interaction depth, shrinkage and minimum number of observations per node) using cross validation.
+Here we assume that: 
+
+1. the recent and current distribution of tropical glaciers represent suitable conditions for the tropical glacier ecosystem; and that 
+2. future suitability can be projected by applying climate change projections from Global Circulation Models to the GBM. 
+
+This approach is analogous to correlative species distribution models [@Anderson2013; @Keith_et_al_2014] and similar models have been used in RLE assessments to summarise changes in environmental conditions [@Ferrer_Paris_2019; @Murray_2020].
+
+For all tropical glacial ecosystem types, we used stratified random sampling to select presence records from within all the glacier outlines and absence records from within 25 km distance buffers around the glacier outlines in areas above 3500 m elevation. To minimise the risk of overfitting the model we implemented a two-stage stratification of the data. First we partitioned the data by withholding the occurrence records for one of the 12 glacier ecosystem types to evaluate prediction performance of the model in the region of interest (target partition) and a random sample of all other occurrence records were used for model fitting (modelling partition). 
+
+Random subsets of the modelling partition were further divided into calibration (80%) and test partitions (20%) for tuning of model parameters (number of trees, interaction depth, shrinkage and minimum number of observations per node) using repeated 10-fold cross validation to calculate sensitivity, specificity and the area under the receiver operating characteristic (ROC) curve to assess the predictive performance. 
+
+Thus, the best parameter combination was chosen by maximising the area under the ROC within the modelling partition, but model performance was tested on a spatially independent target partition. We repeated this procedure to produce suitability models for each of the 12 ecosystem types. 
+
+We used 19 bioclimatic variables from the CHELSA dataset representing climatological mean values for current conditions (1981-2010) as predictor variables [@Karger_2017_CHELSA_descriptor; @Karger_2018_CHELSA_data]. Variables were centred and scaled to zero mean and unit variance.
+
+We fitted the GBM model for classification with two classes using a Bernoulli error distribution, and evaluated the predictive performance of each final model on the target partition. The two classes were defined as: glacier for pixel with at least one glacier outline, and not-glacier for pixels without glaciers outlines.
+
+
+## Running the GBM model
+
+We fitted our own correlative model of bioclimatic suitability using a Gradient Boosting Machine (GBM) algorithm. Details of the model fitting procedure are given here and in the documented source code. 
+
+::: {.callout-note}
+This research includes computations using the computational cluster Katana supported by Research Technology Services at UNSW Sydney. <https://doi.org/10.26190/669x-a286>
+
+The full code makes use of multiple strategies for speeding up calculations in parallel, see @sec-workflow for a full description of the workflow. A simplified version of the code is shown here for reference, but not executed during rendering of this document.
+:::
+
+### Load libraries
+
+First we setup the required libraries.
+
+```{r}
+#| eval: true
+require(dplyr)
+require(sf)
+require(magrittr)
+require(tibble)
+require(raster)
+require(stringr)
+require(tidyr)
+library(caret)
+library(gbm)
+library(doParallel)
+require(readr)
+```
+
+### Parallel set up
+
+We applied several strategies for parallelisation. For instance, we created a full dataset, but we repeat the model fitting process for each assessment unit (group of glacier outlines) using a `PBS` script. Within each session, we also use the `doParallel` library to speed up some of the steps of model fitting. 
+
+```{r}
+#| eval: false
+
+# Programing environment variables
+env_file_path <- "proyectos/Tropical-Glaciers/T6.1-tropical-glaciers-suitability-model/"
+source(
+    sprintf(
+        "%s/%s/env/project-env.R",
+        Sys.getenv("HOME"),
+        env_file_path
+    )
+)
+input.dir <- sprintf("%s/%s/OUTPUT",gis.out,"T6.1-tropical-glaciers-data")
+output.dir <- sprintf("%s/%s/GBMmodel",gis.out,projectname)
+
+# Read command line arguments for each copy run within a batch PBS job
+args = commandArgs(trailingOnly=TRUE)
+pick <- as.numeric(args[1])
+
+```
+
+### Preparation of input data
+
+Occurrence records were selected using stratified random sampling from all the glacier outlines in tropical areas and 25 km distance buffers around glacier outlines. 
+
+```{r}
+#| eval: false
+
+## Load spatial data for the group polygons and glacier points
+grp_table <- 
+  read_sf(sprintf("%s/gisdata/trop-glacier-groups-labelled.gpkg",input.dir)) %>%
+  st_drop_geometry %>%
+  transmute(id = factor(id), unit_name = group_name)
+trop_glaciers_classified <- 
+  readRDS(file=sprintf("%s/Rdata/Inner-outer-wet-dry-glacier-classification.rds",
+  input.dir))
+all_units <- unique(grp_table$unit_name)
+slc_unit <- all_units[ifelse(is.na(pick), 6, pick)]
+
+exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
+
+if (slc_unit %in% exclude) {
+  stop("Skipping temperate and transitional glacier ecosystems")
+}
+
+system(sprintf('mkdir -p %s/%s', output.dir, str_replace_all(slc_unit, " ", "-")))
+
+```
 
 We used 19 bioclimatic variables from the CHELSA dataset representing climatological mean values for present conditions (1981-2010) as predictor variables. Eight variables were excluded from the model due to high correlation to other variables. Variables were centered and scaled to zero mean and unit variance.
 
-We fitted the GBM model for classification (two classes: glacier or not-glacier) using a bernoulli error distribution, and evaluated the predictive performance of the final model on the target partition:
+```{r}
+#| eval: false
+
+# Read the data extracted from the raster files for each polygon, and saved into a Rdata file.
+
+rda.file <- sprintf("%s/current-bioclim-data-all-groups.rda",output.dir)
+if (file.exists(rda.file)) {
+   load(rda.file)
+} else {
+   stop("input_raster_data is missing")
+}
+
+```
+
+We applied a first partition of the data by withhold the occurrence records of the target assessment unit for final model evaluation of prediction performance of the model (target partition) and the rest of the occurrence records were used for model fitting (modeling partition). Random subsets of the modeling partition were divided in calibration (80%) and test partitions (20%) for tuning of model parameters (number of trees, interaction depth, shrinkage and minimum number of observations per node) using cross validation.
+
+```{r}
+#| eval: false
+
+# Exclude low elevations
+input_data <- input_raster_data %>%
+   tibble %>%
+   mutate(id = factor(id)) %>%
+   left_join(grp_table, by = "id") %>%
+   filter(
+      !unit_name %in% slc_unit,
+      unit_name %in% all_units,
+      elevation_1KMmd > 3500
+      ) %>%
+  mutate(andes = grepl("Peru|Colombia|Ecuador",unit_name))
+
+tt <- table(input_data$id)
+
+sample_size <- case_when(
+  slc_unit %in% "Kilimanjaro" ~ 5000L,
+  TRUE ~ 10000L
+)
+if (!grepl("Peru|Colombia|Ecuador",slc_unit)) {
+  prob <- if_else(input_data$glacier,5,.5)*if_else(input_data$andes,1,3)*(sum(tt)/tt[input_data$id])
+} else {
+  prob <- if_else(input_data$glacier,5,.5)*(sum(tt)/tt[input_data$id])
+}
+
+training <- input_data %>%
+   slice_sample(n=sample_size, weight_by = prob) %>%
+   dplyr::select(glacier,starts_with("bio_")) %>%
+   mutate(glacier=factor(if_else(glacier,"G","N")))
+
+testing <- input_raster_data %>%
+   tibble %>%
+   mutate(id = factor(id)) %>%
+   left_join(grp_table, by = "id") %>%
+   filter(unit_name %in% slc_unit, elevation_1KMmd>3500) %>%
+   mutate(glacier = factor(if_else(glacier,"G","N")))
+
+
+```
+
+### Tune GBM model
+
+We fitted the GBM model for classification (two classes: glacier or not-glacier) using a bernoulli error distribution.
+
+Model tuning was based on some suggestions from <https://topepo.github.io/caret/model-training-and-tuning.html#metrics>
+
+
+```{r}
+#| eval: false
+
+ctrl <- trainControl(
+   method = "cv",
+   number = 10
+)
+
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 10,
+                           ## Estimate class probabilities
+                           classProbs = TRUE,
+                           ## Evaluate performance using 
+                           ## the following function
+                           summaryFunction = twoClassSummary)
+
+tuneGrid <- expand.grid(
+   n.trees = c(50, 75, 100, 125, 150, 200),
+   interaction.depth = (1:5),
+   shrinkage = c(0.05, 0.1, 0.5),
+   n.minobsinnode = c(5, 7, 10, 12)
+)
+
+
+```
+
+### Run GBM per region 
+
+Now we can run the GBM for each group using data from other groups and evaluate the predictive performance of the final model on the target partition.
+
+Here we use a parallel cluster, see <https://topepo.github.io/caret/parallel-processing.html>.
+
+```{r}
+#| eval: false
+#| echo: true
+
+## Register cluster for parallel processing
+cl <- makeCluster(detectCores()-1)
+registerDoParallel(cl)
+
+model <- caret::train(
+   glacier ~ .,
+   data = training,
+   method = 'gbm',
+   distribution="bernoulli",
+   preProcess = c("center", "scale"),
+   trControl = fitControl,
+   tuneGrid = tuneGrid,
+   ## Specify which metric to optimize
+   metric = "ROC",
+   verbose = TRUE
+)
+
+## stop parallel cluster
+stopCluster(cl)
+```
+
+And we can inspect the final model with:
+
+```{r}
+#| eval: false
+
+model
+plot(model)
+
+```
+
+### Evaluate predictive performance
+
+We calculate the model prediction at the testing and training locations for model evaluation and also save model, training and testing subsets for further processing. 
+
+```{r}
+#| eval: false
+
+test.features = testing %>% dplyr::select(starts_with("bio_"))
+test.target = testing %>% pull(glacier)
+
+rda.results <- sprintf(
+   '%s/%s/gbm-model-current.rda',
+   output.dir,
+   str_replace_all(slc_unit," ","-")
+   )
+
+
+predictions = predict(model, newdata = test.features, type='prob')
+testing$IV <- predictions[,"G"]
+
+predictions = predict(model,  type='prob')
+training$IV <- predictions[,"G"]
+
+save(file=rda.results,model,training,testing,slc_unit )
+
+```
+
+
+### Prediction and projection
 
 We used the final fitted model to predict the suitability in the present timeframe (1981-2010) and future timeframes (2011-2040 and 2041-2071). We considered uncertainty due to climate change projections (five general circulation models and three representative pathways), and due to the choice of cut-off values to classify predicted suitability into binary score (glacier/non-glacier):
 
@@ -22,3 +284,50 @@ We used the final fitted model to predict the suitability in the present timefra
 
 We summarised the outcomes for each combination of models, pathways and cut-off values and calculated relative severity of each outcome in two ways.
 
+## Model diagnosis
+
+Here we show the results for one assessment unit: the tropical glacier ecosystems of Mexico.
+
+```{r}
+#| label: example GBM model
+#| eval: true
+load(here::here("sandbox","fitted-GBM-models","Mexico.rda")) # this includes slc_unit
+```
+
+First we explore the ensemble of models:
+
+```{r}
+#| eval: true
+model
+```
+
+Then we can select the best fitting model 
+
+```{r}
+#| eval: true
+model$finalModel
+```
+
+We can calculate variable importance:
+
+```{r}
+#| eval: true
+varImp(model)
+```
+
+```{r}
+#| eval: true
+
+plot(model)
+```
+
+This is a problem, the cutoff value is very high because the model overfits!
+```{r}
+boxplot(IV~glacier,testing)
+```
+
+```{r}
+plot_a <- ggplot(testing) + geom_point(aes(x=bio_05,y=IV,colour=glacier))
+plot_b <- ggplot(training) + geom_point(aes(x=bio_05,y=IV,colour=glacier))
+ggarrange(plot_a,plot_b)
+```

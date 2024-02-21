@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.433">
+<meta name="generator" content="quarto-1.4.550">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Environmental degradation and collapse of Tropical Glacier Ecosystems - 7&nbsp; Temporal change in Relative Severity</title>
+<title>Environmental degradation and collapse of Tropical Glacier Ecosystems - 9&nbsp; Temporal change in Relative Severity</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -47,7 +47,13 @@ ul.task-list li input[type="checkbox"] {
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -56,14 +62,51 @@ ul.task-list li input[type="checkbox"] {
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
+<script src="../site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="../site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+<script src="../site_libs/datatables-binding-0.31/datatables.js"></script>
+<script src="../site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<link href="../site_libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="../site_libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
+<script src="../site_libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<link href="../site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<script src="../site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -73,12 +116,12 @@ ul.task-list li input[type="checkbox"] {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../RS/time-series.html">Trajectories towards collapse</a></li><li class="breadcrumb-item"><a href="../RS/time-series.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../RS/time-series.html">Trajectories towards collapse</a></li><li class="breadcrumb-item"><a href="../RS/time-series.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
@@ -88,12 +131,32 @@ ul.task-list li input[type="checkbox"] {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../assets/logo_RLE.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
     <div class="sidebar-title mb-0 py-0">
       <a href="../">Environmental degradation and collapse of Tropical Glacier Ecosystems</a> 
         <div class="sidebar-tools-main">
-    <a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <div class="dropdown">
+      <a href="" title="Share" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Share"><i class="bi bi-share"></i></a>
+      <ul class="dropdown-menu" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://twitter.com/intent/tweet?url=|url|">
+              <i class="bi bi-bi-twitter pe-1"></i>
+            Twitter
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://www.facebook.com/sharer/sharer.php?u=|url|">
+              <i class="bi bi-bi-facebook pe-1"></i>
+            Facebook
+            </a>
+          </li>
+      </ul>
+    </div>
 </div>
     </div>
       </div>
@@ -107,7 +170,7 @@ ul.task-list li input[type="checkbox"] {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Abstract</span></a>
+ <span class="menu-text">Introduction</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -138,14 +201,20 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../IND/indicator-variables.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Direct and indirect indicators</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../IND/mass-balance-model.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Projection of Ice Mass Balance</span></span></a>
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Projection of Ice Mass Balance</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../IND/suitability-model.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Bioclimatic suitability model</span></span></a>
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Bioclimatic suitability model</span></span></a>
   </div>
 </li>
       </ul>
@@ -161,20 +230,26 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../FORM/functional-degradation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Dimensions of ecosystem degradation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../FORM/RS-formula.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The RS formula</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The RS formula</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../FORM/mean-RS-formula.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Average RS</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Average RS</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../FORM/cED-formula.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The cED formula</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></span></a>
   </div>
 </li>
       </ul>
@@ -191,19 +266,19 @@ ul.task-list li input[type="checkbox"] {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/time-series.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/spatial-aggregation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/spatial-variability.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Changes in the extent of decline</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Changes in the extent of decline</span></span></a>
   </div>
 </li>
       </ul>
@@ -220,13 +295,13 @@ ul.task-list li input[type="checkbox"] {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../GLMM/binomial-collapse.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Prediction of collapse</span></span></a>
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Prediction of collapse</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../GLMM/beta-RS.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Magnitude of degradation</span></span></a>
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Magnitude of degradation</span></span></a>
   </div>
 </li>
       </ul>
@@ -309,27 +384,27 @@ ul.task-list li input[type="checkbox"] {
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#loss-of-ice-mass" id="toc-loss-of-ice-mass" class="nav-link active" data-scroll-target="#loss-of-ice-mass"><span class="header-section-number">7.1</span> Loss of ice mass</a>
+  <li><a href="#loss-of-ice-mass" id="toc-loss-of-ice-mass" class="nav-link active" data-scroll-target="#loss-of-ice-mass"><span class="header-section-number">9.1</span> Loss of ice mass</a>
   <ul class="collapse">
   <li><a href="#average-rs-time-series" id="toc-average-rs-time-series" class="nav-link" data-scroll-target="#average-rs-time-series">Average RS time series</a></li>
   </ul></li>
-  <li><a href="#degradation-of-bioclimatic-suitability" id="toc-degradation-of-bioclimatic-suitability" class="nav-link" data-scroll-target="#degradation-of-bioclimatic-suitability"><span class="header-section-number">7.2</span> Degradation of bioclimatic suitability</a></li>
+  <li><a href="#degradation-of-bioclimatic-suitability" id="toc-degradation-of-bioclimatic-suitability" class="nav-link" data-scroll-target="#degradation-of-bioclimatic-suitability"><span class="header-section-number">9.2</span> Degradation of bioclimatic suitability</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/edit/main/RS/time-series.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content page-columns page-full" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../RS/time-series.html">Trajectories towards collapse</a></li><li class="breadcrumb-item"><a href="../RS/time-series.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></h1>
+<h1 class="title"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></h1>
 </div>
 
 
@@ -342,67 +417,96 @@ ul.task-list li input[type="checkbox"] {
   </div>
   
 
+
 </header>
 
+
 <p>We calculate temporal change in Relative Severity by applying the <span class="math inline">\(\mathrm{RS}_{i}\)</span> formula to one fixed initial value and a sequence of final values, the final values can represent the state of the indicator in consecutive years (time series), or in different periods (temporal sequence).</p>
-<section id="loss-of-ice-mass" class="level2 page-columns page-full" data-number="7.1">
-<h2 data-number="7.1" class="anchored" data-anchor-id="loss-of-ice-mass"><span class="header-section-number">7.1</span> Loss of ice mass</h2>
+<section id="loss-of-ice-mass" class="level2 page-columns page-full" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="loss-of-ice-mass"><span class="header-section-number">9.1</span> Loss of ice mass</h2>
 <p>The data from the Dynamic Ice Mass Balance model is provided in one year intervals, and we have summarise the data to provide the total value of ice mass of each assessment unit for each year.</p>
-<div class="page-columns page-full"><p>We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of <span class="math inline">\(0 kg\)</span>.  Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula.</p><div class="no-row-height column-margin column-container"><span class="">We denote this estimate of relative severity as <span class="math inline">\(RS_{ice}^{CT=0}\)</span>.</span></div></div>
-<p>An example is given in <a href="../FORM/RS-formula.html#fig-rs-ice-example-kili">Figure&nbsp;<span>4.4</span></a>.</p>
+<div class="page-columns page-full"><p>We calculate RS using the predicted ice mass of the year 2000 as initial value, and data from subsequent years (2001 to 2100) as final values, and a collapse threshold of <span class="math inline">\(0 \mathrm{kg}\)</span>.  Given that the collapse threshold is also the minimum value of ice possible, and that increases in ice mass are low in magnitude and limited to the start of the time series, we can use the original RS formula. An example of these calculations is given in <a href="../FORM/RS-formula.html#fig-rs-ice-example-kili" class="quarto-xref">Figure&nbsp;<span>6.4</span></a>.</p><div class="no-row-height column-margin column-container"><span class="margin-aside">We denote this estimate of relative severity as <span class="math inline">\(RS_{ice}^{CT=0}\)</span>.</span></div></div>
 <section id="average-rs-time-series" class="level3">
 <h3 class="anchored" data-anchor-id="average-rs-time-series">Average RS time series</h3>
 <p>Using the equation for average RS, we can create time series of <span class="math inline">\(\overline{\mathrm{RS}}\)</span> for each assessment unit.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-rs-ice-all-units" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="time-series_files/figure-html/fig-rs-ice-all-units-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;7.1: Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP2-4.5), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated min and max values for each year.</figcaption>
+<div id="fig-rs-ice-all-units" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rs-ice-all-units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="time-series_files/figure-html/fig-rs-ice-all-units-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rs-ice-all-units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.1: Time series of average RS values for the ice mass indicator variable for all assessment units. We use here data from the 100 years time series calculated for one scenario (SSP2-4.5), and combined median and median absolute deviation (based on 50 replicates per model) for all 12 models. The line represent the best estimate and the shaded area represent the interval between aggregated min and max values for each year.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
+<p>The curves indicate an increase of RS, and in some units the maximum value of 1 is attained, indicating ecosystem collapse (red sections of the curve). Certain thresholds could be used to indicate increasing levels of degradation before collapse. For example, a threshold of 0.8 (80% of the maximum value of RS) could be indictive of widespread and very high degradation. The use of these thresholds could be informative to determine the expected tempo of the process of ecosystem collapse.</p>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="time-series_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<div id="fig-thresholds-ice-all-units" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-thresholds-ice-all-units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="time-series_files/figure-html/fig-thresholds-ice-all-units-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-thresholds-ice-all-units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: Histogram of years when thresholds of very high degradation and collapse are reached.
+</figcaption>
+</figure>
 </div>
 </div>
+</div>
+<p>For example if we compare the years when a model predicts very high degradation and the year when it predicts collapse <a href="#fig-thresholds-ice-all-units" class="quarto-xref">Figure&nbsp;<span>9.2</span></a>, we can see that the gap between both milestones can be as short as 15 years (for Puncak Jaya and Mount Kenia) or as long as half a century (for Mexico), see table <a href="#tbl-gap-thresholds" class="quarto-xref">Table&nbsp;<span>9.1</span></a>.</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 7 × 3
-  unit_name                        n preaviso
-  &lt;fct&gt;                        &lt;int&gt;    &lt;dbl&gt;
-1 Puncak Jaya                     12     14  
-2 Kilimanjaro                     10     23.5
-3 Mount Kenia                     12     15  
-4 Ruwenzori                       12     21  
-5 Mexico                           7     47  
-6 Sierra Nevada de Santa Marta     6     38  
-7 Cordillera de Merida            12     24  </code></pre>
+<div id="tbl-gap-thresholds" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-gap-thresholds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;9.1: Median gap between the year when very high degradation is reached and the year of collapse. Based on the values shown in <a href="#fig-thresholds-ice-all-units" class="quarto-xref">Figure&nbsp;<span>9.2</span></a>.
+</figcaption>
+<div aria-describedby="tbl-gap-thresholds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-9f69533b998fd2974bb6" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-9f69533b998fd2974bb6">{"x":{"filter":"none","vertical":false,"class":"display","data":[["Puncak Jaya","Kilimanjaro","Mount Kenia","Ruwenzori","Mexico","Sierra Nevada de Santa Marta","Cordillera de Merida"],[12,10,12,12,7,6,12],[14,23.5,15,21,47,38,24]],"container":"<table>\n  <style type=\"text/css\">th { font-family: 'Arial'; font-weight: bold; color: white; background-color: #18bc9c;}<\/style>\n  <thead>\n    <tr>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">Assessment unit<\/th>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">Nr. of Models indicating collapse<\/th>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">Gap in years<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":-1,"order":[[2,"asc"]],"columnDefs":[{"className":"dt-right","targets":[1,2]},{"name":"unit_name","targets":0},{"name":"n","targets":1},{"name":"preaviso","targets":2}],"autoWidth":false,"orderClasses":false,"lengthMenu":[-1,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
 </div>
 </div>
 </section>
 </section>
-<section id="degradation-of-bioclimatic-suitability" class="level2" data-number="7.2">
-<h2 data-number="7.2" class="anchored" data-anchor-id="degradation-of-bioclimatic-suitability"><span class="header-section-number">7.2</span> Degradation of bioclimatic suitability</h2>
+<section id="degradation-of-bioclimatic-suitability" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="degradation-of-bioclimatic-suitability"><span class="header-section-number">9.2</span> Degradation of bioclimatic suitability</h2>
 <p>Given that both initial and final values of suitability can be below these thresholds, and that future suitability predictions can be well above current values, we use the conditional RS formula for these estimates of RS.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-RS-periods" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="time-series_files/figure-html/fig-RS-periods-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;7.2: Mean relative severity (RS) of decline in bioclimatic suitability for the assessment unit of the T.G.E. of Ecuador for five global circulation models (points), and three different timeframes (columns), future scenarios (rows) and collapse thresholds (x axis) based on threshold of the confusion matrix ( <span class="math inline">\(acc\)</span>: maximum accuracy, <span class="math inline">\(ess\)</span>: equal sensitivity and specificity, and <span class="math inline">\(ppv\)</span>: Positive predictive value).</figcaption>
+<div id="fig-RS-periods" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-RS-periods-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="time-series_files/figure-html/fig-RS-periods-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-RS-periods-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.3: Mean relative severity (RS) of decline in bioclimatic suitability for the assessment unit of the T.G.E. of Ecuador for five global circulation models (points), and three different timeframes (columns), future scenarios (rows) and collapse thresholds (x axis) based on threshold of the confusion matrix ( <span class="math inline">\(acc\)</span>: maximum accuracy, <span class="math inline">\(ess\)</span>: equal sensitivity and specificity, and <span class="math inline">\(ppv\)</span>: Positive predictive value).
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="time-series_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="time-series_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="time-series_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="time-series_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <hr>
@@ -414,7 +518,7 @@ R session info for this chapter
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.3.1 (2023-06-16)
 Platform: aarch64-apple-darwin20 (64-bit)
-Running under: macOS Sonoma 14.2.1
+Running under: macOS Sonoma 14.3.1
 
 Matrix products: default
 BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
@@ -430,22 +534,24 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] forcats_1.0.0 tidyr_1.3.0   readr_2.1.4   purrr_1.0.2   ggrepel_0.9.4
-[6] stringr_1.5.1 units_0.8-5   ggplot2_3.4.4 dplyr_1.1.4  
+ [1] htmltools_0.5.7 DT_0.31         forcats_1.0.0   tidyr_1.3.0    
+ [5] readr_2.1.4     purrr_1.0.2     ggrepel_0.9.4   stringr_1.5.1  
+ [9] units_0.8-5     ggplot2_3.4.4   dplyr_1.1.4    
 
 loaded via a namespace (and not attached):
- [1] utf8_1.2.4        generics_0.1.3    stringi_1.8.3     hms_1.1.3        
- [5] digest_0.6.33     magrittr_2.0.3    evaluate_0.23     grid_4.3.1       
- [9] fastmap_1.1.1     rprojroot_2.0.4   jsonlite_1.8.8    fansi_1.0.6      
-[13] scales_1.3.0      cli_3.6.2         rlang_1.1.2       crayon_1.5.2     
-[17] bit64_4.0.5       munsell_0.5.0     withr_2.5.2       yaml_2.3.8       
-[21] tools_4.3.1       parallel_4.3.1    tzdb_0.4.0        colorspace_2.1-0 
-[25] here_1.0.1        vctrs_0.6.5       R6_2.5.1          lifecycle_1.0.4  
-[29] htmlwidgets_1.6.4 bit_4.0.5         vroom_1.6.5       pkgconfig_2.0.3  
-[33] pillar_1.9.0      gtable_0.3.4      glue_1.6.2        Rcpp_1.0.11      
-[37] xfun_0.41         tibble_3.2.1      tidyselect_1.2.0  rstudioapi_0.15.0
-[41] knitr_1.45        farver_2.1.1      htmltools_0.5.7   rmarkdown_2.25   
-[45] labeling_0.4.3    compiler_4.3.1   </code></pre>
+ [1] sass_0.4.8        utf8_1.2.4        generics_0.1.3    stringi_1.8.3    
+ [5] hms_1.1.3         digest_0.6.33     magrittr_2.0.3    evaluate_0.23    
+ [9] grid_4.3.1        fastmap_1.1.1     rprojroot_2.0.4   jsonlite_1.8.8   
+[13] fansi_1.0.6       crosstalk_1.2.1   scales_1.3.0      jquerylib_0.1.4  
+[17] cli_3.6.2         rlang_1.1.2       crayon_1.5.2      ellipsis_0.3.2   
+[21] bit64_4.0.5       munsell_0.5.0     cachem_1.0.8      withr_2.5.2      
+[25] yaml_2.3.8        tools_4.3.1       parallel_4.3.1    tzdb_0.4.0       
+[29] colorspace_2.1-0  here_1.0.1        vctrs_0.6.5       R6_2.5.1         
+[33] lifecycle_1.0.4   htmlwidgets_1.6.4 bit_4.0.5         vroom_1.6.5      
+[37] pkgconfig_2.0.3   bslib_0.6.1       pillar_1.9.0      gtable_0.3.4     
+[41] glue_1.6.2        Rcpp_1.0.11       xfun_0.41         tibble_3.2.1     
+[45] tidyselect_1.2.0  rstudioapi_0.15.0 knitr_1.45        farver_2.1.1     
+[49] rmarkdown_2.25    labeling_0.4.3    compiler_4.3.1   </code></pre>
 </div>
 </div>
 </details>
@@ -533,10 +639,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -546,8 +651,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -560,6 +674,125 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
       return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -603,6 +836,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -628,6 +862,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -689,23 +949,25 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../FORM/cED-formula.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The cED formula</span></span>
+      <a href="../FORM/cED-formula.html" class="pagination-link" aria-label="The cED formula">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../RS/spatial-aggregation.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../RS/spatial-aggregation.html" class="pagination-link" aria-label="Uncertainty of models and scenarios">
+        <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
 </div> <!-- /content -->
 <footer class="footer">
   <div class="nav-footer">
-    <div class="nav-footer-left">Created by: JR Ferrer-Paris</div>   
+    <div class="nav-footer-left">
+<p>Created by: JR Ferrer-Paris</p>
+</div>   
     <div class="nav-footer-center">
       &nbsp;
-    </div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/edit/main/RS/time-series.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
     <li class="nav-item compact">
@@ -714,16 +976,11 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </i> 
     </a>
   </li>  
-    <li class="nav-item compact">
-    <a class="nav-link" href="https://twitter.com/neomapas">
-      <i class="bi bi-twitter" role="img">
-</i> 
-    </a>
-  </li>  
 </ul>
     </div>
   </div>
 </footer>
+
 
 
 

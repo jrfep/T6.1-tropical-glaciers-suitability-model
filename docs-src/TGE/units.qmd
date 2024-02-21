@@ -16,29 +16,14 @@ library(sf)
 require(leaflet)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 
 here::i_am("docs-src/TGE/units.qmd")
 target_dir <- "sandbox"
 trop_glaz <- read_sf(here::here(target_dir,"trop-glacier-groups-labelled.gpkg"))
+trop_glaz <- read_sf(here::here(target_dir,"Study_area_tropical_glaciers.kml"))
 load(here::here(target_dir,"current-bioclim-data-all-groups.rda"))
 ```
-
-```{r}
-#| eval: false
-
-## This code checks if the ids of the groups match
-
-input_bioclim_data <-
-    st_as_sf(
-        input_raster_data, 
-        coords = c("lon", "lat"), 
-        crs = 4326
-    )
-tst <- st_intersection(trop_glaz, slice_sample(input_bioclim_data,n=100)) 
-tst %>% transmute(test=id==id.1) %>% st_drop_geometry %>% pull %>% table
-```
-
-
 
 ## Classification
 
@@ -51,36 +36,34 @@ IUCN Global Ecosystem Typology
     - Level 3: T6.1 Ice sheets, glaciers and perennial snowfields
       - Subgroup: Tropical glacier ecosystems (TGE)
       - Level 4: 12 units as follows:
-
 ```{r}
 #| label: name of units
 #| results: asis
-
-exclude <- c("Temperate Glacier Ecosystems", "Famatina", "Norte de Argentina", "Zona Volcanica Central")
-
 trop_glaz_names <- trop_glaz %>%
   st_drop_geometry()  %>%
-  filter(!group_name %in% exclude) %>%
-  arrange(group_name) %>%
-  pull(group_name) %>%
+  arrange(Name) %>%
+  pull(Name) %>%
   unique 
-cat(sprintf("        - TGE of %s\n", trop_glaz_names))
+cat(sprintf("        - Tropical glacier ecosystems of %s\n", trop_glaz_names))
 ```
 
 We excluded transitional units (Rock glaciers, or temperate glaciers).
 
-## Spatial distribution
+## Spatial distribution {#sec-distribution}
 
  We define the tropics notionally as the region between latitudes of 20 N and 20 S, and include all known glaciers from the highest summits of Puncak Jaya in Indonesia; Mount Kilimanjaro, Mount Kenya and the Rwenzori Mountains in East Africa;  the Eje Volcánico Transversal of México; and tropical Andes glaciers groups of the inner tropics (including the Sierra Nevada de Santa Marta), wet outer tropics and dry outer tropics [@Veettil2019;@Sagredo_2012_climatology_andes]. 
  
-We use available global and regional data on glacier outlines and point records to estimate the global distribution of Tropical Glacier Ecosystems. In the Randolph Glacier Inventory version 6.0 [@RGI_2017_glacier_inventory] all tropical glaciers are includes in region *Lower Latitudes*. We compared these records with other global sources [@Raup2007;@GLIMS_database] and include additional point records from national glacier inventories [@INAIGEM2018;@Barcaza2017;@Zalazar2020] to increase the coverage in some regions [@fig-map]. 
+We use available global and regional data on glacier outlines and point records to estimate the global distribution of Tropical Glacier Ecosystems. In the Randolph Glacier Inventory version 6.0 [@RGI_2017_glacier_inventory] all tropical glaciers are includes in region *Lower Latitudes*. We compared these records with other global sources [@Raup2007;@GLIMS_database] and include additional point records from national glacier inventories [@INAIGEM2018;@Barcaza2017;@Zalazar2020] to increase the coverage in some regions. 
 
 ```{r}
 #| label: fig-map
 #| fig-cap: Outline of spatial assessment units for Tropical Glacier Ecosystems. Each assessment unit consist of one or more spatial clusters (polygons), and each cluster includes a buffer of 25km around the glacier outlines. 
 #| warning: false
 #| eval: true
-t_lbls <- sprintf("<strong>%s</strong> (%s)",trop_glaz$group_name,trop_glaz$id) %>% lapply(htmltools::HTML)
+t_lbls <- sprintf("<strong>%s</strong> <p>%s</p>",
+  trop_glaz$Name,
+  str_replace_all(trop_glaz$Description, "\\.", ".<br/>")) %>% 
+  lapply(htmltools::HTML)
 
 leaflet() %>%
   addProviderTiles(providers$OpenStreetMap.HOT,group='OpenStreetMap') %>%
@@ -99,14 +82,8 @@ leaflet() %>%
 ```
 
 
-```{r latitudinal distribution}
-#| eval: false
-grp_outlines <- trop_glaz %>% group_by(group_name) %>% summarise(geom=st_union(geom)) 
-st_bbox(grp_outlines[c(1:5,7:9,11:13,15),])
-st_bbox(grp_outlines[-c(1:5,7:9,11:13,15),])
-```
 
-We divided Tropical glacier ecosystems into 12 regional units considering previous classifications [@Sagredo_2012_climatology_andes], geographical proximity and similarity in bioclimatic conditions at different scales. These boundaries are provisional, since our knowledge about the biota and biogeographical relationships between glaciers in different tropical regions of the world is incomplete  [@Dial2020;@Hotaling_2017_glacier_ecosystem;@Kuhn2011].
+We divided Tropical glacier ecosystems into 12 regional units considering previous classifications [@Sagredo_2012_climatology_andes], geographical proximity and similarity in bioclimatic conditions at different scales, see [@fig-map]. These boundaries are provisional, since our knowledge about the biota and biogeographical relationships between glaciers in different tropical regions of the world is incomplete  [@Dial2020;@Hotaling_2017_glacier_ecosystem;@Kuhn2011].
 
 @Sagredo_2012_climatology_andes suggested a subdivision of tropical glaciers into four classes with different climatic profiles and a distinct separation from subtropical glaciers in the Andes. Their analysis excluded glaciers in tropical and subtropical latitudes of the southern hemisphere (between 20 and 30 degrees South) that could be considered transitional in terms of climate but are mostly classified as rock glaciers or permanent snowfields in national inventories. Based on ecological zonation and ice dynamics in these transitional regions, which differs from tropical regions, we suggest they are best addressed in a separate assessment.
 
@@ -114,10 +91,10 @@ We divided Tropical glacier ecosystems into 12 regional units considering previo
 
 Here we consider a simplified conceptual ecosystem model for tropical glacier ecosystems including only the variables directly related to this analysis [See @FerrerParis_2023 for details]. The different ecosystem compartments [the supraglacial surfaces, englacial interior, subglacial bedrock–ice interface, proglacial streams and lakes and glacier forefields; @Hotaling_2017_glacier_ecosystem] are simplified here as a dashed box on the bottom containing one main abiotic substrate (blue hexagon) and the key biotic component (green hexagon). The main threat (red box) is climate change, it influences three climatic features (blue hexagons) that maintain abiotic processes of ice dynamic (blue ellipses). The grey boxes represent one indirect and one direct indicators of the key abiotic processes.
 
-```{r out.height="400px"}
-#| label: fig-CEM
-#| fig-cap: Simplified Conceptual Ecosystem Model for Tropical Glacier Ecosystems
-DiagrammeR::grViz("CEM-all-TGE.gv")
+```{dot out.height="400px"}
+//| label: fig-CEM
+//| fig-cap: Simplified Conceptual Ecosystem Model for Tropical Glacier Ecosystems
+//| file: CEM-all-TGE.gv
 ```
 
 
@@ -126,3 +103,12 @@ DiagrammeR::grViz("CEM-all-TGE.gv")
 Tropical glaciers are originally formed by processes of snow and ice accumulation and ablation over geological time frames. However the characteristic microbiota can persist in the ice substrate even if processes of ice accumulation have ceased or the overall mass balance of ice is negative.
 
 Thus we defined a glacier as collapsed when the ice substrate disappears completely (ice mass equals zero kg).
+
+----
+
+<details><summary>R session info for this chapter </summary>
+
+```{r}
+sessionInfo()
+```
+</details>

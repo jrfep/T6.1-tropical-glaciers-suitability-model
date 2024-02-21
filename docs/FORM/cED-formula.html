@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.433">
+<meta name="generator" content="quarto-1.4.550">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Environmental degradation and collapse of Tropical Glacier Ecosystems - 6&nbsp; The cED formula</title>
+<title>Environmental degradation and collapse of Tropical Glacier Ecosystems - 8&nbsp; The cED formula</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -81,7 +81,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -90,14 +96,51 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
+<script src="../site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="../site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+<script src="../site_libs/datatables-binding-0.31/datatables.js"></script>
+<script src="../site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<link href="../site_libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="../site_libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
+<script src="../site_libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<link href="../site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<script src="../site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -107,12 +150,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../FORM/RS-formula.html">Relative Severity and Extent of Decline</a></li><li class="breadcrumb-item"><a href="../FORM/cED-formula.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The cED formula</span></a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../FORM/functional-degradation.html">Relative Severity and Extent of Decline</a></li><li class="breadcrumb-item"><a href="../FORM/cED-formula.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
@@ -122,12 +165,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../assets/logo_RLE.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
     <div class="sidebar-title mb-0 py-0">
       <a href="../">Environmental degradation and collapse of Tropical Glacier Ecosystems</a> 
         <div class="sidebar-tools-main">
-    <a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <div class="dropdown">
+      <a href="" title="Share" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Share"><i class="bi bi-share"></i></a>
+      <ul class="dropdown-menu" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://twitter.com/intent/tweet?url=|url|">
+              <i class="bi bi-bi-twitter pe-1"></i>
+            Twitter
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://www.facebook.com/sharer/sharer.php?u=|url|">
+              <i class="bi bi-bi-facebook pe-1"></i>
+            Facebook
+            </a>
+          </li>
+      </ul>
+    </div>
 </div>
     </div>
       </div>
@@ -141,7 +204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Abstract</span></a>
+ <span class="menu-text">Introduction</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -172,14 +235,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../IND/indicator-variables.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Direct and indirect indicators</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../IND/mass-balance-model.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Projection of Ice Mass Balance</span></span></a>
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Projection of Ice Mass Balance</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../IND/suitability-model.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Bioclimatic suitability model</span></span></a>
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Bioclimatic suitability model</span></span></a>
   </div>
 </li>
       </ul>
@@ -195,20 +264,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../FORM/functional-degradation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Dimensions of ecosystem degradation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../FORM/RS-formula.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">The RS formula</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The RS formula</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../FORM/mean-RS-formula.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Average RS</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Average RS</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../FORM/cED-formula.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The cED formula</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></span></a>
   </div>
 </li>
       </ul>
@@ -225,19 +300,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/time-series.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/spatial-aggregation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Uncertainty of models and scenarios</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../RS/spatial-variability.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Changes in the extent of decline</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Changes in the extent of decline</span></span></a>
   </div>
 </li>
       </ul>
@@ -254,13 +329,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../GLMM/binomial-collapse.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Prediction of collapse</span></span></a>
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Prediction of collapse</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../GLMM/beta-RS.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Magnitude of degradation</span></span></a>
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Magnitude of degradation</span></span></a>
   </div>
 </li>
       </ul>
@@ -343,37 +418,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#motivation-variability-in-mathrmrs_i-values" id="toc-motivation-variability-in-mathrmrs_i-values" class="nav-link active" data-scroll-target="#motivation-variability-in-mathrmrs_i-values"><span class="header-section-number">6.1</span> Motivation: Variability in <span class="math inline">\(\mathrm{RS}_{i}\)</span> values</a>
+  <li><a href="#motivation-variability-in-mathrmrs_i-values" id="toc-motivation-variability-in-mathrmrs_i-values" class="nav-link active" data-scroll-target="#motivation-variability-in-mathrmrs_i-values"><span class="header-section-number">8.1</span> Motivation: Variability in <span class="math inline">\(\mathrm{RS}_{i}\)</span> values</a>
   <ul class="collapse">
   <li><a href="#loss-of-ice-mass-in-kilimanjaro" id="toc-loss-of-ice-mass-in-kilimanjaro" class="nav-link" data-scroll-target="#loss-of-ice-mass-in-kilimanjaro">Loss of ice mass in Kilimanjaro</a></li>
   <li><a href="#decline-in-bioclimatic-suitability" id="toc-decline-in-bioclimatic-suitability" class="nav-link" data-scroll-target="#decline-in-bioclimatic-suitability">Decline in bioclimatic suitability</a></li>
   </ul></li>
-  <li><a href="#the-cumulative-extent-of-decline" id="toc-the-cumulative-extent-of-decline" class="nav-link" data-scroll-target="#the-cumulative-extent-of-decline"><span class="header-section-number">6.2</span> The Cumulative Extent of Decline</a>
+  <li><a href="#the-cumulative-extent-of-decline" id="toc-the-cumulative-extent-of-decline" class="nav-link" data-scroll-target="#the-cumulative-extent-of-decline"><span class="header-section-number">8.2</span> The Cumulative Extent of Decline</a>
   <ul class="collapse">
   <li><a href="#ced-for-decline-in-ice-mass" id="toc-ced-for-decline-in-ice-mass" class="nav-link" data-scroll-target="#ced-for-decline-in-ice-mass">cED for decline in ice mass</a></li>
   <li><a href="#ced-for-bioclimatic-suitability" id="toc-ced-for-bioclimatic-suitability" class="nav-link" data-scroll-target="#ced-for-bioclimatic-suitability">cED for bioclimatic suitability</a></li>
   </ul></li>
-  <li><a href="#area-under-the-ced-curve" id="toc-area-under-the-ced-curve" class="nav-link" data-scroll-target="#area-under-the-ced-curve"><span class="header-section-number">6.3</span> Area under the cED curve</a>
+  <li><a href="#area-under-the-ced-curve" id="toc-area-under-the-ced-curve" class="nav-link" data-scroll-target="#area-under-the-ced-curve"><span class="header-section-number">8.3</span> Area under the cED curve</a>
   <ul class="collapse">
   <li><a href="#mathrmauc_mathitced-for-loss-of-ice-mass" id="toc-mathrmauc_mathitced-for-loss-of-ice-mass" class="nav-link" data-scroll-target="#mathrmauc_mathitced-for-loss-of-ice-mass"><span class="math inline">\(\mathrm{AUC}_{\mathit{cED}}\)</span> for loss of ice mass</a></li>
   <li><a href="#mathrmauc_mathitced-for-decline-in-suitability" id="toc-mathrmauc_mathitced-for-decline-in-suitability" class="nav-link" data-scroll-target="#mathrmauc_mathitced-for-decline-in-suitability"><span class="math inline">\(\mathrm{AUC}_{\mathit{cED}}\)</span> for decline in suitability</a></li>
   </ul></li>
   </ul>
-</nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/edit/main/FORM/cED-formula.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content page-columns page-full" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../FORM/functional-degradation.html">Relative Severity and Extent of Decline</a></li><li class="breadcrumb-item"><a href="../FORM/cED-formula.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The cED formula</span></h1>
+<h1 class="title"><span id="sec-EDform" class="quarto-section-identifier"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">The cED formula</span></span></h1>
 </div>
 
 
@@ -386,37 +461,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <p>We can use the average RS to describe the overall magnitude of decline, but the values of relative severity vary across any sample of sites or locations.</p>
 <p>Degradation can be considered a threat to an ecosystem if it is widespread and/or severe in its intensity. Thus moderate values of relative severity across a large extent or high values of relative severity in a moderate extent of the ecosystem distribution could produce similar level of threat.</p>
 <p>For the purpose of describing these patterns of degradation, we calculate extent of decline, or more precisely, the cumulative extent of decline (<span class="math inline">\(\mathrm{cED}\)</span>), as the proportion of the distribution of an assessment unit that has values of relative severity higher than a threshold <span class="math inline">\(x\)</span>.</p>
 <p>We will look at the calculation of (<span class="math inline">\(\mathrm{cED}\)</span>) for the two indicator variables and the relationship between RS and extent of decline through time.</p>
-<section id="motivation-variability-in-mathrmrs_i-values" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="motivation-variability-in-mathrmrs_i-values"><span class="header-section-number">6.1</span> Motivation: Variability in <span class="math inline">\(\mathrm{RS}_{i}\)</span> values</h2>
+<section id="motivation-variability-in-mathrmrs_i-values" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="motivation-variability-in-mathrmrs_i-values"><span class="header-section-number">8.1</span> Motivation: Variability in <span class="math inline">\(\mathrm{RS}_{i}\)</span> values</h2>
 <section id="loss-of-ice-mass-in-kilimanjaro" class="level3">
 <h3 class="anchored" data-anchor-id="loss-of-ice-mass-in-kilimanjaro">Loss of ice mass in Kilimanjaro</h3>
 <p>Given the nature of ice mass as a prediction of a physical measure, we need to weight the RS values of individual glacier outlines.</p>
 <p>If we look at the example of the T.G.E. Kilimanjaro, for one combination of model and scenario and the year 2040, we have following values of <span class="math inline">\(\mathrm{RS}_{i}\)</span>:</p>
 <div class="cell">
-<div class="cell-output cell-output-stderr">
-<pre><code>Adding missing grouping variables: `RGIId`</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 4
-# Groups:   RGIId [10]
-   RGIId             RS initial_mass       w
-   &lt;chr&gt;          &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;
- 1 RGI60-16.01642 0.897  5080655906. 0.0581 
- 2 RGI60-16.01643 0.673  3467374658. 0.0397 
- 3 RGI60-16.01644 0.338  5424962911. 0.0621 
- 4 RGI60-16.01646 0.488  2381113482. 0.0272 
- 5 RGI60-16.01649 0.157   626415587. 0.00717
- 6 RGI60-16.01650 0.716  2492148809. 0.0285 
- 7 RGI60-16.01652 0.639  2406072177. 0.0275 
- 8 RGI60-16.01654 0.625  3199163121. 0.0366 
- 9 RGI60-16.01655 0.358 50941901428. 0.583  
-10 RGI60-16.01656 0.689 11395937131. 0.130  </code></pre>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-e602389896ca78c93c14" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-e602389896ca78c93c14">{"x":{"filter":"none","vertical":false,"class":"display","data":[["RGI60-16.01642","RGI60-16.01643","RGI60-16.01644","RGI60-16.01646","RGI60-16.01649","RGI60-16.01650","RGI60-16.01652","RGI60-16.01654","RGI60-16.01655","RGI60-16.01656"],[0.8974988780718336,0.6726325135178907,0.3383909771802185,0.4879720234821043,0.1566380691596776,0.715682890409118,0.6393472456042338,0.6253259102452718,0.3578274454151141,0.6891500038755701],[5080.655905710729,3467.374658053257,5424.962911173448,2381.113482032958,626.4155865755289,2492.148809336151,2406.07217659651,3199.16312100951,50941.90142817883,11395.93713104121],[0.05812060394294375,0.03966533317007267,0.06205933379803719,0.02723895422181356,0.007165935439579837,0.02850915247999716,0.02752447137325666,0.03659710402668077,0.5827543002232666,0.1303648113243518]],"container":"<table>\n  <style type=\"text/css\">th { font-family: 'Arial'; font-weight: bold; color: white; background-color: #18bc9c;}<\/style>\n  <thead>\n    <tr>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">RGI id<\/th>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">RS<\/th>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">Initial mass (Mt)<\/th>\n      <th style=\"text-align: center; border-right-width: 1px; border-right-style: solid; border-right-color: white; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: white\">weigth<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":-1,"order":[[2,"asc"]],"columnDefs":[{"targets":1,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[1,2,3]},{"name":"RGIId","targets":0},{"name":"RS","targets":1},{"name":"initial_mass","targets":2},{"name":"w","targets":3}],"autoWidth":false,"orderClasses":false,"lengthMenu":[-1,10,25,50,100]}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render"],"jsHooks":[]}</script>
 </div>
 </div>
 <p>Sites with high RS but low initial ice mass will contribute less to the average RS, but nonetheless indicate localised high rates of degradation.</p>
@@ -427,10 +489,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>For small assessment units the spatial sample size for the calculation of <span class="math inline">\(\mathrm{RS}_{i}\)</span> is small and values tend to be relatively similar. Differences can be visualised conveniently with boxplots.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-ruwenzori" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-ruwenzori-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.1: Box and whisker plots of the <span class="math inline">\(RS_{bcs}^{acc}\)</span> values for the Tropical Glacier Ecosystem of Ruwenzori. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean (equal to <span class="math inline">\(\overline{\mathrm{RS}}\)</span>) is marked with an X symbol.</figcaption>
+<div id="fig-ruwenzori" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ruwenzori-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-ruwenzori-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ruwenzori-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.1: Box and whisker plots of the <span class="math inline">\(RS_{bcs}^{acc}\)</span> values for the Tropical Glacier Ecosystem of Ruwenzori. The middle line represent the location of the median and the box include the distribution from first to third quartile, the location of the mean (equal to <span class="math inline">\(\overline{\mathrm{RS}}\)</span>) is marked with an X symbol.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -438,18 +504,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>For larger sampling units we can see more complex distributions of <span class="math inline">\(\mathrm{RS}_{i}\)</span> values. In the case of the Cordilleras Norte de Peru we have more than thousand raster cells with values of relative severity. Histograms of the relative severity values show a wide spread of value in one selected future period, with most cell in the 75 - 100 % interval, but still many cell in the lowest quartile. This is reflected in the difference between mean and median RS values.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-hist-ecuador" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-hist-ecuador-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.2: Histogram of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.</figcaption>
+<div id="fig-hist-ecuador" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hist-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-hist-ecuador-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hist-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.2: Histogram of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of the Cordilleras Norte de Peru using the maximum accuracy threshold.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="the-cumulative-extent-of-decline" class="level2 page-columns page-full" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="the-cumulative-extent-of-decline"><span class="header-section-number">6.2</span> The Cumulative Extent of Decline</h2>
+<section id="the-cumulative-extent-of-decline" class="level2 page-columns page-full" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="the-cumulative-extent-of-decline"><span class="header-section-number">8.2</span> The Cumulative Extent of Decline</h2>
 <p>The cumulative extent of Decline can be calculated as follows: <span class="math display">\[
 \mathrm{cED}(x) = \frac{\sum \begin{cases}
       w_{i}, &amp; \text{if}\ \mathrm{RS}_{i} ≥ x\\
@@ -487,7 +557,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 20 1      0     </code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="cED-formula_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="cED-formula_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -498,10 +572,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The shape of the histogram changes in time, with an initial increase followed by a slight decrease in mean and median values.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-hist-colombia" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-hist-colombia-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.3: Histogram of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.</figcaption>
+<div id="fig-hist-colombia" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hist-colombia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-hist-colombia-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hist-colombia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.3: Histogram of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -512,12 +590,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>then count the cummulative number of cells starting with the highest relative severity values,</li>
 <li>we express this value as a propotion of the total extent of the assessment unit.</li>
 </ul>
-<div class="no-row-height column-margin column-container"><span class="">In this version we have flipped the coordinates of the plot used above for the ice mass of Kilimanjaro</span></div><div class="cell">
+<div class="no-row-height column-margin column-container"><span class="margin-aside">In this version we have flipped the coordinates of the plot used above for the ice mass of Kilimanjaro</span></div><div class="cell">
 <div class="cell-output-display">
-<div id="fig-hist-ecdf-colombia" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-hist-ecdf-colombia-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.4: Comparing the histogram of the <span class="math inline">\(RS_{cor}\)</span> values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.</figcaption>
+<div id="fig-hist-ecdf-colombia" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hist-ecdf-colombia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-hist-ecdf-colombia-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hist-ecdf-colombia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.4: Comparing the histogram of the <span class="math inline">\(RS_{cor}\)</span> values with a modified empirical cumulative distriution function for the Tropical Glacier Ecosystem of Cordilleras de Colombia using the maximum accuracy threshold.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -525,29 +607,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This arrangement allows to read the cummulative extent by different thresholds of relative severity. For example, there ecosystem extent with <span class="math inline">\(RS ≥ 0.75\)</span> increases from less than 40% in the first period to more than 50 %, and the extent with <span class="math inline">\(RS ≥ 0.25\)</span> increases from nearly 65% to almost 75%.</p>
 </section>
 </section>
-<section id="area-under-the-ced-curve" class="level2 page-columns page-full" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="area-under-the-ced-curve"><span class="header-section-number">6.3</span> Area under the cED curve</h2>
+<section id="area-under-the-ced-curve" class="level2 page-columns page-full" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="area-under-the-ced-curve"><span class="header-section-number">8.3</span> Area under the cED curve</h2>
 <p><span class="math display">\[
 \mathrm{AUC}_{\mathit{cED}}=\int_{0}^{1} \mathrm{cED}(x)\,dx \approxeq \overline{\mathrm{RS}}
 \]</span></p>
-<div class="page-columns page-full"><p></p><div class="no-row-height column-margin column-container"><span class="">Which is probably related to the <a href="https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician">LOTUS</a>?</span></div></div>
+<div class="page-columns page-full"><p></p><div class="no-row-height column-margin column-container"><span class="margin-aside">Which is probably related to the <a href="https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician">LOTUS</a>?</span></div></div>
 <section id="mathrmauc_mathitced-for-loss-of-ice-mass" class="level3">
 <h3 class="anchored" data-anchor-id="mathrmauc_mathitced-for-loss-of-ice-mass"><span class="math inline">\(\mathrm{AUC}_{\mathit{cED}}\)</span> for loss of ice mass</h3>
 <p>When we calculate <span class="math inline">\(cED_{x}\)</span> for multiple years we can see a change in the shape of the curve.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> RSvals <span class="sc">%&gt;%</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2040</span>,<span class="dv">2070</span>,<span class="dv">2100</span>))</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>EDs <span class="ot">&lt;-</span> d <span class="sc">%&gt;%</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_modify</span>( <span class="sc">~</span> <span class="fu">cED_w</span>(</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">RS=</span>.x<span class="sc">$</span>RS,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">weights=</span>.x<span class="sc">$</span>w))</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(EDs) <span class="sc">+</span> </span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_step</span>(<span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>ED, <span class="at">group=</span>year,<span class="at">colour=</span><span class="fu">factor</span>(year))) <span class="sc">+</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="fu">expression</span>(ED[RS<span class="sc">&gt;=</span>x])) <span class="sc">+</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="dv">1</span>)<span class="sc">+</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"x"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> RSvals <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2040</span>,<span class="dv">2070</span>,<span class="dv">2100</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>EDs <span class="ot">&lt;-</span> d <span class="sc">%&gt;%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_modify</span>( <span class="sc">~</span> <span class="fu">cED_w</span>(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">RS=</span>.x<span class="sc">$</span>RS,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">weights=</span>.x<span class="sc">$</span>w))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(EDs) <span class="sc">+</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_step</span>(<span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>ED, <span class="at">group=</span>year,<span class="at">colour=</span><span class="fu">factor</span>(year))) <span class="sc">+</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="fu">expression</span>(ED[RS<span class="sc">&gt;=</span>x])) <span class="sc">+</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>,<span class="dv">1</span>)<span class="sc">+</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"x"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>This figure shows a large increase in values of <span class="math inline">\(RS≥0.5\)</span> between 2040 and 2070 and then an increase of values of <span class="math inline">\(RS≥0.75\)</span> between 2070 and 2100.</p>
 </section>
@@ -556,10 +638,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We can flip the coordinates and collapse the panels to actually superinpose these curves for a quick overview of the increase in extent for each value of relative severity :</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-ecdf-ecuador" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-ecdf-ecuador-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.5: Comparison of the modified empirical cumulative distribution function of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia .</figcaption>
+<div id="fig-ecdf-ecuador" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ecdf-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-ecdf-ecuador-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ecdf-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.5: Comparison of the modified empirical cumulative distribution function of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia .
+</figcaption>
 </figure>
 </div>
 </div>
@@ -567,10 +653,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We see that for this combination of model, scenario and threshold, there is an increase in the extent of high severity values between the first and second period, but the distribution does not change much between the second and third period.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-states-ecuador" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="cED-formula_files/figure-html/fig-states-ecuador-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;6.6: Comparison of the modified empirical cumulative distribution function of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia .</figcaption>
+<div id="fig-states-ecuador" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-states-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="cED-formula_files/figure-html/fig-states-ecuador-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-states-ecuador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.6: Comparison of the modified empirical cumulative distribution function of the <span class="math inline">\(RS_{cor}\)</span> values for the Tropical Glacier Ecosystem of Cordilleras de Colombia .
+</figcaption>
 </figure>
 </div>
 </div>
@@ -584,7 +674,7 @@ R session info for this chapter
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.3.1 (2023-06-16)
 Platform: aarch64-apple-darwin20 (64-bit)
-Running under: macOS Sonoma 14.2.1
+Running under: macOS Sonoma 14.3.1
 
 Matrix products: default
 BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
@@ -605,21 +695,22 @@ other attached packages:
 [9] dplyr_1.1.4    
 
 loaded via a namespace (and not attached):
- [1] utf8_1.2.4        generics_0.1.3    tidyr_1.3.0       rstatix_0.7.2    
- [5] stringi_1.8.3     hms_1.1.3         digest_0.6.33     magrittr_2.0.3   
- [9] evaluate_0.23     grid_4.3.1        fastmap_1.1.1     rprojroot_2.0.4  
-[13] jsonlite_1.8.8    backports_1.4.1   fansi_1.0.6       scales_1.3.0     
-[17] tweenr_2.0.2      abind_1.4-5       cli_3.6.2         crayon_1.5.2     
-[21] rlang_1.1.2       polyclip_1.10-6   cowplot_1.1.1     bit64_4.0.5      
-[25] munsell_0.5.0     withr_2.5.2       yaml_2.3.8        parallel_4.3.1   
-[29] tools_4.3.1       tzdb_0.4.0        ggsignif_0.6.4    colorspace_2.1-0 
-[33] here_1.0.1        broom_1.0.5       vctrs_0.6.5       R6_2.5.1         
-[37] lifecycle_1.0.4   bit_4.0.5         car_3.1-2         htmlwidgets_1.6.4
-[41] vroom_1.6.5       MASS_7.3-60       pkgconfig_2.0.3   pillar_1.9.0     
-[45] gtable_0.3.4      glue_1.6.2        Rcpp_1.0.11       xfun_0.41        
-[49] tibble_3.2.1      tidyselect_1.2.0  rstudioapi_0.15.0 knitr_1.45       
-[53] farver_2.1.1      labeling_0.4.3    rmarkdown_2.25    carData_3.0-5    
-[57] compiler_4.3.1   </code></pre>
+ [1] gtable_0.3.4      xfun_0.41         bslib_0.6.1       htmlwidgets_1.6.4
+ [5] rstatix_0.7.2     tzdb_0.4.0        vctrs_0.6.5       tools_4.3.1      
+ [9] crosstalk_1.2.1   generics_0.1.3    parallel_4.3.1    tibble_3.2.1     
+[13] fansi_1.0.6       pkgconfig_2.0.3   lifecycle_1.0.4   compiler_4.3.1   
+[17] farver_2.1.1      munsell_0.5.0     carData_3.0-5     sass_0.4.8       
+[21] yaml_2.3.8        pillar_1.9.0      car_3.1-2         crayon_1.5.2     
+[25] jquerylib_0.1.4   tidyr_1.3.0       ellipsis_0.3.2    MASS_7.3-60      
+[29] cachem_1.0.8      abind_1.4-5       tidyselect_1.2.0  digest_0.6.33    
+[33] stringi_1.8.3     labeling_0.4.3    cowplot_1.1.1     polyclip_1.10-6  
+[37] rprojroot_2.0.4   fastmap_1.1.1     grid_4.3.1        here_1.0.1       
+[41] colorspace_2.1-0  cli_3.6.2         magrittr_2.0.3    utf8_1.2.4       
+[45] broom_1.0.5       withr_2.5.2       scales_1.3.0      backports_1.4.1  
+[49] bit64_4.0.5       rmarkdown_2.25    bit_4.0.5         ggsignif_0.6.4   
+[53] hms_1.1.3         evaluate_0.23     knitr_1.45        rlang_1.1.2      
+[57] Rcpp_1.0.11       glue_1.6.2        tweenr_2.0.2      rstudioapi_0.15.0
+[61] vroom_1.6.5       jsonlite_1.8.8    R6_2.5.1         </code></pre>
 </div>
 </div>
 </details>
@@ -708,10 +799,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -721,8 +811,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -735,6 +834,125 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
       return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -778,6 +996,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -803,6 +1022,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -864,23 +1109,25 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../FORM/mean-RS-formula.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Average RS</span></span>
+      <a href="../FORM/mean-RS-formula.html" class="pagination-link" aria-label="Average RS">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Average RS</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../RS/time-series.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../RS/time-series.html" class="pagination-link" aria-label="Temporal change in Relative Severity">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Temporal change in Relative Severity</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
 </div> <!-- /content -->
 <footer class="footer">
   <div class="nav-footer">
-    <div class="nav-footer-left">Created by: JR Ferrer-Paris</div>   
+    <div class="nav-footer-left">
+<p>Created by: JR Ferrer-Paris</p>
+</div>   
     <div class="nav-footer-center">
       &nbsp;
-    </div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/edit/main/FORM/cED-formula.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/jrfep/T6.1-tropical-glaciers-suitability-model/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
     <li class="nav-item compact">
@@ -889,16 +1136,11 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </i> 
     </a>
   </li>  
-    <li class="nav-item compact">
-    <a class="nav-link" href="https://twitter.com/neomapas">
-      <i class="bi bi-twitter" role="img">
-</i> 
-    </a>
-  </li>  
 </ul>
     </div>
   </div>
 </footer>
+
 
 
 

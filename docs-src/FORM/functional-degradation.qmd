@@ -1,0 +1,13 @@
+# Dimensions of ecosystem degradation {.unnumbered}
+
+Assessing degradation of ecosystem function is challenging, in part because it may occur via a wide array of ecosystem-specific mechanisms and pathways, and also because related concepts of ecosystem condition are inherently vague [@Keith_2015]. 
+
+The RLE protocol provides a framework for analysing trends in diverse ecosystem-specific indicators [@Nicholson_2024], which are mathematically standardised for assessment [@Guidelines_2017; @Keith2013]. 
+
+RLE criteria addressing functional symptoms of collapse (C and D), assess the magnitude of environmental degradation and disruption of biotic processes in ecosystems based on the relative severity and proportional extent of decline. 
+
+Relative severity (RS) is the estimated relative magnitude of change in an indicator towards a threshold that defines a major change of state (ecosystem collapse) in a system of interest, expressed as a percentage relative to a change large enough to cause ecosystem collapse [@Guidelines_2017]. Thus, a relative severity of 50% over a specified time frame represents a change in indicator value of half the magnitude that would be expected to result in ecosystem collapse.
+
+Estimation of *RS* therefore requires a time frame, a measure or estimate of observed decline and a measure or estimate of maximum decline. The suggested formula for RS uses a simple range standardisation [@Guidelines_2017]. The Extent of Decline (ED) is a measure of the proportion of the ecosystem affected by a given level of Relative Severity. Thus, ED is derived from the distribution of RS values calculated for an ecosystem across its range. 
+
+We provide explicit formulation for calculation of these metrics in @sec-RSform and @sec-EDform.

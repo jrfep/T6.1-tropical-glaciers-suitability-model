@@ -1,0 +1,11 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Direct and indirect indicators {.unnumbered}
+
+Here we examine trade-offs between the use of direct and indirect indicators of functional decline. It is always recommended to select indicators that are proximal to causes, effects and mechanisms of ecosystem change (i.e. *Direct indicators*). Sometimes these indicators are difficult to obtain or the available data show temporal and spatial gaps and bias in coverage. *Indirect indicators*, such as generic or aggregated variables, can be useful in assessment if they can fill these gaps, but might be less sensitive to real ecosystem change. 
+
+We selected one direct and one indirect indicator variable, both linked to the same underlying abiotic process (climate change, see @fig-CEM), to predict trajectories of degradation leading to ecosystem collapse. For the direct indicator we used model projections of ice mass as described in @sec-icemass. For the indirect indicator we generated estimates bioclimatic suitability for glaciers, our methods are described in @sec-suitability. 

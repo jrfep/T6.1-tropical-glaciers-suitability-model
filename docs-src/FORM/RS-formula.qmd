@@ -1,9 +1,10 @@
 ---
-title: "The RS formula"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+# The RS formula {#sec-RSform}
 
 ## Original RS formula
 
@@ -288,11 +289,11 @@ We calculate RS using the predicted median ice mass of the year 2000 as initial 
 
 #### Kilimanjaro
 
-The @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$ using the original formula for a selection of units in the T.G.E of Kilimanjaro. 
+The @fig-rs-ice-example-kili shows the calculation of $\mathrm{RS}_{ice}^{CT=0}$ using the original formula for a selection of glacier outlines (sites) in the assessment unit of Kilimanjaro. 
 
 ```{r}
 #| label: fig-rs-ice-example-kili
-#| fig-cap: "Time series of RS values for the ice mass indicator variable for the T.G.E. of Kilimanjaro. We use here data for the first 51 years of the time series calculated from one unnamed model, one scenario (ssp126) and four selected glacier outline units identified by the RGI 6.0 id. The line represent the best estimate of RS based on median ice mass predictions, and the shaded area represent a uncertainty interval based on the median absolute deviation of ice mass predictions."
+#| fig-cap: "Time series of RS values for the ice mass indicator variable for the T.G.E. of Kilimanjaro. We use here data for the first 51 years of the time series calculated from one unnamed model, one scenario (SSP1 2.6) and four selected glacier outline units identified by the RGI 6.0 id. The line represent the best estimate of RS based on median ice mass predictions, and the shaded area represent a uncertainty interval based on the median absolute deviation of ice mass predictions."
 #| warning: false
 RSvals <- massbalance_results %>%
   filter(

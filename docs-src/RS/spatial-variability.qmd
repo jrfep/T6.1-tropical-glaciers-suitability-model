@@ -88,6 +88,8 @@ adjm1/rowSums(adjm1)
 %%| file: states-collapse.mmd
 ```
 
+
+
 ----
 
 <details><summary>R session info for this chapter </summary>

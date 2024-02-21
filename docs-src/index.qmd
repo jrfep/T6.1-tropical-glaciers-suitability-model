@@ -3,24 +3,48 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-# Abstract {.unnumbered}
+# Introduction {.unnumbered}
 
-Tropical Glacier Ecosystems are facing extreme pressure due to climate change and face imminent collapse in this century.
+Tropical glacier ecosystems are facing extreme pressure due to climate change and face imminent collapse in this century.
+We explore here future projections of one direct and one indirect indicator of key ecosystem properties and use these to describe and quantify the probable trajectories toward collapse of these ecosystem types. 
 
-We explore here future projections of one direct and one indirect indicator of key ecosystem properties and use these to explore the probable trajectories toward collapse of the ecosystem. We evaluate the usefulness of relative severity and extent of degradation to anticipate collapse.
+We focus on tropical glacier ecosystems as model ecosystem for risk assessment because:
 
-We discuss here details of the suggested formula for calculation of relative severity $RS$ and different approaches to summarise and visualise data across the extent of the ecosystem assessment unit.
+- risk of ecosystem collapse is very high and well documented,
+- future probabilities of collapse can be projected from mechanistic models,
+- the different assessment units differ in extent: from the isolated glaciers in Indonesia and Venezuela to the highly connected of the Sierra Blanca in Peru (see @sec-distribution).
 
+We use the concepts of **relative severity** and **extent of decline** to describe functional degradation of the ecosystem that can lead to ecosystem collapse. We discuss here details of the suggested formula for calculation of relative severity $RS$ in @sec-RSform and different approaches to summarise and visualise data across the extent of the ecosystem assessment unit in @sec-EDform.
 
-We use the tropical glacier ecosystems as a model because:
+We compare data from one dynamic glacier model (combining ice mass balance and glacier ice dynamics) with projected degradation of climatic suitability because:
 
-- risk of ecosystem collapse is very high and well documented
-- actual probabilities of collapse can be calculated from mechanistic models,
-- the different assessment units differ in extent: from the isolated glaciers in .... to the highly connected of the sierra blanca in Peru.
+- the dynamic model can be used to calculate probability of collapse [see @sec-icemass];
+- both models use the same underlying variables, models and scenarios;
+- they allow to explore different time frames (temporal scale of degradation); amd
+- we can explore uncertainty due to different models, scenarios and collapse thresholds.
 
-We use projected degradation of climatic suitability because:
+# Highlights {.unnumbered}
 
-- it is conceptually linked to models used to calculate probability of collapse
-- it uses the same underlying variables models and scenarios
-- we can explore different time frames (temporal scale of degradation)
-- we can explore uncertainty due to different models, scenarios and collapse thresholds
+- Relative Severity and Extent of Decline are two dimensions of ecosystem degradation 
+- Tropical glaciers show consistent declines in ecosystem-specific indicators
+- Habitat suitability decline correlates with loss of glacier ice in Andean regions
+- Indirect indicator systematically underestimated risks of ecosystem collapse
+- Local studies are required to validate results in isolated and restricted glaciers [see @FerrerParis_2023]
+
+# Links and sources
+
+## Citation information
+
+This document is a supplement to @FerrerParis_Glacier_suitability.
+
+## Reproducibility
+
+The full repository and its documentation are available at:
+
+> Ferrer-Paris, J. R., & Keith, D. (2023, December 23). Environmental suitability model for Tropical Glacier Ecosystems. Retrieved from [osf.io/hp8bs](https://osf.io/hp8bs)
+
+## Related project components
+
+This document is part of a series of outputs related to the assessment of risk of collapse of tropical glacier ecosystems. <https://osf.io/792qb/>
+
+These include an assessment of the risk of collapse of the tropical glacier of the Cordillera de Mérida in Venezuela [@FerrerParis_2023].
